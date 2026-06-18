@@ -1250,7 +1250,7 @@ function renderDashboardTransactions() {
   if (!container) return;
   
   if (!userProfile || !userProfile.transactions || userProfile.transactions.length === 0) {
-    container.innerHTML = \`<div style="text-align:center; padding: 20px; color: var(--text-secondary);">No hay movimientos recientes.</div>\`;
+    container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-secondary);">No hay movimientos recientes.</div>`;
     return;
   }
   
@@ -1260,17 +1260,17 @@ function renderDashboardTransactions() {
     let sign = tx.amount >= 0 ? '+' : '';
     let color = tx.amount >= 0 ? '#10b981' : '#ff5252';
     let icon = tx.type === 'deposit' ? '💰' : (tx.type === 'purchase' ? '🛒' : '🔄');
-    return \`
+    return `
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 8px;">
        <div style="display: flex; align-items: center; gap: 12px;">
-         <div style="font-size: 1.5rem; opacity: 0.8;">\${icon}</div>
+         <div style="font-size: 1.5rem; opacity: 0.8;">${icon}</div>
          <div>
-           <div style="font-weight: bold; font-size: 0.9rem;">\${tx.description || 'Movimiento'}</div>
-           <div style="font-size: 0.75rem; color: var(--text-secondary);">\${new Date(tx.date).toLocaleString()}</div>
+           <div style="font-weight: bold; font-size: 0.9rem;">${tx.description || 'Movimiento'}</div>
+           <div style="font-size: 0.75rem; color: var(--text-secondary);">${new Date(tx.date).toLocaleString()}</div>
          </div>
        </div>
-       <div style="font-weight: bold; color: \${color};">\${sign}\$\${tx.amount.toFixed(2)}</div>
+       <div style="font-weight: bold; color: ${color};">${sign}\$${parseFloat(tx.amount).toFixed(2)}</div>
     </div>
-    \`;
+    `;
   }).join('');
 }
