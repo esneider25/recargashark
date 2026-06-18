@@ -765,6 +765,25 @@ function updateOrderStatus(orderId, newStatus, note) {
         });
       }
     }
+
+    if (newStatus === 'rejected' && order.status !== 'rejected' && order.userId && order.paymentMethodId === 'wallet' && order.productType !== 'wallet-recharge') {
+      if (typeof firebase !== 'undefined') {
+        const fdb = firebase.database();
+        fdb.ref('users/' + order.userId + '/wallet').once('value').then(snap => {
+          const currentWallet = parseFloat(snap.val() || 0);
+          const amountToRefund = parseFloat(order.priceUsd || 0);
+          fdb.ref('users/' + order.userId + '/wallet').set(currentWallet + amountToRefund);
+        });
+        fdb.ref('users/' + order.userId + '/transactions').push({
+          id: Date.now().toString(),
+          type: 'deposit',
+          amount: parseFloat(order.priceUsd || 0),
+          description: `Reembolso por pedido rechazado (#${order.id})`,
+          date: Date.now()
+        });
+      }
+    }
+
   order.status = newStatus;
   if (note) order.adminNote = note;
   order.statusHistory.push({

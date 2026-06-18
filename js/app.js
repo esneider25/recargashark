@@ -576,6 +576,93 @@ function submitOrder() {
 
   // Show success animation then redirect to tracking
   showOrderConfirmation(order);
+
+  // Auto-process if paid with wallet
+  if (order.paymentMethodId === 'wallet' && typeof window !== 'undefined') {
+    if (typeof processWalletOrderAuto === 'function') {
+      processWalletOrderAuto(order);
+    }
+  }
+}
+
+async function processWalletOrderAuto(order) {
+  const apiIdx = parseInt(order.apiProvider);
+  if (isNaN(apiIdx) || typeof API_CONFIGS === 'undefined' || !API_CONFIGS[apiIdx] || !API_CONFIGS[apiIdx].enabled) {
+    return;
+  }
+  
+  const api = API_CONFIGS[apiIdx];
+  const apiProductId = parseInt(order.apiProductId);
+  if (isNaN(apiProductId)) return;
+
+  const baseUrl = api.baseUrl.endsWith('/') ? api.baseUrl.slice(0, -1) : api.baseUrl;
+  
+  if (typeof firebase !== 'undefined') {
+    firebase.database().ref('orders/' + order.id).update({ status: 'processing', adminNote: 'Auto-procesando por pago con billetera...' });
+  }
+  
+  try {
+    const payload = {
+      producto_id: apiProductId,
+      merchant_ref: order.id,
+      cantidad: 1
+    };
+
+    if (order.gameId) {
+      if (order.productType === 'game-id-zone') {
+        const match = order.gameId.match(/ID:\s*(.+?)\s*\|\s*Zona:\s*(.+)/i);
+        if (match) {
+          payload.id_juego = match[1].trim();
+          payload.input2 = match[2].trim();
+        } else {
+          payload.id_juego = order.gameId;
+        }
+      } else {
+        payload.id_juego = order.gameId;
+      }
+    }
+
+    const proxyUrl = '/api/proxy';
+    const response = await fetch(proxyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint: "comprar",
+        method: "POST",
+        apiKey: api.apiKey,
+        baseUrl: baseUrl,
+        data: payload
+      })
+    });
+
+    const data = await response.json();
+
+    if (typeof firebase !== 'undefined') {
+      if (data.ok && data.estado === 'completado') {
+        let note = 'Aprobado y entregado automáticamente por API (Pago con Saldo)';
+        if (data.codigos && data.codigos.length > 0) note = 'Códigos entregados:\n' + data.codigos.join('\n');
+        else if (data.codigo) note = 'Código entregado: ' + data.codigo;
+        
+        firebase.database().ref('orders/' + order.id).update({ 
+          status: 'completed', 
+          adminNote: note 
+        });
+      } else if (data.ok && data.estado === 'procesando') {
+        firebase.database().ref('orders/' + order.id).update({ adminNote: 'En proceso por API' });
+      } else {
+        const refundMsg = data.reembolsado ? ' (Reembolsado al saldo por API)' : '';
+        firebase.database().ref('orders/' + order.id).update({ 
+          status: 'rejected', 
+          adminNote: `Error API: ${data.error}${refundMsg}` 
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error auto API:', error);
+    if (typeof firebase !== 'undefined') {
+      firebase.database().ref('orders/' + order.id).update({ status: 'pending', adminNote: 'Fallo auto-API. Requiere revisión manual' });
+    }
+  }
 }
 
 // ── Submit Wallet Recharge ──
