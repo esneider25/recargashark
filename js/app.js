@@ -192,6 +192,26 @@ function navigateTo(view, param) {
   if (nav) nav.classList.remove('open');
 }
 
+function scrollToSection(sectionId) {
+  if (appState.currentView !== 'home') {
+    navigateTo('home');
+    setTimeout(() => {
+      const el = document.getElementById(sectionId);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+    return;
+  }
+  const el = document.getElementById(sectionId);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const nav = document.getElementById('nav-links');
+  if (nav) nav.classList.remove('open');
+}
+
+function toggleMobileMenu() {
+  const nav = document.getElementById('nav-links');
+  if (nav) nav.classList.toggle('open');
+}
+
 // ── Search ──
 function handleProductSearch(query) {
   const searchTerm = query.toLowerCase().trim();
@@ -399,6 +419,134 @@ function updateOrderSummary() {
     summary.innerHTML = '';
     if(btn) btn.disabled = true;
   }
+}
+
+// ── Submit Order — Creates real order + redirects to tracking ──
+function submitOrder() {
+  const product = PRODUCTS.find(g => g.id === appState.selectedProductId);
+  if (!product) return;
+  const productType = product.type || 'game-id';
+
+  // Validate contact
+  const contactInput = document.getElementById('customer-contact');
+  if (!contactInput || !contactInput.value.trim()) {
+    showToast('⚠️ Ingresa tu teléfono o correo de contacto');
+    contactInput?.focus();
+    return;
+  }
+
+  // Validate type-specific fields
+  let gameId = '';
+  let accountEmail = '';
+  let accountPassword = '';
+
+  if (productType === 'game-id') {
+    const uidInput = document.getElementById('game-uid');
+    if (!uidInput || !uidInput.value.trim()) {
+      showToast('⚠️ Ingresa tu ID del juego');
+      uidInput?.focus();
+      return;
+    }
+    gameId = uidInput.value.trim();
+  } else if (productType === 'game-id-zone') {
+    const uidInput = document.getElementById('game-uid');
+    const zoneInput = document.getElementById('game-zone');
+    if (!uidInput || !uidInput.value.trim()) {
+      showToast('⚠️ Ingresa el Player ID');
+      uidInput?.focus();
+      return;
+    }
+    if (!zoneInput || !zoneInput.value.trim()) {
+      showToast('⚠️ Ingresa el Zone ID');
+      zoneInput?.focus();
+      return;
+    }
+    gameId = `ID: ${uidInput.value.trim()} | Zona: ${zoneInput.value.trim()}`;
+  } else if (productType === 'account') {
+    const emailInput = document.getElementById('account-email');
+    const passInput = document.getElementById('account-password');
+    if (!emailInput || !emailInput.value.trim()) {
+      showToast('⚠️ Ingresa el correo o usuario de la cuenta');
+      emailInput?.focus();
+      return;
+    }
+    if (!passInput || !passInput.value.trim()) {
+      showToast('⚠️ Ingresa la contraseña de la cuenta');
+      passInput?.focus();
+      return;
+    }
+    accountEmail = emailInput.value.trim();
+    accountPassword = passInput.value.trim();
+  }
+
+  if (appState.selectedPackageIndex === null) {
+    showToast('⚠️ Selecciona un paquete');
+    return;
+  }
+  if (!appState.selectedPaymentId) {
+    showToast('⚠️ Selecciona un método de pago');
+    return;
+  }
+  if (!appState.selectedScreenshot) {
+    showToast('⚠️ Sube la captura del comprobante de pago');
+    document.getElementById('screenshot-upload')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => {
+      document.getElementById('screenshot-upload')?.classList.add('error-shake');
+      setTimeout(() => document.getElementById('screenshot-upload')?.classList.remove('error-shake'), 500);
+    }, 300);
+    return;
+  }
+
+  const pkg = product.packages[appState.selectedPackageIndex];
+  const method = PAYMENT_METHODS.find(m => m.id === appState.selectedPaymentId);
+  
+  let finalUsd = pkg.priceUsd;
+  let discountCode = null;
+  let discountValue = 0;
+  let discountType = null;
+
+  if (appState.appliedDiscount) {
+    const dAmount = calculateDiscountAmount(pkg.priceUsd, appState.appliedDiscount);
+    finalUsd = Math.max(0, pkg.priceUsd - dAmount);
+    discountCode = appState.appliedDiscount.code;
+    discountValue = appState.appliedDiscount.value;
+    discountType = appState.appliedDiscount.type;
+  }
+
+  const priceBs = parseFloat(usdToBs(finalUsd));
+
+  // Create the order
+  const order = createOrder({
+    productId: product.id,
+    productName: product.name,
+    productType: productType,
+    packageLabel: pkg.label,
+    apiProductId: pkg.apiServiceId,
+    apiProvider: product.apiProvider,
+    priceUsd: finalUsd,
+    priceBs: priceBs,
+    paymentMethodId: method.id,
+    paymentMethodName: method.name,
+    paymentCurrency: method.currency || 'bs',
+    customerContact: contactInput.value.trim(),
+    gameId: gameId,
+    accountEmail: accountEmail,
+    accountPassword: accountPassword,
+    ocrNumbers: appState.selectedScreenshotOcr || [],
+    discountCode: discountCode,
+    discountValue: discountValue,
+    discountType: discountType
+  });
+
+  if (typeof recordOrderAttempt === 'function') recordOrderAttempt();
+
+  // Handle Telegram notification in the background
+  if (typeof triggerTelegramNotification === 'function') {
+    triggerTelegramNotification(order);
+  }
+
+  // Show success animation then redirect to tracking
+  showOrderConfirmation(order);
 }
 
 // ── Submit Wallet Recharge ──
