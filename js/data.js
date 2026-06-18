@@ -500,7 +500,11 @@ function initFirebaseData() {
         else if (key === 'settings') Object.assign(SITE_SETTINGS, data);
         else if (key === 'api_configs') { API_CONFIGS.length = 0; data.forEach(a => API_CONFIGS.push(a)); }
         else if (key === 'discounts') { DISCOUNT_CODES.length = 0; data.forEach(d => DISCOUNT_CODES.push(d)); }
-        else if (key === 'messages') MESSAGES = data;
+        else if (key === 'messages') {
+          if (!data) MESSAGES = [];
+          else if (Array.isArray(data)) MESSAGES = data.filter(Boolean);
+          else MESSAGES = Object.values(data);
+        }
         else if (key === 'orders') {
           if (!data) ORDERS = [];
           else if (Array.isArray(data)) ORDERS = data.filter(Boolean);

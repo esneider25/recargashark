@@ -922,6 +922,34 @@ select.admin-form-input {
   .admin-orders-list {
     grid-template-columns: 1fr;
   }
+
+  /* Compact styles for mobile */
+  .admin-main {
+    padding: 12px 10px;
+  }
+  .admin-order-card {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 10px;
+  }
+  .admin-order-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .admin-order-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .admin-order-action-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    flex: 1;
+    text-align: center;
+  }
+  .admin-status-badge {
+    align-self: flex-start;
+  }
 }
 
 /* ════════════════════════════════════════
