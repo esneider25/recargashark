@@ -935,15 +935,14 @@ async function sendSupportMessage() {
   const quickActions = document.getElementById('support-quick-actions');
   if (quickActions) quickActions.style.display = 'none';
   
-  // Notify Telegram
-  const TELEGRAM = JSON.parse(localStorage.getItem('recargashark_telegram') || '{}');
-  if (TELEGRAM.enabled && TELEGRAM.botToken && TELEGRAM.chatId) {
-    const tgMsg = `💬 *Nuevo Mensaje de Soporte*\n\n*Cliente:* ${sessionId.substring(0,8)}\n*Mensaje:* ${text}\n\n_Responde desde el Panel Admin_`;
+  // Notify Telegram using global TELEGRAM_CONFIG
+  if (typeof TELEGRAM_CONFIG !== 'undefined' && TELEGRAM_CONFIG.enabled && TELEGRAM_CONFIG.botToken && TELEGRAM_CONFIG.chatId) {
+    const tgMsg = `💬 *Nuevo Mensaje de Soporte*\n\n*Cliente:* ${sessionId.substring(0,8)}\n*Contacto:* ${contact}\n*Mensaje:* ${text}\n\n_Responde desde el Panel Admin_`;
     try {
-      await fetch(`https://api.telegram.org/bot${TELEGRAM.botToken}/sendMessage`, {
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: TELEGRAM.chatId, text: tgMsg, parse_mode: 'Markdown' })
+        body: JSON.stringify({ chat_id: TELEGRAM_CONFIG.chatId, text: tgMsg, parse_mode: 'Markdown' })
       });
     } catch(e) { console.error('Telegram error', e); }
   }

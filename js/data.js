@@ -924,16 +924,7 @@ function buildOrderTelegramMessage(order) {
 }
 
 function buildOrderKeyboard(orderId) {
-  let baseUrl = window.location.href.replace(/index\.html.*$/, '').replace(/\/$/, '');
-  
-  // Telegram API RECHAZA las URLs que empiezan con "file://".
-  // Si estás probando localmente, usamos una URL falsa (https) para que los botones sí aparezcan en Telegram.
-  // Cuando subas la página a un hosting real, esto usará tu dominio real automáticamente.
-  if (baseUrl.startsWith('file://')) {
-    baseUrl = 'https://tupanel.local';
-  }
-
-  const adminUrl = baseUrl + '/admin.html';
+  const adminUrl = 'https://admin.recargashark.com';
   return [
     [
       { text: '✅ Aprobar', url: `${adminUrl}?action=approve&order=${orderId}` },
