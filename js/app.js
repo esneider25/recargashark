@@ -587,6 +587,7 @@ function submitOrder() {
     }
     // Deducir saldo inmediatamente
     db.ref('users/' + currentUser.uid + '/wallet').set(currentWallet - finalUsd);
+    if(typeof addTransaction === 'function') addTransaction(currentUser.uid, 'purchase', -finalUsd, 'Compra con Monedero: ' + product.name);
   }
 
   // Create the order
@@ -1552,6 +1553,8 @@ function authWithGoogle() {
           email: user.email,
           name: user.displayName,
           wallet: 0,
+          points: 0,
+          totalSpent: 0,
           createdAt: Date.now()
         });
       }
@@ -1711,6 +1714,11 @@ async function loadDashboardData() {
 
   // 2. Render Saved IDs
   renderDashboardSavedIds();
+  
+  // 3. Render Transactions
+  if (typeof renderDashboardTransactions === 'function') {
+    renderDashboardTransactions();
+  }
 }
 
 function switchDashboardTab(tab) {

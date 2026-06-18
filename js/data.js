@@ -742,15 +742,29 @@ function updateOrderStatus(orderId, newStatus, note) {
   const order = orders.find(o => o.id === orderId);
   if (!order) return null;
 
-  if (order.productType === 'wallet-recharge' && newStatus === 'completed' && order.status !== 'completed') {
-    if (order.userId) {
-      db.ref('users/' + order.userId + '/wallet').once('value').then(snap => {
-        const currentWallet = parseFloat(snap.val() || 0);
-        const amountToAdd = parseFloat(order.priceUsd || 0);
-        db.ref('users/' + order.userId + '/wallet').set(currentWallet + amountToAdd);
-      });
+    if (newStatus === 'completed' && order.status !== 'completed' && order.userId) {
+      if (order.productType === 'wallet-recharge') {
+        db.ref('users/' + order.userId + '/wallet').once('value').then(snap => {
+          const currentWallet = parseFloat(snap.val() || 0);
+          const amountToAdd = parseFloat(order.priceUsd || 0);
+          db.ref('users/' + order.userId + '/wallet').set(currentWallet + amountToAdd);
+        });
+        if (typeof addTransaction === 'function') {
+          addTransaction(order.userId, 'deposit', parseFloat(order.priceUsd || 0), 'Recarga de monedero aprobada');
+        }
+      } else {
+        // Product Purchase: Give points (10 per dollar) and update total spent
+        db.ref('users/' + order.userId).once('value').then(snap => {
+          let p = snap.val() || {};
+          let currentPoints = p.points || 0;
+          let totalSpent = p.totalSpent || 0;
+          let price = parseFloat(order.priceUsd || 0);
+          let newPoints = currentPoints + Math.floor(price * 10);
+          let newSpent = totalSpent + price;
+          db.ref('users/' + order.userId).update({ points: newPoints, totalSpent: newSpent });
+        });
+      }
     }
-  }
   order.status = newStatus;
   if (note) order.adminNote = note;
   order.statusHistory.push({

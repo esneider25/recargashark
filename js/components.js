@@ -1096,124 +1096,181 @@ function renderDashboard() {
     return `<div style="text-align:center; padding: 100px;"><h2>Por favor inicia sesión.</h2></div>`;
   }
 
-  // Llama asincrónicamente para cargar los datos en la vista una vez renderizada.
   setTimeout(() => { if (typeof loadDashboardData === 'function') loadDashboardData(); }, 100);
+
+  const wallet = userProfile?.wallet || 0;
+  const spent = userProfile?.totalSpent || 0;
+  const points = userProfile?.points || 0;
+  const vip = typeof getVipLevel === 'function' ? getVipLevel(spent) : { name: 'Bronce', color: '#cd7f32', gradient: 'linear-gradient(135deg, #d4a373 0%, #a68a64 100%)', nextThreshold: 50 };
+  
+  let progressHtml = '';
+  if (vip.nextThreshold) {
+     const percent = Math.min(100, (spent / vip.nextThreshold) * 100);
+     progressHtml = `
+       <div style="margin-top: 15px; font-size: 0.8rem; color: var(--text-secondary);">
+         Progreso a siguiente nivel: $${spent.toFixed(2)} / $${vip.nextThreshold}
+         <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 5px; overflow: hidden;">
+           <div style="width: ${percent}%; height: 100%; background: ${vip.gradient}; transition: width 1s ease;"></div>
+         </div>
+       </div>
+     `;
+  } else {
+     progressHtml = `<div style="margin-top: 15px; font-size: 0.85rem; color: ${vip.color}; font-weight: bold;">¡Has alcanzado el nivel máximo!</div>`;
+  }
 
   return `
     <div class="dashboard-container" style="max-width: 1200px; margin: 40px auto; padding: 20px; color: white;">
-      <h1 style="margin-bottom: 30px;">Panel de Usuario</h1>
-      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
+      <h1 style="margin-bottom: 30px; font-size: 2.5rem; text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);">Panel de Usuario</h1>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px;">
         
-        <!-- Left Column -->
-        <div class="dashboard-left">
-          <div style="background: var(--bg-card); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; margin-bottom: 20px;">
-            <img src="${currentUser.photoURL || 'https://ui-avatars.com/api/?name=' + currentUser.email + '&background=0D8ABC&color=fff'}" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 15px; border: 3px solid #10b981; object-fit: cover;">
-            <h3 style="margin-bottom: 5px;">${currentUser.displayName || 'Usuario'}</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 20px; word-break: break-all;">${currentUser.email}</p>
-            
-            <div style="background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 12px; border: 1px dashed #10b981; margin-bottom: 20px;">
-               <div style="font-size: 0.9rem; color: #10b981;">Saldo Disponible</div>
-               <div style="font-size: 2rem; font-weight: bold; color: #10b981;">$${(typeof userProfile !== 'undefined' && userProfile && userProfile.wallet) ? userProfile.wallet.toFixed(2) : '0.00'}</div>
-            </div>
-            
-            <button onclick="navigateTo('wallet-recharge')" class="btn-primary" style="width: 100%; margin-bottom: 10px;">Recargar Monedero</button>
-            <button onclick="navigateTo('home')" class="btn-secondary" style="width: 100%; margin-bottom: 20px;">Ir a la Tienda</button>
-            
-            <button onclick="logout()" class="btn-secondary" style="width: 100%; color: #ff5252; border-color: #ff5252; background: rgba(255,82,82,0.1);">Cerrar Sesión</button>
-          </div>
-          
-          <div style="background: var(--bg-card); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
-            <h3 style="margin-bottom: 15px;">💾 IDs Guardados</h3>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">Guarda tus cuentas para comprar más rápido.</p>
-            <div id="dashboard-saved-ids">
-              <div class="loader" style="width:20px;height:20px;margin:auto;"></div>
-            </div>
-            <button onclick="showAddIdModal()" class="btn-secondary" style="width: 100%; margin-top: 15px;">+ Añadir ID</button>
+        <div style="background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 16px; display: flex; gap: 20px; align-items: center; position: relative; overflow: hidden;">
+          <div style="position: absolute; top: -50px; right: -50px; width: 100px; height: 100px; background: ${vip.gradient}; filter: blur(50px); opacity: 0.3;"></div>
+          <img src="${currentUser.photoURL || 'https://ui-avatars.com/api/?name=' + currentUser.email + '&background=0D8ABC&color=fff'}" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid ${vip.color}; box-shadow: 0 0 15px ${vip.color}40; position: relative; z-index: 2;">
+          <div style="flex: 1; position: relative; z-index: 2;">
+            <h3 style="margin: 0 0 5px 0; font-size: 1.3rem;">${currentUser.displayName || 'Usuario'}</h3>
+            <span style="background: ${vip.gradient}; color: #000; font-weight: bold; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; box-shadow: 0 2px 10px ${vip.color}50;">VIP ${vip.name}</span>
+            ${progressHtml}
           </div>
         </div>
 
-        <!-- Right Column -->
-        <div class="dashboard-right">
-          <div style="background: var(--bg-card); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); min-height: 500px;">
-            <h2 style="margin-bottom: 20px;">📦 Mis Pedidos</h2>
-            
-            <div class="tabs" style="display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-               <button id="tab-active-orders" onclick="switchDashboardTab('active')" style="background:none; border:none; color:#10b981; font-weight:bold; font-size:1.1rem; cursor:pointer; padding:5px 10px; border-bottom: 2px solid #10b981;">En Proceso</button>
-               <button id="tab-completed-orders" onclick="switchDashboardTab('completed')" style="background:none; border:none; color:var(--text-secondary); font-size:1.1rem; cursor:pointer; padding:5px 10px;">Completados</button>
-            </div>
-            
-            <div id="dashboard-orders-container">
-              <div class="loader" style="margin: 50px auto;"></div>
-            </div>
+        <div style="background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(16, 185, 129, 0.3); padding: 25px; border-radius: 16px; position: relative; overflow: hidden;">
+          <div style="position: absolute; bottom: -50px; left: -50px; width: 100px; height: 100px; background: #10b981; filter: blur(50px); opacity: 0.2;"></div>
+          <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Saldo Monedero</div>
+          <div style="font-size: 2.8rem; font-weight: 800; color: #10b981; text-shadow: 0 0 15px rgba(16, 185, 129, 0.3);">\$${wallet.toFixed(2)}</div>
+          <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <button onclick="startWalletRecharge()" class="btn-primary" style="flex: 1; padding: 8px;">+ Recargar</button>
           </div>
         </div>
+
+        <div style="background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(59, 130, 246, 0.3); padding: 25px; border-radius: 16px; position: relative; overflow: hidden;">
+          <div style="position: absolute; bottom: -50px; right: -50px; width: 100px; height: 100px; background: #3b82f6; filter: blur(50px); opacity: 0.2;"></div>
+          <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Shark Points</div>
+          <div style="font-size: 2.5rem; font-weight: 800; color: #3b82f6; text-shadow: 0 0 15px rgba(59, 130, 246, 0.3);">${points}</div>
+          <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <button onclick="if(typeof redeemPoints==='function')redeemPoints()" class="btn-secondary" style="flex: 1; padding: 8px; border-color: #3b82f6; color: #3b82f6;">Canjear por $1</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
         
+        <div>
+          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 25px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+              <h2 style="margin: 0; font-size: 1.5rem;">Mis Pedidos</h2>
+              <div style="display: flex; gap: 15px;">
+                <button id="tab-active-orders" onclick="switchDashboardTab('active')" style="background:none; border:none; color: #10b981; border-bottom: 2px solid #10b981; padding-bottom: 5px; cursor: pointer; font-weight: bold;">En Proceso</button>
+                <button id="tab-completed-orders" onclick="switchDashboardTab('completed')" style="background:none; border:none; color: var(--text-secondary); padding-bottom: 5px; cursor: pointer; font-weight: bold;">Completados</button>
+              </div>
+            </div>
+            <div id="dashboard-orders-container" style="min-height: 200px;">
+              <div style="text-align:center; padding: 40px;"><span class="tracking-spinner" style="display:inline-block; width:24px; height:24px; border:3px solid #10b981; border-bottom-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></span></div>
+            </div>
+          </div>
+          
+          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 25px;">
+             <h2 style="margin: 0 0 20px 0; font-size: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">Historial de Billetera</h2>
+             <div id="dashboard-transactions-container" style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
+                <div style="text-align:center; padding: 20px; color: var(--text-secondary);">Cargando movimientos...</div>
+             </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 25px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+              <h3 style="margin: 0;">Libreta de IDs</h3>
+              <button onclick="showAddIdModal()" class="btn-primary" style="padding: 5px 12px; font-size: 0.8rem; border-radius: 20px;">+ Añadir</button>
+            </div>
+            <div id="dashboard-saved-ids">
+              <div style="text-align:center; color:var(--text-secondary);"><small>Cargando...</small></div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn-secondary" style="width: 100%; border-radius: 12px;" onclick="navigateTo('home')">Volver a la Tienda</button>
+            <button onclick="logout()" class="btn-secondary" style="width: 100%; border-radius: 12px; color: #ff5252; border-color: rgba(255, 82, 82, 0.3); background: rgba(255, 82, 82, 0.05);">Cerrar Sesión</button>
+          </div>
+        </div>
+
       </div>
     </div>
   `;
 }
 
-// Render dynamic orders in dashboard
 function renderDashboardOrders(orders, type) {
   if (orders.length === 0) {
     return `
       <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-        <div style="font-size: 3rem; margin-bottom: 10px;">🛒</div>
-        <h3>No tienes pedidos ${type === 'active' ? 'en proceso' : 'completados'}.</h3>
-        <p style="margin-top: 10px;">¡Explora la tienda y haz tu primera compra!</p>
-        <button onclick="navigateTo('home')" class="btn-primary" style="margin-top: 20px;">Ir a la Tienda</button>
+        <div style="font-size: 3rem; margin-bottom: 10px; opacity: 0.5;">${type === 'active' ? '📦' : '✅'}</div>
+        <h3 style="font-weight: 500;">No tienes pedidos ${type === 'active' ? 'en proceso' : 'completados'}.</h3>
       </div>
     `;
   }
   
-  return orders.map(order => `
-    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <span style="font-weight: bold; color: #fff;">${order.productName || 'Producto'} - ${order.packageLabel || ''}</span>
-        <span class="status-badge status-${order.status}">${order.status.toUpperCase()}</span>
-      </div>
-      <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 5px;">
-        ID de Orden: ${order.id} | Fecha: ${new Date(order.createdAt).toLocaleString()}
-      </div>
-      <div style="font-size: 0.9rem; color: var(--text-secondary);">
-        <strong>Juego/Cuenta:</strong> ${order.gameId || order.accountEmail || 'N/A'}
-      </div>
-      ${order.status === 'pending' || order.status === 'processing' ? `
-        <div style="margin-top: 15px;">
-          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: var(--text-secondary);">
-            <span>Recibido</span>
-            <span>Procesando</span>
-            <span>Entregado</span>
-          </div>
-          <div style="height: 6px; background: var(--bg-dark); border-radius: 3px; position: relative;">
-             <div style="position: absolute; top: 0; left: 0; height: 100%; border-radius: 3px; background: #10b981; width: ${order.status === 'processing' ? '50%' : '10%'}; transition: width 0.5s;"></div>
-          </div>
+  return orders.map(order => {
+    let statusColor = '#f59e0b';
+    if (order.status === 'processing') statusColor = '#3b82f6';
+    if (order.status === 'completed') statusColor = '#10b981';
+    if (order.status === 'rejected') statusColor = '#ef4444';
+
+    return `
+    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-left: 4px solid ${statusColor}; border-radius: 8px; padding: 20px; margin-bottom: 15px; transition: transform 0.2s ease, background 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.transform='translateY(0)'">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+        <div>
+          <span style="font-weight: 800; color: #fff; font-size: 1.1rem;">${order.productName || 'Producto'}</span>
+          <div style="color: #10b981; font-weight: bold; margin-top: 5px;">${order.packageLabel || ''}</div>
         </div>
+        <div style="text-align: right;">
+           <span style="background: ${statusColor}20; color: ${statusColor}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid ${statusColor}40;">${order.status.toUpperCase()}</span>
+           <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px;">Ord: #${order.id}</div>
+        </div>
+      </div>
+      <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 10px;">
+        Fecha: ${new Date(order.createdAt).toLocaleString()}
+      </div>
+      
+      ${type === 'active' ? `
+      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 5px; font-weight: bold;">
+        <span style="color: ${order.status === 'pending' || order.status === 'processing' ? '#10b981' : 'var(--text-secondary)'}">1. Recibido</span>
+        <span style="color: ${order.status === 'processing' ? '#3b82f6' : 'var(--text-secondary)'}">2. Procesando</span>
+        <span>3. Entregado</span>
+      </div>
+      <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+        <div style="width: ${order.status === 'pending' ? '33%' : (order.status === 'processing' ? '66%' : '100%')}; height: 100%; background: ${statusColor}; transition: width 0.5s ease;"></div>
+      </div>
       ` : ''}
     </div>
-  `).join('');
+  `}).join('');
 }
 
-function fillSavedId(uid, zoneId) {
-  const uidInput = document.getElementById('game-uid');
-  const zoneInput = document.getElementById('game-zone');
-  const emailInput = document.getElementById('account-email');
+function renderDashboardTransactions() {
+  const container = document.getElementById('dashboard-transactions-container');
+  if (!container) return;
   
-  if (uidInput) {
-    uidInput.value = uid;
-    uidInput.style.borderColor = '#10b981';
-    setTimeout(() => uidInput.style.borderColor = 'rgba(255, 255, 255, 0.2)', 1500);
-  } else if (emailInput) {
-    emailInput.value = uid;
-    emailInput.style.borderColor = '#10b981';
-    setTimeout(() => emailInput.style.borderColor = 'rgba(255, 255, 255, 0.2)', 1500);
+  if (!userProfile || !userProfile.transactions || userProfile.transactions.length === 0) {
+    container.innerHTML = \`<div style="text-align:center; padding: 20px; color: var(--text-secondary);">No hay movimientos recientes.</div>\`;
+    return;
   }
   
-  if (zoneInput && zoneId && zoneId !== 'null' && zoneId !== 'undefined') {
-    zoneInput.value = zoneId;
-    zoneInput.style.borderColor = '#10b981';
-    setTimeout(() => zoneInput.style.borderColor = 'rgba(255, 255, 255, 0.2)', 1500);
-  }
+  const sortedTx = [...userProfile.transactions].sort((a,b) => b.date - a.date);
   
-  if(typeof showToast === 'function') showToast('? Datos completados autom�ticamente');
+  container.innerHTML = sortedTx.map(tx => {
+    let sign = tx.amount >= 0 ? '+' : '';
+    let color = tx.amount >= 0 ? '#10b981' : '#ff5252';
+    let icon = tx.type === 'deposit' ? '💰' : (tx.type === 'purchase' ? '🛒' : '🔄');
+    return \`
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 8px;">
+       <div style="display: flex; align-items: center; gap: 12px;">
+         <div style="font-size: 1.5rem; opacity: 0.8;">\${icon}</div>
+         <div>
+           <div style="font-weight: bold; font-size: 0.9rem;">\${tx.description || 'Movimiento'}</div>
+           <div style="font-size: 0.75rem; color: var(--text-secondary);">\${new Date(tx.date).toLocaleString()}</div>
+         </div>
+       </div>
+       <div style="font-weight: bold; color: \${color};">\${sign}\$\${tx.amount.toFixed(2)}</div>
+    </div>
+    \`;
+  }).join('');
 }
