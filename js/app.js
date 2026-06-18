@@ -190,7 +190,9 @@ function navigateTo(view, param) {
   } else if (view === 'history') {
     appState.currentView = 'history';
     appState.historyContactStr = param;
-  } else if (view === 'wallet-recharge') {
+  } else if (view === 'dashboard') {
+      appState.currentView = 'dashboard';
+    } else if (view === 'wallet-recharge') {
     appState.currentView = 'wallet-recharge';
     appState.selectedPaymentId = null;
     appState.selectedPackageIndex = null;
