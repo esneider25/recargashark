@@ -1030,12 +1030,16 @@ async function processAutomaticTopup(orderId, fromModal = false) {
       updateOrderStatus(orderId, 'rejected', `Error API: ${data.error}${refundMsg}`);
       refreshOrdersView();
       if (fromModal) closeAdminModal();
+      
+      // Notify Admin via Telegram about the API error
+      sendTelegramMessage(`❌ <b>ERROR API — Pedido #${orderId}</b>\nLa API rechazó la recarga automática.\n\n<b>Motivo:</b> ${data.error}${refundMsg}\n\n<i>Estado cambiado a Rechazado. Verifica el ID o saldo.</i>`);
     }
   } catch (error) {
     console.error('Error API Comprar:', error);
     showAdminToast(`❌ Fallo de conexión con la API`, 'error');
     updateOrderStatus(orderId, 'pending', 'Fallo conexión API externa');
     refreshOrdersView();
+    sendTelegramMessage(`⚠️ <b>FALLO DE CONEXIÓN API — Pedido #${orderId}</b>\nNo se pudo conectar con el proveedor API externo.\nEl pedido sigue en estado Pendiente.`);
   }
 }
 
@@ -2076,12 +2080,8 @@ function handleUrlAction(action, orderId) {
     if (action === 'approve') {
       const order = getOrderById(orderId);
       if (order && order.status !== 'completed') {
-        const updated = updateOrderStatus(orderId, 'completed', 'Aprobado desde Telegram');
-        if (updated) {
-          showAdminToast('✅ Pedido aprobado desde Telegram', 'success');
-          refreshOrdersView();
-          sendTelegramMessage(`✅ <b>Pedido #${updated.id} APROBADO</b>\nProducto: ${updated.productName} — ${updated.packageLabel}`);
-        }
+        // En lugar de forzar 'completed', usamos quickUpdateStatus que dispara la API automática (SmileOne/Moogold) si está configurada
+        quickUpdateStatus(orderId, 'completed');
       }
     } else if (action === 'reject') {
       openRejectModal(orderId, 'rejected');
