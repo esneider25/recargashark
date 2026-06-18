@@ -18,7 +18,7 @@ function renderNavbar() {
           <li><a onclick="navigateTo('lookup')" data-section="lookup">🔍 Mis Pedidos</a></li>
           <li id="auth-nav-item">
             ${(typeof currentUser !== 'undefined' && currentUser) 
-              ? `<a onclick="showProfileModal()" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Mi Perfil ($${(typeof userProfile !== 'undefined' && userProfile && userProfile.wallet) ? userProfile.wallet : 0})</a>`
+              ? `<a onclick="navigateTo('dashboard')" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Mi Perfil ($${(typeof userProfile !== 'undefined' && userProfile && userProfile.wallet) ? userProfile.wallet : 0})</a>`
               : `<a onclick="showAuthModal()" class="nav-cta" style="background: linear-gradient(135deg, #4f46e5, #3b82f6); cursor:pointer;">Ingresar</a>`
             }
           </li>
@@ -269,8 +269,30 @@ function renderProductDetail(productId) {
     </div>
   `).join('');
 
+  // Saved IDs handling
+  let savedIdsHtml = '';
+  if (typeof currentUser !== 'undefined' && currentUser && typeof userProfile !== 'undefined' && userProfile && userProfile.savedIds && userProfile.savedIds.length > 0) {
+    const relevantIds = userProfile.savedIds.filter(id => id.gameName && id.gameName.toLowerCase().includes(product.name.toLowerCase()));
+    
+    // If no exact match, show all saved IDs as a fallback
+    const idsToShow = relevantIds.length > 0 ? relevantIds : userProfile.savedIds;
+    
+    savedIdsHtml = `
+      <div style="margin-bottom: 20px; padding: 15px; background: rgba(16, 185, 129, 0.05); border: 1px dashed #10b981; border-radius: 8px;">
+        <div style="font-size: 0.85rem; color: #10b981; margin-bottom: 10px; font-weight: bold;">Autocompletar con tus cuentas guardadas:</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          ${idsToShow.map(id => `
+            <button type="button" class="btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; background: rgba(255,255,255,0.05);" onclick="fillSavedId('${id.uid}', '${id.zoneId || ''}')">
+              ${id.gameName}: ${id.uid}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   // Dynamic input fields based on product type
-  let typeFieldsHtml = '';
+  let typeFieldsHtml = savedIdsHtml;
   if (productType === 'game-id') {
     let verifierHtml = '';
     if (product.apiVerifierProvider) {
@@ -1063,4 +1085,135 @@ function renderWalletRecharge() {
       </div>
     </section>
   `;
+}
+
+// ==========================================
+// Dashboard Component
+// ==========================================
+
+function renderDashboard() {
+  if (!currentUser) {
+    return `<div style="text-align:center; padding: 100px;"><h2>Por favor inicia sesión.</h2></div>`;
+  }
+
+  // Llama asincrónicamente para cargar los datos en la vista una vez renderizada.
+  setTimeout(() => { if (typeof loadDashboardData === 'function') loadDashboardData(); }, 100);
+
+  return `
+    <div class="dashboard-container" style="max-width: 1200px; margin: 40px auto; padding: 20px; color: white;">
+      <h1 style="margin-bottom: 30px;">Panel de Usuario</h1>
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
+        
+        <!-- Left Column -->
+        <div class="dashboard-left">
+          <div style="background: var(--bg-card); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; margin-bottom: 20px;">
+            <img src="${currentUser.photoURL || 'https://ui-avatars.com/api/?name=' + currentUser.email + '&background=0D8ABC&color=fff'}" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 15px; border: 3px solid #10b981; object-fit: cover;">
+            <h3 style="margin-bottom: 5px;">${currentUser.displayName || 'Usuario'}</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 20px; word-break: break-all;">${currentUser.email}</p>
+            
+            <div style="background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 12px; border: 1px dashed #10b981; margin-bottom: 20px;">
+               <div style="font-size: 0.9rem; color: #10b981;">Saldo Disponible</div>
+               <div style="font-size: 2rem; font-weight: bold; color: #10b981;">$${(typeof userProfile !== 'undefined' && userProfile && userProfile.wallet) ? userProfile.wallet.toFixed(2) : '0.00'}</div>
+            </div>
+            
+            <button onclick="navigateTo('wallet-recharge')" class="btn-primary" style="width: 100%; margin-bottom: 10px;">Recargar Monedero</button>
+            <button onclick="navigateTo('home')" class="btn-secondary" style="width: 100%; margin-bottom: 20px;">Ir a la Tienda</button>
+            
+            <button onclick="logout()" class="btn-secondary" style="width: 100%; color: #ff5252; border-color: #ff5252; background: rgba(255,82,82,0.1);">Cerrar Sesión</button>
+          </div>
+          
+          <div style="background: var(--bg-card); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
+            <h3 style="margin-bottom: 15px;">💾 IDs Guardados</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">Guarda tus cuentas para comprar más rápido.</p>
+            <div id="dashboard-saved-ids">
+              <div class="loader" style="width:20px;height:20px;margin:auto;"></div>
+            </div>
+            <button onclick="showAddIdModal()" class="btn-secondary" style="width: 100%; margin-top: 15px;">+ Añadir ID</button>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="dashboard-right">
+          <div style="background: var(--bg-card); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); min-height: 500px;">
+            <h2 style="margin-bottom: 20px;">📦 Mis Pedidos</h2>
+            
+            <div class="tabs" style="display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+               <button id="tab-active-orders" onclick="switchDashboardTab('active')" style="background:none; border:none; color:#10b981; font-weight:bold; font-size:1.1rem; cursor:pointer; padding:5px 10px; border-bottom: 2px solid #10b981;">En Proceso</button>
+               <button id="tab-completed-orders" onclick="switchDashboardTab('completed')" style="background:none; border:none; color:var(--text-secondary); font-size:1.1rem; cursor:pointer; padding:5px 10px;">Completados</button>
+            </div>
+            
+            <div id="dashboard-orders-container">
+              <div class="loader" style="margin: 50px auto;"></div>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  `;
+}
+
+// Render dynamic orders in dashboard
+function renderDashboardOrders(orders, type) {
+  if (orders.length === 0) {
+    return `
+      <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+        <div style="font-size: 3rem; margin-bottom: 10px;">🛒</div>
+        <h3>No tienes pedidos ${type === 'active' ? 'en proceso' : 'completados'}.</h3>
+        <p style="margin-top: 10px;">¡Explora la tienda y haz tu primera compra!</p>
+        <button onclick="navigateTo('home')" class="btn-primary" style="margin-top: 20px;">Ir a la Tienda</button>
+      </div>
+    `;
+  }
+  
+  return orders.map(order => `
+    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <span style="font-weight: bold; color: #fff;">${order.productName || 'Producto'} - ${order.packageLabel || ''}</span>
+        <span class="status-badge status-${order.status}">${order.status.toUpperCase()}</span>
+      </div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 5px;">
+        ID de Orden: ${order.id} | Fecha: ${new Date(order.createdAt).toLocaleString()}
+      </div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">
+        <strong>Juego/Cuenta:</strong> ${order.gameId || order.accountEmail || 'N/A'}
+      </div>
+      ${order.status === 'pending' || order.status === 'processing' ? `
+        <div style="margin-top: 15px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: var(--text-secondary);">
+            <span>Recibido</span>
+            <span>Procesando</span>
+            <span>Entregado</span>
+          </div>
+          <div style="height: 6px; background: var(--bg-dark); border-radius: 3px; position: relative;">
+             <div style="position: absolute; top: 0; left: 0; height: 100%; border-radius: 3px; background: #10b981; width: ${order.status === 'processing' ? '50%' : '10%'}; transition: width 0.5s;"></div>
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+function fillSavedId(uid, zoneId) {
+  const uidInput = document.getElementById('game-uid');
+  const zoneInput = document.getElementById('game-zone');
+  const emailInput = document.getElementById('account-email');
+  
+  if (uidInput) {
+    uidInput.value = uid;
+    uidInput.style.borderColor = '#10b981';
+    setTimeout(() => uidInput.style.borderColor = 'rgba(255, 255, 255, 0.2)', 1500);
+  } else if (emailInput) {
+    emailInput.value = uid;
+    emailInput.style.borderColor = '#10b981';
+    setTimeout(() => emailInput.style.borderColor = 'rgba(255, 255, 255, 0.2)', 1500);
+  }
+  
+  if (zoneInput && zoneId && zoneId !== 'null' && zoneId !== 'undefined') {
+    zoneInput.value = zoneId;
+    zoneInput.style.borderColor = '#10b981';
+    setTimeout(() => zoneInput.style.borderColor = 'rgba(255, 255, 255, 0.2)', 1500);
+  }
+  
+  if(typeof showToast === 'function') showToast('? Datos completados autom�ticamente');
 }

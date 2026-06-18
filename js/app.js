@@ -132,6 +132,17 @@ function renderApp() {
       ${renderSupportWidget()}
       ${termsHtml}
     `;
+  } else if (appState.currentView === 'dashboard') {
+    app.innerHTML = `
+      <div class="bg-ocean-grid">${typeof renderBubbles === 'function' ? renderBubbles() : ''}</div>
+      ${typeof renderNavbar === 'function' ? renderNavbar() : ''}
+      <div class="app-container">
+        ${typeof renderDashboard === 'function' ? renderDashboard() : ''}
+        ${typeof renderFooter === 'function' ? renderFooter() : ''}
+      </div>
+      ${typeof renderSupportWidget === 'function' ? renderSupportWidget() : ''}
+      ${termsHtml}
+    `;
   } else if (appState.currentView === 'wallet-recharge') {
     app.innerHTML = `
       <div class="bg-ocean-grid">${typeof renderBubbles === 'function' ? renderBubbles() : ''}</div>
@@ -1494,7 +1505,7 @@ function initPublicAuth() {
       firebase.database().ref('users/' + user.uid).on('value', (snapshot) => {
         userProfile = snapshot.val() || { wallet: 0 };
         if (authNavItem) {
-          authNavItem.innerHTML = `<a onclick="showProfileModal()" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Mi Perfil ($${userProfile.wallet || 0})</a>`;
+          authNavItem.innerHTML = `<a onclick="navigateTo('dashboard')" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Mi Perfil ($${userProfile.wallet || 0})</a>`;
         }
       });
     } else {
@@ -1647,3 +1658,172 @@ function logout() {
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(initPublicAuth, 1000);
 });
+
+
+// ==========================================
+// Dashboard Logic
+// ==========================================
+
+let dashboardOrders = { active: [], completed: [] };
+
+async function loadDashboardData() {
+  if (!currentUser) return;
+  
+  // 1. Load Orders
+  try {
+    const contact = currentUser.email;
+    const orderIds = {};
+    const ref1 = await firebase.database().ref('user_orders').orderByChild('contact').equalTo(contact).once('value');
+    if (ref1.exists()) {
+      Object.keys(ref1.val()).forEach(k => orderIds[k] = true);
+    }
+    
+    // Fallback search by email inside order details
+    const ref2 = await firebase.database().ref('user_orders').orderByChild('accountEmail').equalTo(contact).once('value');
+    if (ref2.exists()) {
+       Object.keys(ref2.val()).forEach(k => orderIds[k] = true);
+    }
+    
+    let allOrders = [];
+    if (Object.keys(orderIds).length > 0) {
+      const keys = Object.keys(orderIds);
+      for (let id of keys) {
+        const orderSnap = await firebase.database().ref('orders/' + id).once('value');
+        if (orderSnap.exists()) {
+          allOrders.push(orderSnap.val());
+        }
+      }
+    }
+    
+    // Sort and separate
+    allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    dashboardOrders.active = allOrders.filter(o => o.status === 'pending' || o.status === 'processing');
+    dashboardOrders.completed = allOrders.filter(o => o.status !== 'pending' && o.status !== 'processing');
+    
+    // Render default tab
+    switchDashboardTab('active');
+
+  } catch (error) {
+    console.error("Error loading dashboard orders:", error);
+  }
+
+  // 2. Render Saved IDs
+  renderDashboardSavedIds();
+}
+
+function switchDashboardTab(tab) {
+  const activeBtn = document.getElementById('tab-active-orders');
+  const completedBtn = document.getElementById('tab-completed-orders');
+  const container = document.getElementById('dashboard-orders-container');
+  
+  if (!activeBtn || !completedBtn || !container) return;
+
+  if (tab === 'active') {
+    activeBtn.style.color = '#10b981';
+    activeBtn.style.borderBottom = '2px solid #10b981';
+    completedBtn.style.color = 'var(--text-secondary)';
+    completedBtn.style.borderBottom = 'none';
+    container.innerHTML = typeof renderDashboardOrders === 'function' ? renderDashboardOrders(dashboardOrders.active, 'active') : '';
+  } else {
+    completedBtn.style.color = '#10b981';
+    completedBtn.style.borderBottom = '2px solid #10b981';
+    activeBtn.style.color = 'var(--text-secondary)';
+    activeBtn.style.borderBottom = 'none';
+    container.innerHTML = typeof renderDashboardOrders === 'function' ? renderDashboardOrders(dashboardOrders.completed, 'completed') : '';
+  }
+}
+
+// ── Saved IDs Logic ──
+
+function renderDashboardSavedIds() {
+  const container = document.getElementById('dashboard-saved-ids');
+  if (!container) return;
+  
+  const savedIds = (userProfile && userProfile.savedIds) ? userProfile.savedIds : [];
+  
+  if (savedIds.length === 0) {
+    container.innerHTML = `<div style="font-size: 0.9rem; color: var(--text-secondary); text-align: center; padding: 10px;">No tienes IDs guardados.</div>`;
+    return;
+  }
+  
+  container.innerHTML = savedIds.map((item, index) => `
+    <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.1);">
+      <div style="text-align: left;">
+        <div style="font-weight: bold; font-size: 0.95rem;">${item.gameName || 'Juego'}</div>
+        <div style="font-size: 0.8rem; color: #10b981;">ID: ${item.uid} ${item.zoneId ? '(Zona: ' + item.zoneId + ')' : ''}</div>
+      </div>
+      <button onclick="deleteSavedId(${index})" style="background:none; border:none; color: #ff5252; cursor:pointer; font-size: 1.2rem;" title="Eliminar">🗑️</button>
+    </div>
+  `).join('');
+}
+
+function showAddIdModal() {
+  const modalContainer = document.createElement('div');
+  modalContainer.id = 'add-id-modal-container';
+  modalContainer.innerHTML = `
+    <div class="modal-overlay active" onclick="if(event.target===this) this.parentElement.remove()">
+      <div class="modal" style="max-width: 400px; text-align: left;">
+        <h3 style="margin-bottom: 15px;">Añadir Nuevo ID</h3>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px;">Guarda tus datos para autocompletar en tus próximas compras.</p>
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label>Nombre del Juego / Plataforma</label>
+          <input type="text" id="new-id-game" placeholder="Ej: Free Fire, Mobile Legends" class="form-input">
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label>Player ID / Correo</label>
+          <input type="text" id="new-id-uid" placeholder="Ej: 12345678" class="form-input">
+        </div>
+        <div class="form-group" style="margin-bottom: 25px;">
+          <label>Zone ID (Opcional)</label>
+          <input type="text" id="new-id-zone" placeholder="Ej: 1234" class="form-input">
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+          <button onclick="document.getElementById('add-id-modal-container').remove()" class="btn-secondary" style="flex: 1;">Cancelar</button>
+          <button onclick="saveNewId()" class="btn-primary" style="flex: 1;">Guardar</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modalContainer);
+}
+
+async function saveNewId() {
+  if (!currentUser) return;
+  const game = document.getElementById('new-id-game').value.trim();
+  const uid = document.getElementById('new-id-uid').value.trim();
+  const zone = document.getElementById('new-id-zone').value.trim();
+  
+  if (!game || !uid) {
+    showToast('⚠️ Debes ingresar el nombre del juego y el ID');
+    return;
+  }
+  
+  const savedIds = (userProfile && userProfile.savedIds) ? userProfile.savedIds : [];
+  savedIds.push({ gameName: game, uid: uid, zoneId: zone || null });
+  
+  try {
+    await firebase.database().ref('users/' + currentUser.uid + '/savedIds').set(savedIds);
+    document.getElementById('add-id-modal-container').remove();
+    showToast('✅ ID guardado correctamente');
+    renderDashboardSavedIds();
+  } catch(e) {
+    showToast('❌ Error al guardar el ID');
+  }
+}
+
+async function deleteSavedId(index) {
+  if (!currentUser || !userProfile || !userProfile.savedIds) return;
+  if (!confirm('¿Seguro que deseas eliminar este ID?')) return;
+  
+  const savedIds = userProfile.savedIds;
+  savedIds.splice(index, 1);
+  
+  try {
+    await firebase.database().ref('users/' + currentUser.uid + '/savedIds').set(savedIds);
+    showToast('🗑️ ID eliminado');
+    renderDashboardSavedIds();
+  } catch(e) {
+    showToast('❌ Error al eliminar el ID');
+  }
+}
