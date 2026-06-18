@@ -1181,11 +1181,20 @@ function openProductModal(productId = null) {
             </select>
           </div>
           <div class="admin-form-group">
-            <label class="admin-form-label" for="m-prod-api">Proveedor API (Opcional)</label>
+            <label class="admin-form-label" for="m-prod-api">Proveedor API de Recarga (Opcional)</label>
             <select class="admin-form-input" id="m-prod-api">
               <option value="">-- Manual (Sin API) --</option>
               ${API_CONFIGS.map((api, idx) => `
                 <option value="${idx}" ${product.apiProvider === String(idx) ? 'selected' : ''}>Puerto ${idx + 1}: ${api.name || 'Sin nombre'}</option>
+              `).join('')}
+            </select>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label" for="m-prod-api-verifier">API Verificador de ID (Opcional)</label>
+            <select class="admin-form-input" id="m-prod-api-verifier">
+              <option value="">-- Sin Verificador --</option>
+              ${API_CONFIGS.map((api, idx) => `
+                <option value="${idx}" ${product.apiVerifierProvider === String(idx) ? 'selected' : ''}>Puerto ${idx + 1}: ${api.name || 'Sin nombre'}</option>
               `).join('')}
             </select>
           </div>
@@ -1367,6 +1376,7 @@ function saveProduct() {
     currencyIcon: iconInput.value.trim() || '💎',
     imageUrl: imageInput.value.trim() || '',
     apiProvider: document.getElementById('m-prod-api') ? document.getElementById('m-prod-api').value : '',
+    apiVerifierProvider: document.getElementById('m-prod-api-verifier') ? document.getElementById('m-prod-api-verifier').value : '',
     color: hexColor,
     colorGradient: cssGradient,
     description: descText.value.trim(),
