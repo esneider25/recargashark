@@ -753,27 +753,7 @@ function updateOrderStatus(orderId, newStatus, note) {
           addTransaction(order.userId, 'deposit', parseFloat(order.priceUsd || 0), 'Recarga de monedero aprobada');
         }
       } else {
-        // Product Purchase: Deduct wallet if paid with wallet
-        if (order.paymentMethodId === 'wallet') {
-          db.ref('users/' + order.userId + '/wallet').once('value').then(snap => {
-            const currentWallet = parseFloat(snap.val() || 0);
-            const amountToDeduct = parseFloat(order.priceUsd || 0);
-            db.ref('users/' + order.userId + '/wallet').set(currentWallet - amountToDeduct);
-          });
-          if (typeof addTransaction === 'function') {
-            addTransaction(order.userId, 'purchase', -parseFloat(order.priceUsd || 0), `Compra: ${order.productName} - ${order.packageLabel || ''}`);
-          } else {
-            db.ref('users/' + order.userId + '/transactions').push({
-              id: Date.now().toString(),
-              type: 'purchase',
-              amount: -parseFloat(order.priceUsd || 0),
-              description: `Compra: ${order.productName} - ${order.packageLabel || ''}`,
-              date: Date.now()
-            });
-          }
-        }
-
-        // Give points (10 per dollar) and update total spent
+        // Product Purchase: Give points (10 per dollar) and update total spent
         db.ref('users/' + order.userId).once('value').then(snap => {
           let p = snap.val() || {};
           let currentPoints = p.points || 0;
@@ -782,6 +762,24 @@ function updateOrderStatus(orderId, newStatus, note) {
           let newPoints = currentPoints + Math.floor(price * 10);
           let newSpent = totalSpent + price;
           db.ref('users/' + order.userId).update({ points: newPoints, totalSpent: newSpent });
+        });
+      }
+    }
+
+    if (newStatus === 'rejected' && order.status !== 'rejected' && order.userId && order.paymentMethodId === 'wallet' && order.productType !== 'wallet-recharge') {
+      if (typeof firebase !== 'undefined') {
+        const fdb = firebase.database();
+        fdb.ref('users/' + order.userId + '/wallet').once('value').then(snap => {
+          const currentWallet = parseFloat(snap.val() || 0);
+          const amountToRefund = parseFloat(order.priceUsd || 0);
+          fdb.ref('users/' + order.userId + '/wallet').set(currentWallet + amountToRefund);
+        });
+        fdb.ref('users/' + order.userId + '/transactions').push({
+          id: Date.now().toString(),
+          type: 'deposit',
+          amount: parseFloat(order.priceUsd || 0),
+          description: `Pago reembolsado por pedido rechazado (#${order.id})`,
+          date: Date.now()
         });
       }
     }

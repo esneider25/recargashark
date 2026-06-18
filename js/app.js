@@ -531,6 +531,19 @@ function submitOrder() {
 
   const priceBs = parseFloat(usdToBs(finalUsd));
 
+  if (appState.selectedPaymentId === 'wallet') {
+    const currentWallet = (typeof userProfile !== 'undefined' && userProfile && userProfile.wallet) ? userProfile.wallet : 0;
+    const newWallet = currentWallet - finalUsd;
+    firebase.database().ref('users/' + currentUser.uid).update({ wallet: newWallet });
+    firebase.database().ref('users/' + currentUser.uid + '/transactions').push({
+      id: Date.now().toString(),
+      type: 'purchase',
+      amount: -finalUsd,
+      description: `Compra: ${product.name} - ${pkg.label}`,
+      date: Date.now()
+    });
+  }
+
   // Create the order
   const order = createOrder({
     userId: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.uid : null,
