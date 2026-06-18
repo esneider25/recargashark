@@ -1228,7 +1228,8 @@ window.verifyGameId = async function(productId) {
     let finalMethod = 'POST';
 
     // Manejar formato de TiendaGiftVen, NetEase Bloodstrike o cualquier API por GET
-    if (bUrl.includes('?') || bUrl.includes('{ID}') || bUrl.includes('{PLAYER_ID}')) {
+    // Solo asumimos GET si el usuario incluyó explícitamente tokens o action=
+    if (bUrl.includes('{ID}') || bUrl.includes('{PLAYER_ID}') || bUrl.includes('action=') || bUrl.includes('api.php')) {
       finalMethod = 'GET';
       
       // Reemplazar tokens {ID} o {PLAYER_ID}
@@ -1289,8 +1290,8 @@ window.verifyGameId = async function(productId) {
     const isSuccess = data.ok || data.status == 200 || data.code == 200 || data.success || (data.data && typeof data.data === 'object');
     
     if (isSuccess) {
-      // Buscar el nombre en la raíz o dentro del objeto "data"
-      const src = data.data || data;
+      // Buscar el nombre en la raíz o dentro del objeto "data" (solo si es un objeto válido)
+      const src = (data.data && typeof data.data === 'object' && !Array.isArray(data.data)) ? data.data : data;
       
       // Probar múltiples campos. Ignoramos temporalmente los que tengan "@" (como los correos internos de NetEase)
       let name = src.nickname || src.nick_name || src.rolename || src.role_name || src.PlayerName || src.player_name || src.nombre || src.Name;
