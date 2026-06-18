@@ -1291,17 +1291,30 @@ window.verifyGameId = async function(productId) {
     if (isSuccess) {
       // Buscar el nombre en la raíz o dentro del objeto "data"
       const src = data.data || data;
-      const name = src.nickname || src.username || src.PlayerName || src.role || src.nombre || src.name || src.player_name || src.Name || src.role_name;
       
-      if (name && typeof name === 'string' && name.trim() !== '') {
+      // Probar múltiples campos. Ignoramos temporalmente los que tengan "@" (como los correos internos de NetEase)
+      let name = src.nickname || src.nick_name || src.role_name || src.PlayerName || src.player_name || src.nombre || src.Name;
+      
+      if (!name) {
+        // Si no encontró los primarios, intentar con estos
+        const secondary = src.username || src.name || src.role || src.account;
+        if (secondary && typeof secondary === 'string' && !secondary.includes('@')) {
+          name = secondary;
+        }
+      }
+
+      if (name && typeof name === 'string' && name.trim() !== '' && !name.includes('@')) {
         resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ Nombre: <b>${name}</b></span>`;
       } else {
-        // Fallback genérico si no encuentra el campo exacto
-        let fallbackName = Object.values(src).find(v => typeof v === 'string' && v.length > 2 && v.length < 30 && v !== 'success' && v !== 'OK');
+        // Fallback inteligente: buscar cualquier string que no sea un correo y tenga longitud de nombre
+        let fallbackName = Object.values(src).find(v => typeof v === 'string' && v.length > 2 && v.length < 30 && v !== 'success' && v !== 'OK' && !v.includes('@'));
+        
         if (fallbackName) {
            resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ Nombre: <b>${fallbackName}</b></span>`;
         } else {
-           resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ ID Verificado con éxito</span>`;
+           // Imprimir un mini-resumen de los datos recibidos para que el usuario pueda decirnos qué llaves llegaron
+           const availableKeys = Object.keys(src).filter(k => typeof src[k] === 'string' || typeof src[k] === 'number').map(k => `${k}: ${src[k]}`).join(', ');
+           resultDiv.innerHTML = `<span style="color: #00e5c3; font-size: 0.8rem;">✅ Encontrado: ${availableKeys.substring(0, 100)}...</span>`;
         }
       }
     } else {
