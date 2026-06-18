@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "admin.recargashark.com"
+        }
+      ],
+      "destination": "/admin.html"
+    }
+  ]
+}
