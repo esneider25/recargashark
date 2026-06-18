@@ -266,14 +266,39 @@ function renderProductDetail(productId) {
   // Dynamic input fields based on product type
   let typeFieldsHtml = '';
   if (productType === 'game-id') {
+    let verifierHtml = '';
+    if (product.apiVerifierProvider) {
+      verifierHtml = `
+        <div style="margin-top: 10px;">
+          <button type="button" class="btn-secondary" onclick="verifyGameId('${product.id}')" id="btn-verify-id" style="width: 100%; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            Verificar ID
+          </button>
+          <div id="verify-result" style="margin-top: 8px; font-weight: bold; text-align: center; font-size: 0.95rem; min-height: 20px;"></div>
+        </div>
+      `;
+    }
     typeFieldsHtml = `
       <div class="form-group">
         <label for="game-uid">🎮 ID del juego</label>
         <input type="text" class="form-input" id="game-uid"
                placeholder="Ingresa tu ID del juego" autocomplete="off">
+        ${verifierHtml}
       </div>
     `;
   } else if (productType === 'game-id-zone') {
+    let verifierHtml = '';
+    if (product.apiVerifierProvider) {
+      verifierHtml = `
+        <div style="grid-column: 1 / -1; margin-top: 5px;">
+          <button type="button" class="btn-secondary" onclick="verifyGameId('${product.id}')" id="btn-verify-id" style="width: 100%; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            Verificar ID + Zona
+          </button>
+          <div id="verify-result" style="margin-top: 8px; font-weight: bold; text-align: center; font-size: 0.95rem; min-height: 20px;"></div>
+        </div>
+      `;
+    }
     typeFieldsHtml = `
       <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
         <div class="form-group">
@@ -286,6 +311,7 @@ function renderProductDetail(productId) {
           <input type="text" class="form-input" id="game-zone"
                  placeholder="Ej. 1234" autocomplete="off">
         </div>
+        ${verifierHtml}
       </div>
     `;
   } else if (productType === 'account') {

@@ -1178,3 +1178,82 @@ setInterval(() => {
     lastTrackingStatus = null;
   }
 }, 3000); // Check every 3 seconds
+
+// ── Verificador de ID ──
+window.verifyGameId = async function(productId) {
+  const product = PRODUCTS.find(p => p.id === productId);
+  if (!product || !product.apiVerifierProvider) return;
+
+  const resultDiv = document.getElementById('verify-result');
+  const btnVerify = document.getElementById('btn-verify-id');
+
+  if (typeof API_CONFIGS === 'undefined' || API_CONFIGS.length === 0) {
+    resultDiv.innerHTML = '<span style="color: #ff5252;">❌ Error interno: Verificador inaccesible (Problema de permisos o sesión). Contacta a soporte.</span>';
+    return;
+  }
+
+  const verifierIdx = parseInt(product.apiVerifierProvider);
+  const api = API_CONFIGS[verifierIdx];
+  if (!api || !api.enabled) {
+    resultDiv.innerHTML = '<span style="color: #ff5252;">❌ Verificador inactivo o eliminado.</span>';
+    return;
+  }
+
+  const uidInput = document.getElementById('game-uid');
+  const zoneInput = document.getElementById('game-zone');
+  
+  if (!uidInput || !uidInput.value.trim()) {
+    showToast('⚠️ Ingresa el ID del juego primero.', 'info');
+    uidInput?.focus();
+    return;
+  }
+
+  let id_juego = uidInput.value.trim();
+  let input2 = zoneInput ? zoneInput.value.trim() : '';
+
+  btnVerify.disabled = true;
+  btnVerify.innerHTML = '<span class="tracking-spinner" style="display:inline-block; width:16px; height:16px; border:2px solid #fff; border-bottom-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></span> Verificando...';
+  resultDiv.innerHTML = '';
+
+  try {
+    const payload = {
+      producto_id: parseInt(product.apiServiceId) || 0,
+      id_juego: id_juego
+    };
+    if (input2) payload.input2 = input2;
+
+    const baseUrl = api.baseUrl.endsWith('/') ? api.baseUrl.slice(0, -1) : api.baseUrl;
+    const proxyUrl = '/api/proxy';
+    
+    const response = await fetch(proxyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint: 'check', // Typical verifier endpoint for Smile.One APIs
+        method: 'POST',
+        apiKey: api.apiKey,
+        baseUrl: baseUrl,
+        data: payload
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.ok || data.status === 200 || data.code === 200 || data.username || data.nickname || data.role || data.nombre) {
+      const name = data.nickname || data.username || data.role || data.nombre || data.name || data.player_name;
+      if (name) {
+        resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ Nombre verificado: <b>${name}</b></span>`;
+      } else {
+        resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ ID Verificado con éxito</span>`;
+      }
+    } else {
+      resultDiv.innerHTML = `<span style="color: #ff5252;">❌ ID no encontrado: ${data.error || data.msg || data.mensaje || 'Verifica el ID'}</span>`;
+    }
+  } catch (error) {
+    console.error('Error verificando ID:', error);
+    resultDiv.innerHTML = `<span style="color: #ff5252;">❌ Error de conexión al verificar el ID.</span>`;
+  } finally {
+    btnVerify.disabled = false;
+    btnVerify.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg> Verificar ID';
+  }
+}
