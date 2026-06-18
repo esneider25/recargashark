@@ -2,25 +2,42 @@
 // RecargaShark Admin Panel Logic (Enhanced)
 // ============================================================
 
-// ── Admin State ──
 const adminState = {
   currentTab: 'dashboard',
   editingProductId: null,
   editingCategoryId: null,
   tempPackages: [],
-  ordersFilter: 'all'
+  ordersFilter: 'all',
+  ordersPage: 1,
+  ordersSearch: '',
+  customersSearch: '',
+  dashboardStartDate: '',
+  dashboardEndDate: ''
 };
 
 let lastPendingOrders = 0;
 let lastUnreadMessages = 0;
 const notifySound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
+let adminAuthVerified = false;
+
 // ── Initialization ──
 document.addEventListener('DOMContentLoaded', () => {
   if (localStorage.getItem('recargashark_theme') === 'light') {
     document.body.classList.add('light-theme');
   }
-  initAdminApp();
+  
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        adminAuthVerified = true;
+        if (window.DATA_LOADED) initAdminApp();
+      } else {
+        adminAuthVerified = false;
+        if (window.DATA_LOADED) initAdminApp();
+      }
+    });
+  }
 });
 
 function toggleAdminTheme() {
@@ -43,7 +60,7 @@ function initAdminApp() {
     return;
   }
 
-  if (sessionStorage.getItem('admin_logged_in') !== 'true') {
+  if (!adminAuthVerified) {
     renderAdminLogin(container);
     return;
   }
@@ -54,6 +71,11 @@ function initAdminApp() {
 
   if (action && orderId) {
     handleUrlAction(action, orderId);
+  }
+
+  // Request Push Notification permission if supported
+  if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+    Notification.requestPermission();
   }
 
   container.innerHTML = `
@@ -169,16 +191,29 @@ function getUnreadMessagesCount() {
 // 1. DASHBOARD
 // ════════════════════════════════════════
 function renderDashboard(container) {
+  let allOrders = getOrders();
+  
+  // Date filtering
+  if (adminState.dashboardStartDate) {
+    const start = new Date(adminState.dashboardStartDate).getTime();
+    allOrders = allOrders.filter(o => o.createdAt >= start);
+  }
+  if (adminState.dashboardEndDate) {
+    const end = new Date(adminState.dashboardEndDate);
+    end.setHours(23, 59, 59, 999);
+    allOrders = allOrders.filter(o => o.createdAt <= end.getTime());
+  }
+
   const totalProducts = PRODUCTS.length;
   const totalCategories = CATEGORIES.length;
   const activeApis = API_CONFIGS.filter(a => a.enabled).length;
   const paymentCount = PAYMENT_METHODS.length;
-  const allOrders = getOrders();
+  
   const pendingCount = allOrders.filter(o => o.status === 'pending' || o.status === 'processing').length;
   const completedCount = allOrders.filter(o => o.status === 'completed').length;
   const totalRevenue = allOrders.filter(o => o.status === 'completed').reduce((sum, o) => sum + (o.priceUsd || 0), 0);
 
-  // Recent orders (last 5)
+  // Recent orders (last 5 from the filtered set)
   const recentOrders = allOrders.slice(0, 5);
   const recentOrdersHtml = recentOrders.length > 0 ? recentOrders.map(order => {
     const statusInfo = ORDER_STATUSES[order.status] || ORDER_STATUSES['pending'];
@@ -200,6 +235,12 @@ function renderDashboard(container) {
       <div>
         <h1 class="admin-title">Panel de Control</h1>
         <p class="admin-subtitle">Resumen general de RecargaShark</p>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center; background: var(--bg-surface); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);">
+        <input type="date" id="dash-start-date" class="admin-form-input" style="margin-bottom: 0; padding: 6px;" value="${adminState.dashboardStartDate}" onchange="updateDashboardDates()">
+        <span style="color: var(--text-muted);">hasta</span>
+        <input type="date" id="dash-end-date" class="admin-form-input" style="margin-bottom: 0; padding: 6px;" value="${adminState.dashboardEndDate}" onchange="updateDashboardDates()">
+        ${adminState.dashboardStartDate || adminState.dashboardEndDate ? `<button class="btn btn-secondary" style="padding: 6px 12px;" onclick="clearDashboardDates()">✕</button>` : ''}
       </div>
     </div>
 
@@ -421,29 +462,35 @@ function renderCustomers(container) {
     if (o.createdAt > customersMap[contact].lastOrder) customersMap[contact].lastOrder = o.createdAt;
   });
 
-  const customers = Object.values(customersMap).sort((a, b) => b.totalSpent - a.totalSpent);
+  let customers = Object.values(customersMap).sort((a, b) => b.totalSpent - a.totalSpent);
+  
+  // Filter by search
+  const searchTerm = (adminState.customersSearch || '').toLowerCase().trim();
+  if (searchTerm) {
+    customers = customers.filter(c => c.contact.toLowerCase().includes(searchTerm));
+  }
 
   const customersHtml = customers.map(c => `
-    <div class="admin-cat-row" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 15px; align-items: center; background: var(--bg-surface); padding: 12px 16px; margin-bottom: 8px; border-radius: 8px; border: 1px solid var(--border);">
+    <div class="admin-crm-row">
       <div style="font-weight: 500; display: flex; align-items: center; gap: 10px;">
         <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: var(--bg-deep); font-weight: bold; flex-shrink: 0;">
           ${c.contact.charAt(0).toUpperCase()}
         </div>
         <span style="word-break: break-all;">${c.contact}</span>
       </div>
-      <div style="color: var(--text-secondary);">${c.totalOrders}</div>
+      <div style="color: var(--text-secondary);">Pedidos: <b>${c.totalOrders}</b></div>
       <div style="font-weight: bold; color: #00e5c3;">$${c.totalSpent.toFixed(2)}</div>
       <div style="font-size: 0.85rem; color: var(--text-muted);">
-        ${new Date(c.lastOrder).toLocaleDateString('es-VE')}
+        Último: ${new Date(c.lastOrder).toLocaleDateString('es-VE')}
       </div>
     </div>
-  `).join('') || '<div style="text-align: center; padding: 40px; color: var(--text-muted);">No hay clientes registrados con compras completadas.</div>';
+  `).join('') || '<div style="text-align: center; padding: 40px; color: var(--text-muted);">No se encontraron clientes.</div>';
 
   container.innerHTML = `
     <div class="admin-header">
       <div>
-        <h1 class="admin-title">Base de Datos de Clientes</h1>
-        <p class="admin-subtitle">Tus clientes recurrentes (Generado automáticamente desde pedidos completados)</p>
+        <h1 class="admin-title">Clientes VIP (CRM)</h1>
+        <p class="admin-subtitle">Tus mejores compradores basados en sus recargas completadas</p>
       </div>
       <button class="btn btn-secondary" onclick="exportCustomersCSV()">
         <span>📥</span> Exportar a CSV
@@ -1391,9 +1438,23 @@ function showAdminToast(message, type = 'success') {
 function renderOrders(container) {
   const allOrders = getOrders();
   const filter = adminState.ordersFilter || 'all';
-  const filteredOrders = filter === 'all' ? allOrders : allOrders.filter(o => o.status === filter);
+  const searchTerm = (adminState.ordersSearch || '').toLowerCase().trim();
+  
+  // First, filter by status
+  let filteredOrders = filter === 'all' ? allOrders : allOrders.filter(o => o.status === filter);
+  
+  // Then, filter by search term if provided
+  if (searchTerm) {
+    filteredOrders = filteredOrders.filter(o => 
+      o.id.toLowerCase().includes(searchTerm) ||
+      (o.customerContact && o.customerContact.toLowerCase().includes(searchTerm)) ||
+      (o.accountEmail && o.accountEmail.toLowerCase().includes(searchTerm)) ||
+      (o.gameId && o.gameId.toLowerCase().includes(searchTerm)) ||
+      (o.productName && o.productName.toLowerCase().includes(searchTerm))
+    );
+  }
 
-  // Count by status
+  // Count by status (based on ALL orders, so filters show total numbers)
   const counts = {
     all: allOrders.length,
     pending: allOrders.filter(o => o.status === 'pending').length,
@@ -1420,20 +1481,37 @@ function renderOrders(container) {
   `).join('');
 
   const bulkActionsHtml = `
-    <div style="display: flex; gap: 8px; align-items: center; background: var(--bg-surface); padding: 8px; border-radius: 8px; border: 1px solid var(--border);">
-      <input type="checkbox" id="admin-bulk-select-all" onchange="toggleAllOrders(this.checked)" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); margin: 0 8px;">
-      <select id="admin-bulk-action" class="admin-form-input" style="padding: 6px 12px; font-size: 0.85rem; height: auto; min-width: 180px; margin-bottom: 0;">
-        <option value="">Acción masiva...</option>
-        <option value="completed">✅ Aprobar seleccionados</option>
-        <option value="rejected">❌ Rechazar seleccionados</option>
-      </select>
-      <button class="btn-primary" onclick="executeBulkAction()" style="padding: 8px 16px; font-size: 0.85rem; border-radius: 6px; font-weight: 600;">
-        Aplicar
-      </button>
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <input type="text" id="admin-orders-search" class="admin-form-input" style="flex: 1; margin-bottom: 0; padding: 10px 16px; border-radius: 8px;" placeholder="Buscar por ID, Email, Teléfono, Juego..." value="${adminState.ordersSearch}" onkeyup="if(event.key==='Enter') filterOrdersSearch(this.value)">
+        <button class="btn btn-secondary" onclick="filterOrdersSearch(document.getElementById('admin-orders-search').value)" style="padding: 10px 16px;">🔍 Buscar</button>
+        ${adminState.ordersSearch ? `<button class="btn btn-danger" onclick="filterOrdersSearch('')" style="padding: 10px 16px;">✕</button>` : ''}
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center; background: var(--bg-surface); padding: 8px; border-radius: 8px; border: 1px solid var(--border);">
+        <input type="checkbox" id="admin-bulk-select-all" onchange="toggleAllOrders(this.checked)" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); margin: 0 8px;">
+        <select id="admin-bulk-action" class="admin-form-input" style="padding: 6px 12px; font-size: 0.85rem; height: auto; min-width: 180px; margin-bottom: 0;">
+          <option value="">Acción masiva...</option>
+          <option value="completed">✅ Aprobar seleccionados</option>
+          <option value="rejected">❌ Rechazar seleccionados</option>
+        </select>
+        <button class="btn-primary" onclick="executeBulkAction()" style="padding: 8px 16px; font-size: 0.85rem; border-radius: 6px; font-weight: 600;">
+          Aplicar
+        </button>
+      </div>
     </div>
   `;
 
-  const ordersHtml = filteredOrders.length > 0 ? filteredOrders.map(order => {
+  // Pagination Logic
+  const itemsPerPage = 50;
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage) || 1;
+  if (adminState.ordersPage > totalPages) adminState.ordersPage = totalPages;
+  if (adminState.ordersPage < 1) adminState.ordersPage = 1;
+  
+  const startIndex = (adminState.ordersPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+
+  const ordersHtml = paginatedOrders.length > 0 ? paginatedOrders.map(order => {
     const statusInfo = ORDER_STATUSES[order.status] || ORDER_STATUSES['pending'];
     const statusClass = order.status;
     const date = new Date(order.createdAt);
@@ -1500,16 +1578,24 @@ function renderOrders(container) {
   }).join('') : `
     <div class="admin-empty-orders">
       <div class="admin-empty-orders-icon">📋</div>
-      <h3>${filter === 'all' ? 'No hay pedidos todavía' : 'No hay pedidos con este estado'}</h3>
+      <h3>${filter === 'all' && !searchTerm ? 'No hay pedidos todavía' : 'No se encontraron pedidos'}</h3>
       <p>Los pedidos de tus clientes aparecerán aquí</p>
     </div>
   `;
+
+  const paginationHtml = totalPages > 1 ? `
+    <div style="display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 24px; padding: 16px; background: var(--bg-surface); border-radius: 8px; border: 1px solid var(--border);">
+      <button class="btn btn-secondary" onclick="changeOrdersPage(-1)" ${adminState.ordersPage === 1 ? 'disabled style="opacity:0.5"' : ''}>Anterior</button>
+      <span style="font-size: 0.9rem; color: var(--text-secondary);">Página <strong>${adminState.ordersPage}</strong> de ${totalPages}</span>
+      <button class="btn btn-secondary" onclick="changeOrdersPage(1)" ${adminState.ordersPage === totalPages ? 'disabled style="opacity:0.5"' : ''}>Siguiente</button>
+    </div>
+  ` : '';
 
   container.innerHTML = `
     <div class="admin-header">
       <div>
         <h1 class="admin-title">Gestión de Pedidos</h1>
-        <p class="admin-subtitle">${allOrders.length} pedido${allOrders.length !== 1 ? 's' : ''} en total · ${counts.pending} pendiente${counts.pending !== 1 ? 's' : ''}</p>
+        <p class="admin-subtitle">${filteredOrders.length} resultados de ${allOrders.length} en total · ${counts.pending} pendiente${counts.pending !== 1 ? 's' : ''}</p>
       </div>
       <div style="display: flex; gap: 8px;">
         <button class="btn btn-secondary" onclick="exportOrders()" style="padding: 8px 16px; font-size: 0.85rem;">
@@ -1523,16 +1609,35 @@ function renderOrders(container) {
     <div class="admin-orders-filters">
       ${filtersHtml}
     </div>
+    ${bulkActionsHtml}
     <div class="admin-orders-list">
       ${ordersHtml}
     </div>
+    ${paginationHtml}
   `;
 }
 
 function filterOrders(status) {
   adminState.ordersFilter = status;
+  adminState.ordersPage = 1;
   const main = document.getElementById('admin-main-content');
   if (main) renderOrders(main);
+}
+
+function filterOrdersSearch(query) {
+  adminState.ordersSearch = query.trim();
+  adminState.ordersPage = 1;
+  const main = document.getElementById('admin-main-content');
+  if (main) renderOrders(main);
+}
+
+function changeOrdersPage(delta) {
+  adminState.ordersPage += delta;
+  const main = document.getElementById('admin-main-content');
+  if (main) {
+    renderOrders(main);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
 
 function quickUpdateStatus(orderId, newStatus) {
@@ -2316,6 +2421,19 @@ function checkAdminNotifications() {
   
   if (currentPending > lastPendingOrders || currentUnread > lastUnreadMessages) {
     notifySound.play().catch(e => console.log('Audio autoplay blocked'));
+    
+    // Web Push Notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+      let title = 'RecargaShark';
+      let body = '';
+      if (currentPending > lastPendingOrders) {
+        body += `¡Nuevo pedido recibido! Tienes ${currentPending} pendiente(s).\n`;
+      }
+      if (currentUnread > lastUnreadMessages) {
+        body += `¡Nuevo mensaje de soporte!`;
+      }
+      new Notification(title, { body, icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦈</text></svg>' });
+    }
   }
   
   lastPendingOrders = currentPending;
@@ -2352,8 +2470,7 @@ function adminLogin() {
 
   firebase.auth().signInWithEmailAndPassword(user, pass)
     .then((userCredential) => {
-      sessionStorage.setItem('admin_logged_in', 'true');
-      initAdminApp(); // Reload layout
+      // The onAuthStateChanged listener will handle initAdminApp
     })
     .catch((error) => {
       alert('Error de inicio de sesión: ' + error.message);
