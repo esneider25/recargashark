@@ -2749,3 +2749,55 @@ function saveUserWallet(uid, email, oldWallet) {
     alert("Error actualizando saldo: " + err.message);
   });
 }
+
+
+window.viewUserTransactions = function(userId) {
+  const user = window.CUSTOMERS_DATA?.find(u => u.id === userId);
+  if (!user) return;
+  
+  const modal = document.createElement('div');
+  modal.id = 'tx-modal';
+  modal.style.position = 'fixed';
+  modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
+  modal.style.background = 'rgba(0,0,0,0.8)'; modal.style.zIndex = '1000';
+  modal.style.display = 'flex'; modal.style.alignItems = 'center'; modal.style.justifyContent = 'center';
+  
+  let txHtml = '<div style="text-align:center; padding: 20px; color: var(--text-secondary);">No hay movimientos.</div>';
+  
+  if (user.transactions && user.transactions.length > 0) {
+    const sortedTx = [...user.transactions].sort((a,b) => b.date - a.date);
+    txHtml = sortedTx.map(tx => {
+      let sign = tx.amount >= 0 ? '+' : '';
+      let color = tx.amount >= 0 ? '#10b981' : '#ff5252';
+      let icon = tx.type === 'deposit' ? '💰' : (tx.type === 'purchase' ? '🛒' : '🔄');
+      return `
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 8px;">
+         <div style="display: flex; align-items: center; gap: 12px;">
+           <div style="font-size: 1.5rem; opacity: 0.8;">${icon}</div>
+           <div>
+             <div style="font-weight: bold; font-size: 0.9rem;">${tx.description || 'Movimiento'}</div>
+             <div style="font-size: 0.75rem; color: var(--text-secondary);">${new Date(tx.date).toLocaleString()}</div>
+           </div>
+         </div>
+         <div style="font-weight: bold; color: ${color};">${sign}$${parseFloat(tx.amount).toFixed(2)}</div>
+      </div>
+      `;
+    }).join('');
+  }
+  
+  modal.innerHTML = `
+    <div style="background: var(--bg-surface); padding: 30px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 500px; max-height: 80vh; display: flex; flex-direction: column;">
+      <h3 style="margin-top: 0; margin-bottom: 20px; display: flex; justify-content: space-between;">
+        <span>Movimientos de ${user.name || user.email}</span>
+        <span style="color: #10b981;">$${parseFloat(user.wallet || 0).toFixed(2)}</span>
+      </h3>
+      <div style="overflow-y: auto; flex: 1; padding-right: 10px;">
+        ${txHtml}
+      </div>
+      <div style="margin-top: 25px;">
+        <button class="btn-secondary" style="width: 100%;" onclick="document.getElementById('tx-modal').remove()">Cerrar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+};
