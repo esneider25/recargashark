@@ -489,15 +489,6 @@ function submitOrder() {
     showToast('⚠️ Selecciona un método de pago');
     return;
   }
-  if (!appState.selectedScreenshot) {
-    showToast('⚠️ Sube la captura del comprobante de pago');
-    document.getElementById('screenshot-upload')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => {
-      document.getElementById('screenshot-upload')?.classList.add('error-shake');
-      setTimeout(() => document.getElementById('screenshot-upload')?.classList.remove('error-shake'), 500);
-    }, 300);
-    return;
-  }
 
   const pkg = product.packages[appState.selectedPackageIndex];
   const method = PAYMENT_METHODS.find(m => m.id === appState.selectedPaymentId);
@@ -515,7 +506,40 @@ function submitOrder() {
     discountType = appState.appliedDiscount.type;
   }
 
+  if (appState.selectedPaymentId === 'wallet') {
+    if (typeof currentUser === 'undefined' || !currentUser) {
+      showToast('⚠️ Debes iniciar sesión para usar tu monedero');
+      return;
+    }
+    const currentWallet = (typeof userProfile !== 'undefined' && userProfile && userProfile.wallet) ? userProfile.wallet : 0;
+    if (currentWallet < finalUsd) {
+      showToast(`⚠️ Saldo insuficiente. Tienes $${currentWallet.toFixed(2)} USD y necesitas $${finalUsd.toFixed(2)} USD.`);
+      return;
+    }
+  } else if (!appState.selectedScreenshot) {
+    showToast('⚠️ Sube la captura del comprobante de pago');
+    document.getElementById('screenshot-upload')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => {
+      document.getElementById('screenshot-upload')?.classList.add('error-shake');
+      setTimeout(() => document.getElementById('screenshot-upload')?.classList.remove('error-shake'), 500);
+    }, 300);
+    return;
+  }
+
   const priceBs = parseFloat(usdToBs(finalUsd));
+
+  if (appState.selectedPaymentId === 'wallet') {
+    const currentWallet = (typeof userProfile !== 'undefined' && userProfile && userProfile.wallet) ? userProfile.wallet : 0;
+    const newWallet = currentWallet - finalUsd;
+    firebase.database().ref('users/' + currentUser.uid).update({ wallet: newWallet });
+    firebase.database().ref('users/' + currentUser.uid + '/transactions').push({
+      id: Date.now().toString(),
+      type: 'purchase',
+      amount: -finalUsd,
+      description: `Compra: ${product.name} - ${pkg.label}`,
+      date: Date.now()
+    });
+  }
 
   // Create the order
   const order = createOrder({

@@ -123,7 +123,13 @@ function switchDashboardTab(tab) {
 function renderDashboardSavedIds() {
   const container = document.getElementById('dashboard-saved-ids');
   if (!container) return;
-  if (!userProfile || !userProfile.savedIds || userProfile.savedIds.length === 0) {
+  
+  let idsList = [];
+  if (userProfile && userProfile.savedIds) {
+    idsList = Array.isArray(userProfile.savedIds) ? userProfile.savedIds : Object.values(userProfile.savedIds);
+  }
+  
+  if (idsList.length === 0) {
     container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-secondary);">No tienes cuentas guardadas.</div>`;
     return;
   }
@@ -135,12 +141,12 @@ function renderDashboardSavedIds() {
       </div>
       <button onclick="removeSavedId(${index})" style="background: none; border: none; color: #ff5252; cursor: pointer;" title="Eliminar">🗑️</button>
     </div>
-  `).join('');
+  }).join('');
 }
 
 function removeSavedId(index) {
   if (!currentUser || !userProfile || !userProfile.savedIds) return;
-  const newIds = [...userProfile.savedIds];
+  let newIds = Array.isArray(userProfile.savedIds) ? [...userProfile.savedIds] : Object.values(userProfile.savedIds);
   newIds.splice(index, 1);
   firebase.database().ref('users/' + currentUser.uid + '/savedIds').set(newIds);
 }
@@ -200,7 +206,11 @@ function submitAddId() {
   
   if (!uid) { alert('El UID es obligatorio'); return; }
   
-  const currentIds = userProfile?.savedIds || [];
+  let currentIds = [];
+  if (userProfile && userProfile.savedIds) {
+    currentIds = Array.isArray(userProfile.savedIds) ? [...userProfile.savedIds] : Object.values(userProfile.savedIds);
+  }
+  
   currentIds.push({ gameName: game, uid: uid, zoneId: zone });
   
   firebase.database().ref('users/' + currentUser.uid + '/savedIds').set(currentIds).then(() => {
@@ -402,12 +412,17 @@ function renderDashboardTransactions() {
   const container = document.getElementById('dashboard-transactions-container');
   if (!container) return;
   
-  if (!userProfile || !userProfile.transactions || userProfile.transactions.length === 0) {
+  let txList = [];
+  if (userProfile && userProfile.transactions) {
+    txList = Array.isArray(userProfile.transactions) ? userProfile.transactions : Object.values(userProfile.transactions);
+  }
+  
+  if (txList.length === 0) {
     container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-secondary);">No hay movimientos recientes.</div>`;
     return;
   }
   
-  const sortedTx = [...userProfile.transactions].sort((a,b) => b.date - a.date);
+  const sortedTx = [...txList].sort((a,b) => b.date - a.date);
   
   container.innerHTML = sortedTx.map(tx => {
     let sign = tx.amount >= 0 ? '+' : '';
