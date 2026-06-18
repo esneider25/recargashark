@@ -637,24 +637,27 @@ async function processWalletOrderAuto(order) {
 
     const data = await response.json();
 
-    if (typeof firebase !== 'undefined') {
+    if (typeof updateOrderStatus === 'function') {
       if (data.ok && data.estado === 'completado') {
         let note = 'Aprobado y entregado automáticamente por API (Pago con Saldo)';
         if (data.codigos && data.codigos.length > 0) note = 'Códigos entregados:\n' + data.codigos.join('\n');
         else if (data.codigo) note = 'Código entregado: ' + data.codigo;
         
-        firebase.database().ref('orders/' + order.id).update({ 
-          status: 'completed', 
-          adminNote: note 
-        });
+        updateOrderStatus(order.id, 'completed', note);
       } else if (data.ok && data.estado === 'procesando') {
-        firebase.database().ref('orders/' + order.id).update({ adminNote: 'En proceso por API' });
+        if (typeof firebase !== 'undefined') {
+          firebase.database().ref('orders/' + order.id).update({ adminNote: 'En proceso por API' });
+        }
       } else {
         const refundMsg = data.reembolsado ? ' (Reembolsado al saldo por API)' : '';
-        firebase.database().ref('orders/' + order.id).update({ 
-          status: 'rejected', 
-          adminNote: `Error API: ${data.error}${refundMsg}` 
-        });
+        updateOrderStatus(order.id, 'rejected', `Error API: ${data.error}${refundMsg}`);
+      }
+    } else if (typeof firebase !== 'undefined') {
+      // Fallback
+      if (data.ok && data.estado === 'completado') {
+        firebase.database().ref('orders/' + order.id).update({ status: 'completed' });
+      } else if (!data.ok || data.estado === 'rechazado') {
+        firebase.database().ref('orders/' + order.id).update({ status: 'rejected', adminNote: data.error });
       }
     }
   } catch (error) {
