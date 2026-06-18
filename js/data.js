@@ -4,10 +4,10 @@
 
 // ── Categories ──
 const CATEGORIES = [
-  { id: 'juegos',    name: 'Juegos',     icon: '🎮', color: '#7c4dff', gradient: 'linear-gradient(135deg, #7c4dff, #536dfe)' },
+  { id: 'juegos', name: 'Juegos', icon: '🎮', color: '#7c4dff', gradient: 'linear-gradient(135deg, #7c4dff, #536dfe)' },
   { id: 'gift-card', name: 'Gift Cards', icon: '🎁', color: '#ff9800', gradient: 'linear-gradient(135deg, #ff9800, #ff5722)' },
-  { id: 'streaming', name: 'Streaming',  icon: '📺', color: '#e040fb', gradient: 'linear-gradient(135deg, #e040fb, #d500f9)' },
-  { id: 'billeteras',name: 'Billeteras', icon: '💳', color: '#00e5c3', gradient: 'linear-gradient(135deg, #00e5c3, #00b89c)' }
+  { id: 'streaming', name: 'Streaming', icon: '📺', color: '#e040fb', gradient: 'linear-gradient(135deg, #e040fb, #d500f9)' },
+  { id: 'billeteras', name: 'Billeteras', icon: '💳', color: '#00e5c3', gradient: 'linear-gradient(135deg, #00e5c3, #00b89c)' }
 ];
 
 // ── Exchange Rate ──
@@ -144,9 +144,9 @@ const PRODUCTS = [
     description: 'Recarga diamantes para Free Fire. Entrega inmediata.',
     popular: true,
     packages: [
-      { amount: 100,  priceUsd: 1.09,  label: '100 Diamantes' },
-      { amount: 310,  priceUsd: 3.19,  label: '310 Diamantes' },
-      { amount: 520,  priceUsd: 5.29,  label: '520 Diamantes' },
+      { amount: 100, priceUsd: 1.09, label: '100 Diamantes' },
+      { amount: 310, priceUsd: 3.19, label: '310 Diamantes' },
+      { amount: 520, priceUsd: 5.29, label: '520 Diamantes' },
       { amount: 1060, priceUsd: 10.49, label: '1060 Diamantes' },
       { amount: 2180, priceUsd: 20.99, label: '2180 Diamantes' },
       { amount: 5600, priceUsd: 52.99, label: '5600 Diamantes' }
@@ -164,9 +164,9 @@ const PRODUCTS = [
     description: 'Compra UC para PUBG Mobile. Proceso rápido y seguro.',
     popular: true,
     packages: [
-      { amount: 60,   priceUsd: 0.99,  label: '60 UC' },
-      { amount: 325,  priceUsd: 4.99,  label: '325 UC' },
-      { amount: 660,  priceUsd: 9.99,  label: '660 UC' },
+      { amount: 60, priceUsd: 0.99, label: '60 UC' },
+      { amount: 325, priceUsd: 4.99, label: '325 UC' },
+      { amount: 660, priceUsd: 9.99, label: '660 UC' },
       { amount: 1800, priceUsd: 24.99, label: '1800 UC' },
       { amount: 3850, priceUsd: 49.99, label: '3850 UC' },
       { amount: 8100, priceUsd: 99.99, label: '8100 UC' }
@@ -184,11 +184,11 @@ const PRODUCTS = [
     description: 'Obtén Robux mediante códigos de regalo. Entrega por código.',
     popular: true,
     packages: [
-      { amount: 400,   priceUsd: 4.99,   label: '400 Robux' },
-      { amount: 800,   priceUsd: 9.99,   label: '800 Robux' },
-      { amount: 1700,  priceUsd: 19.99,  label: '1700 Robux' },
-      { amount: 4500,  priceUsd: 49.99,  label: '4500 Robux' },
-      { amount: 10000, priceUsd: 99.99,  label: '10000 Robux' }
+      { amount: 400, priceUsd: 4.99, label: '400 Robux' },
+      { amount: 800, priceUsd: 9.99, label: '800 Robux' },
+      { amount: 1700, priceUsd: 19.99, label: '1700 Robux' },
+      { amount: 4500, priceUsd: 49.99, label: '4500 Robux' },
+      { amount: 10000, priceUsd: 99.99, label: '10000 Robux' }
     ]
   },
   {
@@ -203,10 +203,10 @@ const PRODUCTS = [
     description: 'Recarga diamantes para Mobile Legends: Bang Bang.',
     popular: false,
     packages: [
-      { amount: 56,   priceUsd: 1.09,  label: '56 Diamantes' },
-      { amount: 172,  priceUsd: 3.09,  label: '172 Diamantes' },
-      { amount: 257,  priceUsd: 4.59,  label: '257 Diamantes' },
-      { amount: 706,  priceUsd: 12.49, label: '706 Diamantes' },
+      { amount: 56, priceUsd: 1.09, label: '56 Diamantes' },
+      { amount: 172, priceUsd: 3.09, label: '172 Diamantes' },
+      { amount: 257, priceUsd: 4.59, label: '257 Diamantes' },
+      { amount: 706, priceUsd: 12.49, label: '706 Diamantes' },
       { amount: 2010, priceUsd: 34.99, label: '2010 Diamantes' },
       { amount: 4452, priceUsd: 74.99, label: '4452 Diamantes' }
     ]
@@ -223,12 +223,12 @@ const PRODUCTS = [
     description: 'COD Points para Call of Duty Mobile. Entrega directa.',
     popular: false,
     packages: [
-      { amount: 80,   priceUsd: 0.99,  label: '80 CP' },
-      { amount: 400,  priceUsd: 4.99,  label: '400 CP' },
-      { amount: 800,  priceUsd: 9.99,  label: '800 CP' },
+      { amount: 80, priceUsd: 0.99, label: '80 CP' },
+      { amount: 400, priceUsd: 4.99, label: '400 CP' },
+      { amount: 800, priceUsd: 9.99, label: '800 CP' },
       { amount: 2000, priceUsd: 24.99, label: '2000 CP' },
       { amount: 5000, priceUsd: 49.99, label: '5000 CP' },
-      { amount: 10800,priceUsd: 99.99, label: '10800 CP' }
+      { amount: 10800, priceUsd: 99.99, label: '10800 CP' }
     ]
   },
   {
@@ -243,9 +243,9 @@ const PRODUCTS = [
     description: 'Genesis Crystals para Genshin Impact vía top-up center.',
     popular: false,
     packages: [
-      { amount: 60,   priceUsd: 0.99,  label: '60 Cristales' },
-      { amount: 330,  priceUsd: 4.99,  label: '330 Cristales' },
-      { amount: 980,  priceUsd: 14.99, label: '980 Cristales' },
+      { amount: 60, priceUsd: 0.99, label: '60 Cristales' },
+      { amount: 330, priceUsd: 4.99, label: '330 Cristales' },
+      { amount: 980, priceUsd: 14.99, label: '980 Cristales' },
       { amount: 1980, priceUsd: 29.99, label: '1980 Cristales' },
       { amount: 3280, priceUsd: 49.99, label: '3280 Cristales' },
       { amount: 6480, priceUsd: 99.99, label: '6480 Cristales' }
@@ -264,9 +264,9 @@ const PRODUCTS = [
     popular: false,
     isNew: true,
     packages: [
-      { amount: 60,   priceUsd: 0.99,  label: '60 Gold' },
-      { amount: 300,  priceUsd: 4.99,  label: '300 Gold' },
-      { amount: 980,  priceUsd: 14.99, label: '980 Gold' },
+      { amount: 60, priceUsd: 0.99, label: '60 Gold' },
+      { amount: 300, priceUsd: 4.99, label: '300 Gold' },
+      { amount: 980, priceUsd: 14.99, label: '980 Gold' },
       { amount: 1980, priceUsd: 29.99, label: '1980 Gold' },
       { amount: 4280, priceUsd: 59.99, label: '4280 Gold' }
     ]
@@ -284,10 +284,10 @@ const PRODUCTS = [
     description: 'Tarjeta de regalo Google Play para apps, juegos y más.',
     popular: true,
     packages: [
-      { amount: 5,   priceUsd: 5.50,   label: '$5 USD' },
-      { amount: 10,  priceUsd: 10.80,  label: '$10 USD' },
-      { amount: 25,  priceUsd: 26.50,  label: '$25 USD' },
-      { amount: 50,  priceUsd: 52.50,  label: '$50 USD' },
+      { amount: 5, priceUsd: 5.50, label: '$5 USD' },
+      { amount: 10, priceUsd: 10.80, label: '$10 USD' },
+      { amount: 25, priceUsd: 26.50, label: '$25 USD' },
+      { amount: 50, priceUsd: 52.50, label: '$50 USD' },
       { amount: 100, priceUsd: 104.00, label: '$100 USD' }
     ]
   },
@@ -303,10 +303,10 @@ const PRODUCTS = [
     description: 'Tarjeta Apple para App Store, iTunes, Apple Music y más.',
     popular: false,
     packages: [
-      { amount: 5,   priceUsd: 5.80,   label: '$5 USD' },
-      { amount: 10,  priceUsd: 11.00,  label: '$10 USD' },
-      { amount: 25,  priceUsd: 27.00,  label: '$25 USD' },
-      { amount: 50,  priceUsd: 53.50,  label: '$50 USD' },
+      { amount: 5, priceUsd: 5.80, label: '$5 USD' },
+      { amount: 10, priceUsd: 11.00, label: '$10 USD' },
+      { amount: 25, priceUsd: 27.00, label: '$25 USD' },
+      { amount: 50, priceUsd: 53.50, label: '$50 USD' },
       { amount: 100, priceUsd: 106.00, label: '$100 USD' }
     ]
   },
@@ -323,10 +323,10 @@ const PRODUCTS = [
     popular: false,
     isNew: true,
     packages: [
-      { amount: 5,   priceUsd: 5.50,   label: '$5 USD' },
-      { amount: 10,  priceUsd: 10.80,  label: '$10 USD' },
-      { amount: 20,  priceUsd: 21.50,  label: '$20 USD' },
-      { amount: 50,  priceUsd: 53.00,  label: '$50 USD' },
+      { amount: 5, priceUsd: 5.50, label: '$5 USD' },
+      { amount: 10, priceUsd: 10.80, label: '$10 USD' },
+      { amount: 20, priceUsd: 21.50, label: '$20 USD' },
+      { amount: 50, priceUsd: 53.00, label: '$50 USD' },
       { amount: 100, priceUsd: 105.00, label: '$100 USD' }
     ]
   },
@@ -343,9 +343,9 @@ const PRODUCTS = [
     description: 'Suscripción Netflix. Activa tu cuenta al instante.',
     popular: true,
     packages: [
-      { amount: 1,  priceUsd: 6.99,  label: '1 Mes Básico' },
-      { amount: 1,  priceUsd: 15.49, label: '1 Mes Estándar' },
-      { amount: 1,  priceUsd: 22.99, label: '1 Mes Premium' }
+      { amount: 1, priceUsd: 6.99, label: '1 Mes Básico' },
+      { amount: 1, priceUsd: 15.49, label: '1 Mes Estándar' },
+      { amount: 1, priceUsd: 22.99, label: '1 Mes Premium' }
     ]
   },
   {
@@ -360,9 +360,9 @@ const PRODUCTS = [
     description: 'Spotify Premium individual. Música sin anuncios.',
     popular: false,
     packages: [
-      { amount: 1,  priceUsd: 4.99,  label: '1 Mes Individual' },
-      { amount: 3,  priceUsd: 13.99, label: '3 Meses Individual' },
-      { amount: 1,  priceUsd: 7.99,  label: '1 Mes Familiar' }
+      { amount: 1, priceUsd: 4.99, label: '1 Mes Individual' },
+      { amount: 3, priceUsd: 13.99, label: '3 Meses Individual' },
+      { amount: 1, priceUsd: 7.99, label: '1 Mes Familiar' }
     ]
   },
   {
@@ -378,8 +378,8 @@ const PRODUCTS = [
     popular: false,
     isNew: true,
     packages: [
-      { amount: 1,  priceUsd: 7.99,  label: '1 Mes Básico' },
-      { amount: 1,  priceUsd: 13.99, label: '1 Mes Premium' }
+      { amount: 1, priceUsd: 7.99, label: '1 Mes Básico' },
+      { amount: 1, priceUsd: 13.99, label: '1 Mes Premium' }
     ]
   },
   // ── Billeteras ──
@@ -395,10 +395,10 @@ const PRODUCTS = [
     description: 'Recarga de saldo PayPal para compras internacionales.',
     popular: false,
     packages: [
-      { amount: 5,   priceUsd: 5.80,   label: '$5 USD' },
-      { amount: 10,  priceUsd: 11.20,  label: '$10 USD' },
-      { amount: 25,  priceUsd: 27.50,  label: '$25 USD' },
-      { amount: 50,  priceUsd: 54.00,  label: '$50 USD' },
+      { amount: 5, priceUsd: 5.80, label: '$5 USD' },
+      { amount: 10, priceUsd: 11.20, label: '$10 USD' },
+      { amount: 25, priceUsd: 27.50, label: '$25 USD' },
+      { amount: 50, priceUsd: 54.00, label: '$50 USD' },
       { amount: 100, priceUsd: 107.00, label: '$100 USD' }
     ]
   },
@@ -414,10 +414,10 @@ const PRODUCTS = [
     description: 'Recarga USDT a tu cuenta Binance. Red TRC20.',
     popular: false,
     packages: [
-      { amount: 10,  priceUsd: 10.50, label: '10 USDT' },
-      { amount: 25,  priceUsd: 26.00, label: '25 USDT' },
-      { amount: 50,  priceUsd: 51.50, label: '50 USDT' },
-      { amount: 100, priceUsd: 102.00,label: '100 USDT' }
+      { amount: 10, priceUsd: 10.50, label: '10 USDT' },
+      { amount: 25, priceUsd: 26.00, label: '25 USDT' },
+      { amount: 50, priceUsd: 51.50, label: '50 USDT' },
+      { amount: 100, priceUsd: 102.00, label: '100 USDT' }
     ]
   }
 ];
@@ -460,9 +460,9 @@ function initFirebaseData() {
     setTimeout(initFirebaseData, 100);
     return;
   }
-  
+
   const db = firebase.database();
-  
+
   if (!window.__firebaseAuthHooked) {
     window.__firebaseAuthHooked = true;
     firebase.auth().onAuthStateChanged(user => {
@@ -475,7 +475,7 @@ function initFirebaseData() {
 
   const keysToLoad = ['products', 'categories', 'payment_methods', 'exchange_rate', 'settings', 'api_configs', 'discounts', 'messages', 'orders', 'telegram_config', 'quick_replies', 'spam_tracker', 'order_counter'];
   const loadedKeys = new Set();
-  
+
   function checkLoadComplete(key) {
     loadedKeys.add(key);
     if (loadedKeys.size >= keysToLoad.length && !window.DATA_LOADED) {
@@ -553,11 +553,11 @@ PRODUCTS.forEach(p => { if (!p.type) p.type = PRODUCT_TYPE_MAP[p.id] || 'game-id
 
 // ── Order Statuses ──
 const ORDER_STATUSES = {
-  'pending':     { label: 'Pendiente',   icon: '📋', color: '#ffb74d', bg: 'rgba(255,183,77,0.15)' },
-  'processing':  { label: 'Procesando',  icon: '⚙️', color: '#42a5f5', bg: 'rgba(66,165,245,0.15)' },
-  'completed':   { label: 'Completado',  icon: '✅', color: '#66bb6a', bg: 'rgba(102,187,106,0.15)' },
-  'rejected':    { label: 'Rechazado',   icon: '❌', color: '#ef5350', bg: 'rgba(239,83,80,0.15)' },
-  'invalid-id':  { label: 'ID Inválido', icon: '⚠️', color: '#ffa726', bg: 'rgba(255,167,38,0.15)' }
+  'pending': { label: 'Pendiente', icon: '📋', color: '#ffb74d', bg: 'rgba(255,183,77,0.15)' },
+  'processing': { label: 'Procesando', icon: '⚙️', color: '#42a5f5', bg: 'rgba(66,165,245,0.15)' },
+  'completed': { label: 'Completado', icon: '✅', color: '#66bb6a', bg: 'rgba(102,187,106,0.15)' },
+  'rejected': { label: 'Rechazado', icon: '❌', color: '#ef5350', bg: 'rgba(239,83,80,0.15)' },
+  'invalid-id': { label: 'ID Inválido', icon: '⚠️', color: '#ffa726', bg: 'rgba(255,167,38,0.15)' }
 };
 
 // ── Discounts CRUD ──
@@ -632,7 +632,7 @@ function addMessage(sessionId, sender, text, contact = null) {
   } else if (contact) {
     conv.contact = contact;
   }
-  
+
   if (text) {
     conv.messages.push({
       id: 'msg-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
@@ -642,13 +642,13 @@ function addMessage(sessionId, sender, text, contact = null) {
     });
   }
   conv.updatedAt = new Date().toISOString();
-  
+
   if (sender === 'user') {
     conv.hasUnreadAdmin = true;
   } else {
     conv.hasUnreadUser = true;
   }
-  
+
   saveMessages();
 }
 
@@ -939,7 +939,7 @@ function buildOrderKeyboard(orderId) {
 // ── Quick Replies CRUD ──
 function getQuickReplies() {
   if (QUICK_REPLIES.length > 0) return QUICK_REPLIES;
-  
+
   // Default values if empty
   const defaults = [
     { id: 'precios', title: '💰 Precios', keywords: 'precio,tasa,costo', response: '📊 La tasa actual es: 1 USD = Bs. ' + EXCHANGE_RATE.usdToBs + '. Puedes ver los precios de cada producto directamente en el catálogo.' },
