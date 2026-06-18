@@ -185,6 +185,8 @@ function navigateTo(view, param) {
     appState.currentView = 'history';
     appState.historyContactStr = param;
   } else if (view === 'dashboard') {
+    window.location.href = 'usuario.html';
+    return;
   }
   renderApp();
   window.scrollTo({ top: 0, behavior: 'smooth' });
