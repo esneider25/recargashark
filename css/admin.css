@@ -950,6 +950,9 @@ select.admin-form-input {
   .admin-status-badge {
     align-self: flex-start;
   }
+  .admin-messages-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 /* ════════════════════════════════════════

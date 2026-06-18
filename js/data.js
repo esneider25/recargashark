@@ -655,9 +655,16 @@ function addMessage(sessionId, sender, text, contact = null) {
 function markMessagesAsRead(sessionId, reader) {
   const conv = MESSAGES.find(m => m.sessionId === sessionId);
   if (conv) {
-    if (reader === 'admin') conv.hasUnreadAdmin = false;
-    if (reader === 'user') conv.hasUnreadUser = false;
-    saveMessages();
+    let changed = false;
+    if (reader === 'admin' && conv.hasUnreadAdmin) {
+      conv.hasUnreadAdmin = false;
+      changed = true;
+    }
+    if (reader === 'user' && conv.hasUnreadUser) {
+      conv.hasUnreadUser = false;
+      changed = true;
+    }
+    if (changed) saveMessages();
   }
 }
 

@@ -2082,24 +2082,26 @@ function adminDeleteDiscount(code) {
 let currentChatSessionId = null;
 
 function renderMessages(main) {
-  main.innerHTML = `
-    <header class="admin-header">
-      <h2>💬 Mensajería de Soporte</h2>
-    </header>
-    <div style="display: grid; grid-template-columns: 350px 1fr; gap: 20px; align-items: start; margin-top: 20px;">
-      <div class="admin-card" style="padding: 15px; max-height: 600px; overflow-y: auto; display: flex; flex-direction: column;">
-        <div class="admin-card-header" style="border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;">
-          <h3 class="admin-card-title">Bandeja de Entrada</h3>
+  if (!document.getElementById('admin-chat-container')) {
+    main.innerHTML = `
+      <header class="admin-header">
+        <h2>💬 Mensajería de Soporte</h2>
+      </header>
+      <div style="display: grid; grid-template-columns: 350px 1fr; gap: 20px; align-items: start; margin-top: 20px;" class="admin-messages-grid">
+        <div class="admin-card" style="padding: 15px; max-height: 600px; overflow-y: auto; display: flex; flex-direction: column;">
+          <div class="admin-card-header" style="border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;">
+            <h3 class="admin-card-title">Bandeja de Entrada</h3>
+          </div>
+          <div id="admin-chat-list" style="flex: 1; overflow-y: auto; padding-right: 5px;">
+            <!-- List loaded via JS -->
+          </div>
         </div>
-        <div id="admin-chat-list" style="flex: 1; overflow-y: auto; padding-right: 5px;">
-          <!-- List loaded via JS -->
+        <div class="admin-card" id="admin-chat-container" style="padding: 0; overflow: hidden; max-height: 600px;">
+          <!-- Chat loaded via JS -->
         </div>
       </div>
-      <div class="admin-card" id="admin-chat-container" style="padding: 0; overflow: hidden; max-height: 600px;">
-        <!-- Chat loaded via JS -->
-      </div>
-    </div>
-  `;
+    `;
+  }
 
   updateAdminMessagesUI();
 }
