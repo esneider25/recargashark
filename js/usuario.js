@@ -133,7 +133,7 @@ function renderDashboardSavedIds() {
     container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-secondary);">No tienes cuentas guardadas.</div>`;
     return;
   }
-  container.innerHTML = userProfile.savedIds.map((id, index) => `
+  container.innerHTML = idsList.map((id, index) => `
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 8px;">
       <div>
         <div style="font-weight: bold; font-size: 0.9rem;">${id.gameName}</div>
@@ -141,7 +141,7 @@ function renderDashboardSavedIds() {
       </div>
       <button onclick="removeSavedId(${index})" style="background: none; border: none; color: #ff5252; cursor: pointer;" title="Eliminar">🗑️</button>
     </div>
-  }).join('');
+  `).join('');
 }
 
 function removeSavedId(index) {
