@@ -491,7 +491,10 @@ function submitOrder() {
   }
 
   const pkg = product.packages[appState.selectedPackageIndex];
-  const method = PAYMENT_METHODS.find(m => m.id === appState.selectedPaymentId);
+  let method = PAYMENT_METHODS.find(m => m.id === appState.selectedPaymentId);
+  if (appState.selectedPaymentId === 'wallet') {
+    method = { id: 'wallet', name: 'Saldo (Monedero)', currency: 'usd' };
+  }
   
   let finalUsd = pkg.priceUsd;
   let discountCode = null;
