@@ -132,6 +132,17 @@ function renderApp() {
       ${renderSupportWidget()}
       ${termsHtml}
     `;
+  } else if (appState.currentView === 'wallet-recharge') {
+    app.innerHTML = `
+      <div class="bg-ocean-grid">${typeof renderBubbles === 'function' ? renderBubbles() : ''}</div>
+      ${typeof renderNavbar === 'function' ? renderNavbar() : ''}
+      <div class="app-container">
+        ${typeof renderWalletRecharge === 'function' ? renderWalletRecharge() : ''}
+        ${typeof renderFooter === 'function' ? renderFooter() : ''}
+      </div>
+      ${typeof renderSupportWidget === 'function' ? renderSupportWidget() : ''}
+      ${termsHtml}
+    `;
   }
 }
 
@@ -168,6 +179,10 @@ function navigateTo(view, param) {
   } else if (view === 'history') {
     appState.currentView = 'history';
     appState.historyContactStr = param;
+  } else if (view === 'wallet-recharge') {
+    appState.currentView = 'wallet-recharge';
+    appState.selectedPaymentId = null;
+    appState.selectedPackageIndex = null;
   }
   renderApp();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -276,6 +291,19 @@ function selectPackage(productId, index) {
   updateOrderSummary();
 }
 
+function selectWalletAmount(amount, index) {
+  appState.selectedPackageIndex = amount; // Using this as the amount in USD
+  document.querySelectorAll('.package-card').forEach(card => card.classList.remove('selected'));
+  const selected = document.getElementById(`wallet-amt-${index}`);
+  if (selected) selected.classList.add('selected');
+  const form = document.getElementById('wallet-order-form');
+  if (form) {
+    form.style.display = 'block';
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  updateOrderSummary();
+}
+
 // ── Payment Selection ──
 function selectPayment(methodId) {
   appState.selectedPaymentId = methodId;
@@ -283,7 +311,18 @@ function selectPayment(methodId) {
   const selected = document.getElementById(`pay-${methodId}`);
   if (selected) selected.classList.add('selected');
   const container = document.getElementById('payment-details-container');
-  if (container) container.innerHTML = renderPaymentDetails(methodId);
+  const screenshotGroup = document.getElementById('screenshot-group');
+  
+  if (methodId === 'wallet') {
+    if (container) container.innerHTML = `<div class="payment-details-card" style="border-color: #10b981;">
+      <h4>💰 Pago con Monedero</h4>
+      <p>El monto será descontado automáticamente de tu saldo actual.</p>
+    </div>`;
+    if (screenshotGroup) screenshotGroup.style.display = 'none';
+  } else {
+    if (container) container.innerHTML = renderPaymentDetails(methodId);
+    if (screenshotGroup) screenshotGroup.style.display = 'block';
+  }
   updateOrderSummary();
 }
 
@@ -325,19 +364,90 @@ function calculateDiscountAmount(originalUsd, discount) {
 
 // ── Order Summary ──
 function updateOrderSummary() {
-  const product = PRODUCTS.find(g => g.id === appState.selectedProductId);
-  const pkg = appState.selectedPackageIndex !== null ? product?.packages[appState.selectedPackageIndex] : null;
-  const method = PAYMENT_METHODS.find(m => m.id === appState.selectedPaymentId);
+  let method;
+  if (appState.selectedPaymentId === 'wallet') {
+    method = { id: 'wallet', name: 'Saldo del Monedero', currency: 'usd' };
+  } else {
+    method = PAYMENT_METHODS.find(m => m.id === appState.selectedPaymentId);
+  }
   const summary = document.getElementById('order-summary');
   const btn = document.getElementById('btn-submit');
+  
+  if (appState.currentView === 'wallet-recharge') {
+    const amount = appState.selectedPackageIndex;
+    if (amount && method) {
+      const bs = usdToBs(amount);
+      const isUsd = method.currency === 'usd';
+      const totalHtml = isUsd 
+        ? `<div class="order-summary-row total" style="color: #00e5c3;"><span>Total a pagar (USD)</span><span>$${amount.toFixed(2)} USD</span></div>`
+        : `<div class="order-summary-row total"><span>Total a pagar (Bs.)</span><span>Bs. ${formatBs(bs)}</span></div>`;
+      
+      summary.innerHTML = `
+        <h4>Resumen de la Recarga</h4>
+        <div class="order-summary-row"><span>Producto</span><span>Recarga de Monedero</span></div>
+        <div class="order-summary-row"><span>Monto</span><span>$${amount.toFixed(2)}</span></div>
+        <div class="order-summary-row"><span>Método de pago</span><span>${method.name}</span></div>
+        ${totalHtml}
+      `;
+      summary.style.display = 'block';
+      if(btn) btn.disabled = false;
+    } else {
+      summary.innerHTML = '';
+      if(btn) btn.disabled = true;
+    }
+    return;
+  }
+
+  const product = PRODUCTS.find(g => g.id === appState.selectedProductId);
+  const pkg = appState.selectedPackageIndex !== null ? product?.packages[appState.selectedPackageIndex] : null;
   if (product && pkg && method) {
     summary.innerHTML = renderOrderSummary(product, pkg, method, appState.appliedDiscount);
     summary.style.display = 'block';
-    btn.disabled = false;
+    if(btn) btn.disabled = false;
   } else {
     summary.innerHTML = '';
-    btn.disabled = true;
+    if(btn) btn.disabled = true;
   }
+}
+
+// ── Submit Wallet Recharge ──
+function submitWalletRecharge() {
+  if (!currentUser) {
+    showToast('⚠️ Debes iniciar sesión para recargar tu monedero');
+    return;
+  }
+  const amount = appState.selectedPackageIndex;
+  const method = PAYMENT_METHODS.find(m => m.id === appState.selectedPaymentId);
+  
+  if (!amount) { showToast('⚠️ Selecciona un monto'); return; }
+  if (!method) { showToast('⚠️ Selecciona un método de pago'); return; }
+  if (!appState.selectedScreenshot) {
+    showToast('⚠️ Sube la captura del comprobante');
+    return;
+  }
+
+  const priceBs = parseFloat(usdToBs(amount));
+
+  const order = createOrder({
+    userId: currentUser.uid,
+    userName: currentUser.displayName || currentUser.email,
+    productId: 'wallet-recharge',
+    productName: 'Recarga de Monedero',
+    productType: 'wallet-recharge',
+    packageLabel: `$${amount} USD`,
+    priceUsd: amount,
+    priceBs: priceBs,
+    paymentMethodId: method.id,
+    paymentMethodName: method.name,
+    paymentCurrency: method.currency || 'bs',
+    customerContact: currentUser.email,
+    accountEmail: currentUser.email,
+    ocrNumbers: appState.selectedScreenshotOcr || [],
+  });
+
+  recordOrderAttempt();
+  triggerTelegramNotification(order);
+  showOrderConfirmation(order);
 }
 
 // ── Submit Order — Creates real order + redirects to tracking ──
@@ -423,7 +533,7 @@ function submitOrder() {
     showToast('⚠️ Selecciona un método de pago');
     return;
   }
-  if (!appState.selectedScreenshot) {
+  if (appState.selectedPaymentId !== 'wallet' && !appState.selectedScreenshot) {
     showToast('⚠️ Sube la captura del comprobante de pago');
     document.getElementById('screenshot-upload')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => {
@@ -434,7 +544,12 @@ function submitOrder() {
   }
 
   const pkg = product.packages[appState.selectedPackageIndex];
-  const method = PAYMENT_METHODS.find(m => m.id === appState.selectedPaymentId);
+  let method;
+  if (appState.selectedPaymentId === 'wallet') {
+    method = { id: 'wallet', name: 'Saldo del Monedero', currency: 'usd' };
+  } else {
+    method = PAYMENT_METHODS.find(m => m.id === appState.selectedPaymentId);
+  }
   
   let finalUsd = pkg.priceUsd;
   let discountCode = null;
@@ -450,6 +565,16 @@ function submitOrder() {
   }
 
   const priceBs = parseFloat(usdToBs(finalUsd));
+
+  if (appState.selectedPaymentId === 'wallet') {
+    const currentWallet = userProfile?.wallet || 0;
+    if (currentWallet < finalUsd) {
+      showToast('⚠️ Saldo insuficiente en tu monedero');
+      return;
+    }
+    // Deducir saldo inmediatamente
+    db.ref('users/' + currentUser.uid + '/wallet').set(currentWallet - finalUsd);
+  }
 
   // Create the order
   const order = createOrder({
@@ -1439,13 +1564,19 @@ function showProfileModal() {
         
         <div style="margin-bottom: 20px;">
            <button class="btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="loadUserHistory()">Ver Historial de Compras</button>
-           <button class="btn-secondary" style="width: 100%;" onclick="alert('La recarga de monedero se habilitará próximamente.');">Recargar Monedero</button>
+           <button class="btn-secondary" style="width: 100%;" onclick="startWalletRecharge()">Recargar Monedero</button>
         </div>
 
         <button onclick="logout()" class="btn-secondary" style="width: 100%; color: #ff5252; border-color: #ff5252;">Cerrar Sesión</button>
       </div>
     </div>`;
   document.body.appendChild(modalContainer);
+}
+
+function startWalletRecharge() {
+  const modal = document.getElementById('profile-modal-container');
+  if (modal) modal.remove();
+  navigateTo('wallet-recharge');
 }
 
 async function loadUserHistory() {

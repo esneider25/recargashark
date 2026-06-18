@@ -741,6 +741,16 @@ function updateOrderStatus(orderId, newStatus, note) {
   const orders = getOrders();
   const order = orders.find(o => o.id === orderId);
   if (!order) return null;
+
+  if (order.productType === 'wallet-recharge' && newStatus === 'completed' && order.status !== 'completed') {
+    if (order.userId) {
+      db.ref('users/' + order.userId + '/wallet').once('value').then(snap => {
+        const currentWallet = parseFloat(snap.val() || 0);
+        const amountToAdd = parseFloat(order.priceUsd || 0);
+        db.ref('users/' + order.userId + '/wallet').set(currentWallet + amountToAdd);
+      });
+    }
+  }
   order.status = newStatus;
   if (note) order.adminNote = note;
   order.statusHistory.push({

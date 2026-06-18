@@ -390,11 +390,17 @@ function renderProductDetail(productId) {
                 <div class="payment-option-name">${pm.name}</div>
               </div>
             `).join('')}
+            ${(typeof currentUser !== 'undefined' && currentUser && typeof userProfile !== 'undefined' && userProfile && userProfile.wallet > 0) ? `
+              <div class="payment-option" onclick="selectPayment('wallet')" id="pay-wallet" style="border-color: #10b981;">
+                <div class="payment-option-icon">💰</div>
+                <div class="payment-option-name" style="color: #10b981;">Monedero ($${userProfile.wallet.toFixed(2)})</div>
+              </div>
+            ` : ''}
           </div>
         </div>
         <div id="payment-details-container"></div>
         <div class="order-summary" id="order-summary" style="margin-top: 20px; margin-bottom: 20px;"></div>
-        <div class="form-group">
+        <div id="screenshot-group" class="form-group">
           <label>📸 Captura del comprobante de pago</label>
           <div class="screenshot-upload" id="screenshot-upload" onclick="document.getElementById('payment-screenshot').click()">
             <input type="file" id="payment-screenshot" accept="image/*" style="display:none;" onchange="previewScreenshot(this)">
@@ -986,4 +992,72 @@ function renderBubbles() {
     bubbles += `<div class="bubble" style="width:${size}px;height:${size}px;left:${left}%;animation-delay:${delay}s;animation-duration:${duration}s;"></div>`;
   }
   return bubbles;
+}
+
+// ── Wallet Recharge Page ──
+function renderWalletRecharge() {
+  const predefinedAmounts = [5, 10, 20, 50, 100];
+  
+  const amountsHtml = predefinedAmounts.map((amount, i) => `
+    <div class="package-card fade-in-up stagger-${(i % 5) + 1}"
+         onclick="selectWalletAmount(${amount}, ${i})"
+         id="wallet-amt-${i}">
+      <div class="package-amount">$${amount}</div>
+      <div class="package-label">Saldo</div>
+      <div class="package-price-bs">Bs. ${formatBs(usdToBs(amount))}</div>
+    </div>
+  `).join('');
+
+  return `
+    <section class="game-detail" id="wallet-recharge-section">
+      <button class="game-detail-back" onclick="navigateTo('home')">← Volver al inicio</button>
+      <div class="game-detail-header" style="justify-content: center; text-align: center; display: flex; flex-direction: column; align-items: center;">
+        <div style="width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg, #10b981, #059669);display:flex;align-items:center;justify-content:center;font-size:2.5rem; margin-bottom: 15px;">💰</div>
+        <div>
+          <h2>Recargar Monedero</h2>
+          <p class="game-detail-desc" style="max-width: 500px; margin: 0 auto;">Agrega saldo a tu cuenta para realizar compras más rápidas sin tener que verificar el pago cada vez.</p>
+        </div>
+      </div>
+      
+      <div class="packages-title" style="margin-top: 30px; text-align: center;">1. Selecciona el monto a recargar</div>
+      <div class="packages-grid" id="wallet-amounts-grid" style="justify-content: center;">
+        ${amountsHtml}
+      </div>
+      
+      <div class="order-form" id="wallet-order-form" style="display:none; max-width: 600px; margin: 30px auto;">
+        <h3>2. Detalles de Pago</h3>
+        <div class="form-group">
+          <label>Método de pago</label>
+          <div class="payment-methods" id="payment-methods">
+            ${PAYMENT_METHODS.filter(pm => pm.id !== 'wallet').map(pm => `
+              <div class="payment-option" onclick="selectPayment('${pm.id}')" id="pay-${pm.id}">
+                <div class="payment-option-icon">${pm.icon}</div>
+                <div class="payment-option-name">${pm.name}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div id="payment-details-container"></div>
+        
+        <div class="order-summary" id="order-summary" style="margin-top: 20px; margin-bottom: 20px;"></div>
+        
+        <div class="form-group">
+          <label>📸 Captura del comprobante de pago</label>
+          <div class="screenshot-upload" id="screenshot-upload" onclick="document.getElementById('payment-screenshot').click()">
+            <input type="file" id="payment-screenshot" accept="image/*" style="display:none;" onchange="previewScreenshot(this)">
+            <div class="screenshot-preview" id="screenshot-preview">
+              <div class="screenshot-placeholder">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                <span>Toca para subir captura</span>
+                <span class="screenshot-hint">JPG, PNG — Máx 5MB</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="btn-primary" id="btn-submit" onclick="submitWalletRecharge()" disabled>
+          🦈 Confirmar Recarga
+        </button>
+      </div>
+    </section>
+  `;
 }
