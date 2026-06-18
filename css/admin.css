@@ -888,68 +888,142 @@ select.admin-form-input {
 }
 
 @media (max-width: 768px) {
+  /* ── Mobile Sidebar (Top Horizontal Nav) ── */
   .admin-sidebar {
     width: 100%;
     height: auto;
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    padding: 10px 0;
+    flex-direction: column;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   }
 
+  .admin-logo {
+    display: none; /* Ocultar logo para maximizar espacio de navegación */
+  }
+
+  .admin-nav {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 8px;
+    padding: 0 16px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .admin-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-nav-item {
+    flex: 0 0 auto;
+    padding: 8px 16px;
+    border-left: none;
+    border-bottom: none;
+    border-radius: 20px;
+    background: var(--bg-surface);
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .admin-nav-item.active {
+    background: var(--accent-glow);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+
+  .admin-sidebar-footer {
+    display: none;
+  }
+
+  /* ── Mobile Main Content ── */
   .admin-main {
     margin-left: 0;
-    padding: 20px 16px;
+    padding: 16px 12px;
   }
 
   .admin-container {
     flex-direction: column;
   }
 
-  .admin-modal-grid {
-    grid-template-columns: 1fr;
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
   }
 
-  .admin-apis-grid {
-    grid-template-columns: 1fr;
+  .admin-title {
+    font-size: 1.4rem;
   }
 
-  .admin-categories-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-games-grid {
-    grid-template-columns: 1fr;
-  }
-
+  /* ── Mobile Grids ── */
+  .admin-dashboard-grid,
+  .admin-modal-grid,
+  .admin-apis-grid,
+  .admin-categories-grid,
+  .admin-games-grid,
   .admin-orders-list {
     grid-template-columns: 1fr;
   }
 
-  /* Compact styles for mobile */
-  .admin-main {
-    padding: 12px 10px;
+  /* ── Compact Cards ── */
+  .admin-card, .admin-stat-card {
+    padding: 16px;
+    margin-bottom: 16px;
+    border-radius: 12px;
   }
+
+  .admin-card-header {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+  }
+
+  /* ── Beautiful Mobile Order Cards ── */
   .admin-order-card {
     grid-template-columns: 1fr;
-    padding: 12px;
-    gap: 10px;
+    padding: 14px;
+    gap: 12px;
+    border-radius: 12px;
   }
+
+  .admin-order-ref {
+    display: inline-block;
+    align-self: flex-start;
+  }
+
   .admin-order-meta {
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: 6px;
   }
+
   .admin-order-actions {
+    display: flex;
     flex-wrap: wrap;
-    justify-content: flex-start;
+    gap: 8px;
+    margin-top: 4px;
   }
+
   .admin-order-action-btn {
-    padding: 6px 12px;
-    font-size: 0.75rem;
-    flex: 1;
+    flex: 1 1 calc(50% - 8px);
+    padding: 8px 12px;
+    font-size: 0.78rem;
     text-align: center;
+    border-radius: 8px;
   }
+
   .admin-status-badge {
     align-self: flex-start;
+    margin-top: -6px;
+    margin-bottom: 4px;
   }
+  
   .admin-messages-grid {
     grid-template-columns: 1fr !important;
   }
