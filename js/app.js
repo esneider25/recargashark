@@ -1227,19 +1227,24 @@ window.verifyGameId = async function(productId) {
     let proxyEndpoint = 'check'; // Default for Smile.One
     let finalMethod = 'POST';
 
-    // Manejar formato de TiendaGiftVen o APIs por GET
-    if (bUrl.includes('api.php') || bUrl.includes('action=')) {
+    // Manejar formato de TiendaGiftVen, NetEase Bloodstrike o cualquier API por GET
+    if (bUrl.includes('?') || bUrl.includes('{ID}') || bUrl.includes('{PLAYER_ID}')) {
       finalMethod = 'GET';
       
-      // Si el usuario puso {ID} o {ZONE} en la URL
+      // Reemplazar tokens {ID} o {PLAYER_ID}
       if (bUrl.includes('{ID}')) {
-        bUrl = bUrl.replace('{ID}', encodeURIComponent(id_juego));
-        if (input2 && bUrl.includes('{ZONE}')) bUrl = bUrl.replace('{ZONE}', encodeURIComponent(input2));
-      } else if (bUrl.includes('?action=')) {
-        bUrl = bUrl.endsWith('=') ? bUrl + encodeURIComponent(id_juego) : bUrl + '&id=' + encodeURIComponent(id_juego);
-      } else {
-        bUrl = bUrl.endsWith('/') ? bUrl.slice(0, -1) : bUrl;
-        bUrl = bUrl + '/api.php?action=ValidarParametros&id=' + encodeURIComponent(id_juego);
+        bUrl = bUrl.replace(/{ID}/g, encodeURIComponent(id_juego));
+      }
+      if (bUrl.includes('{PLAYER_ID}')) {
+        bUrl = bUrl.replace(/{PLAYER_ID}/g, encodeURIComponent(id_juego));
+      }
+      if (input2 && bUrl.includes('{ZONE}')) {
+        bUrl = bUrl.replace(/{ZONE}/g, encodeURIComponent(input2));
+      }
+      
+      // Si el usuario puso un ? pero olvidó el token de ID, lo agregamos al final (fallback)
+      if (!bUrl.includes(encodeURIComponent(id_juego))) {
+         bUrl = bUrl.endsWith('=') ? bUrl + encodeURIComponent(id_juego) : bUrl + '&id=' + encodeURIComponent(id_juego);
       }
       
       // Separar baseUrl y endpoint para evitar doble slash en el proxy
