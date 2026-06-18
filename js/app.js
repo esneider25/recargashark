@@ -178,6 +178,164 @@ function navigateTo(view, param) {
   } else if (view === 'tracking') {
     appState.currentView = 'tracking';
     appState.trackingOrderId = param;
+  }
+  if (localStorage.getItem('recargashark_theme') === 'light') {
+    document.body.classList.add('light-theme');
+  }
+  renderApp();
+  initScrollEffects();
+  initCounters();
+});
+
+function toggleTheme() {
+  document.body.classList.toggle('light-theme');
+  const isLight = document.body.classList.contains('light-theme');
+  localStorage.setItem('recargashark_theme', isLight ? 'light' : 'dark');
+}
+
+// ── Render ──
+function renderApp() {
+  const app = document.getElementById('app');
+  if (!app) return;
+  
+  if (!window.DATA_LOADED) {
+    app.innerHTML = `
+      <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div class="tracking-spinner" style="font-size: 3rem;">🦈</div>
+        <h2 style="margin-top: 20px; color: var(--accent);">Conectando...</h2>
+      </div>
+    `;
+    return;
+  }
+
+  const config = typeof getSettings === 'function' ? getSettings() : {};
+  if (config.maintenance) {
+    app.innerHTML = `
+      <div class="bg-ocean-grid" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;">${typeof renderBubbles === 'function' ? renderBubbles() : ''}</div>
+      <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
+        <div style="font-size: 5rem; margin-bottom: 20px;">🚧</div>
+        <h1 style="color: var(--text-primary); margin-bottom: 10px;">Estamos en Mantenimiento</h1>
+        <p style="color: var(--text-secondary); max-width: 500px; font-size: 1.1rem; line-height: 1.6;">
+          Estamos actualizando nuestros precios y productos para brindarte un mejor servicio.<br>
+          <b style="color: var(--accent);">¡Regresamos en unos minutos!</b>
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  const termsAccepted = localStorage.getItem('recargashark_terms_accepted');
+  const termsHtml = !termsAccepted ? (typeof renderTermsModal === 'function' ? renderTermsModal() : '') : '';
+
+  if (appState.currentView === 'home') {
+    app.innerHTML = `
+      <div class="bg-ocean-grid">${renderBubbles()}</div>
+      ${renderNavbar()}
+      <div class="app-container">
+        ${renderHero()}
+        ${renderPromoCarousel()}
+        ${renderHowItWorks()}
+        ${renderCatalogSection(appState.selectedCategory)}
+        ${renderFeaturesSection()}
+        ${renderFAQ()}
+        ${renderFooter()}
+      </div>
+      ${renderSupportWidget()}
+      ${termsHtml}
+    `;
+    requestAnimationFrame(() => {
+      initCounters();
+      initScrollObserver();
+    });
+  } else if (appState.currentView === 'product') {
+    app.innerHTML = `
+      <div class="bg-ocean-grid">${renderBubbles()}</div>
+      ${renderNavbar()}
+      <div class="app-container">
+        ${renderProductDetail(appState.selectedProductId)}
+        ${renderFooter()}
+      </div>
+      ${renderSupportWidget()}
+      ${termsHtml}
+    `;
+  } else if (appState.currentView === 'tracking') {
+    app.innerHTML = `
+      <div class="bg-ocean-grid">${renderBubbles()}</div>
+      ${renderNavbar()}
+      <div class="app-container">
+        ${renderOrderTracking(appState.trackingOrderId)}
+        ${renderFooter()}
+      </div>
+      ${renderSupportWidget()}
+      ${termsHtml}
+    `;
+  } else if (appState.currentView === 'lookup') {
+    app.innerHTML = `
+      <div class="bg-ocean-grid">${renderBubbles()}</div>
+      ${renderNavbar()}
+      <div class="app-container">
+        ${renderOrderLookup()}
+        ${renderFooter()}
+      </div>
+      ${renderSupportWidget()}
+      ${termsHtml}
+    `;
+  } else if (appState.currentView === 'history') {
+    const orders = getOrders().filter(o => 
+      o.customerContact && appState.historyContactStr && 
+      o.customerContact.toLowerCase().includes(appState.historyContactStr.toLowerCase())
+    );
+    app.innerHTML = `
+      <div class="bg-ocean-grid">${renderBubbles()}</div>
+      ${renderNavbar()}
+      <div class="app-container">
+        ${renderOrderHistoryList(orders, appState.historyContactStr)}
+        ${renderFooter()}
+      </div>
+      ${renderSupportWidget()}
+      ${termsHtml}
+    `;
+  } else if (appState.currentView === 'wallet-recharge') {
+    app.innerHTML = `
+      <div class="bg-ocean-grid">${typeof renderBubbles === 'function' ? renderBubbles() : ''}</div>
+      ${typeof renderNavbar === 'function' ? renderNavbar() : ''}
+      <div class="app-container">
+        ${typeof renderWalletRecharge === 'function' ? renderWalletRecharge() : ''}
+        ${typeof renderFooter === 'function' ? renderFooter() : ''}
+      </div>
+      ${typeof renderSupportWidget === 'function' ? renderSupportWidget() : ''}
+      ${termsHtml}
+    `;
+  }
+}
+
+// ── Terms ──
+function acceptTerms() {
+  localStorage.setItem('recargashark_terms_accepted', 'true');
+  const modal = document.getElementById('terms-modal-overlay');
+  if (modal) {
+    modal.style.transition = 'opacity 0.3s ease';
+    modal.style.opacity = '0';
+    setTimeout(() => modal.remove(), 300);
+  }
+}
+
+// ── Navigation ──
+function navigateTo(view, param) {
+  if (view === 'home') {
+    appState.currentView = 'home';
+    appState.selectedProductId = null;
+    appState.selectedPackageIndex = null;
+    appState.selectedPaymentId = null;
+    appState.trackingOrderId = null;
+  } else if (view === 'product') {
+    appState.currentView = 'product';
+    appState.selectedProductId = param;
+    appState.selectedPackageIndex = null;
+    appState.selectedPaymentId = null;
+  } else if (view === 'tracking') {
+    appState.currentView = 'tracking';
+    appState.trackingOrderId = param;
   } else if (view === 'lookup') {
     appState.currentView = 'lookup';
     appState.trackingOrderId = null;
@@ -185,12 +343,63 @@ function navigateTo(view, param) {
     appState.currentView = 'history';
     appState.historyContactStr = param;
   } else if (view === 'dashboard') {
-      window.location.href = 'usuario.html';
-      return;
-    } else if (view === 'wallet-recharge') {
-    appState.currentView = 'wallet-recharge';
-    appState.selectedPaymentId = null;
-    appState.selectedPackageIndex = null;
+  }
+  renderApp();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  const nav = document.getElementById('nav-links');
+  if (nav) nav.classList.remove('open');
+}
+
+function scrollToSection(sectionId) {
+  if (appState.currentView !== 'home') {
+    navigateTo('home');
+    setTimeout(() => {
+      const el = document.getElementById(sectionId);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+    return;
+  }
+  const el = document.getElementById(sectionId);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const nav = document.getElementById('nav-links');
+  if (nav) nav.classList.remove('open');
+}
+
+function toggleMobileMenu() {
+  const nav = document.getElementById('nav-links');
+  if (nav) nav.classList.toggle('open');
+}
+
+// ── Search ──
+function handleProductSearch(query) {
+  const searchTerm = query.toLowerCase().trim();
+  const productsGrid = document.getElementById('products-grid');
+  if (!productsGrid) return;
+  
+  const filteredProducts = PRODUCTS.filter(p => {
+    if (appState.selectedCategory !== 'todos' && p.category !== appState.selectedCategory) return false;
+    return p.name.toLowerCase().includes(searchTerm) || 
+           (p.description && p.description.toLowerCase().includes(searchTerm));
+  });
+  
+  if (filteredProducts.length === 0) {
+    productsGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted); background: var(--bg-surface); border-radius: 12px;">No se encontraron productos que coincidan con tu búsqueda.</div>';
+  } else {
+    productsGrid.innerHTML = filteredProducts.map((product, index) => {
+      const category = CATEGORIES.find(c => c.id === product.category);
+      const delay = (index % 10) * 0.05;
+      const minPrice = Math.min(...product.packages.map(p => p.priceUsd));
+      
+      const iconHtml = product.imageUrl 
+        ? `<img src="${product.imageUrl}" class="product-icon-img" alt="${product.name}" onerror="this.onerror=null; this.outerHTML='<div class=\\'product-icon\\'>${product.currencyIcon}</div>'">`
+        : `<div class="product-icon">${product.currencyIcon}</div>`;
+        
+      return `
+        <div class="product-card fade-in-up" style="animation-delay: ${delay}s" onclick="navigateTo('product', '${product.id}')">
+          <div class="product-card-bg" style="background: ${product.colorGradient || 'linear-gradient(135deg, var(--accent), var(--accent-hover))'}"></div>
+          ${product.popular ? '<div class="product-badge badge-popular">🔥 Popular</div>' : ''}
+          ${product.isNew ? '<div class="product-badge badge-new">✨ Nuevo</div>' : ''}
+          ${iconHtml}
   }
   renderApp();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -296,6 +505,15 @@ function selectPackage(productId, index) {
     form.style.display = 'block';
     form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+
+  const product = PRODUCTS.find(g => g.id === productId);
+  const pkg = product ? product.packages[index] : null;
+  if (pkg && typeof userProfile !== 'undefined' && userProfile && userProfile.wallet > 0) {
+    if (userProfile.wallet >= pkg.priceUsd) {
+      selectPayment('wallet');
+    }
+  }
+
   updateOrderSummary();
 }
 
@@ -454,175 +672,6 @@ function submitWalletRecharge() {
   });
 
   recordOrderAttempt();
-    if (currentUser) {
-      firebase.database().ref('users/' + currentUser.uid + '/orders/' + order.id).set(true);
-    }
-    triggerTelegramNotification(order);
-    showOrderConfirmation(order);
-}
-
-// ── Submit Order — Creates real order + redirects to tracking ──
-function submitOrder() {
-  // Anti-spam checks DISABLED as per user request
-  /*
-  if (isUserBlocked()) {
-    const blockedUntil = getBlockedUntil();
-    const timeStr = blockedUntil ? blockedUntil.toLocaleTimeString() : 'más tarde';
-    showToast(`⛔ Demasiados pedidos. Acceso bloqueado temporalmente hasta ${timeStr}.`);
-    return;
-  }
-
-  if (!checkSpamLimit()) {
-    showToast('⛔ Has realizado demasiados intentos. Bloqueado temporalmente.');
-    const fp = getDeviceFingerprint();
-    sendTelegramMessage(`⚠️ <b>ALERTA ANTI-SPAM:</b> Un usuario ha sido bloqueado.\nFingerprint: <code>${fp}</code>\nUser-Agent: ${navigator.userAgent}`);
-    return;
-  }
-  */
-
-  const product = PRODUCTS.find(g => g.id === appState.selectedProductId);
-  if (!product) return;
-  const productType = product.type || 'game-id';
-
-  // Validate contact
-  const contactInput = document.getElementById('customer-contact');
-  if (!contactInput || !contactInput.value.trim()) {
-    showToast('⚠️ Ingresa tu teléfono o correo de contacto');
-    contactInput?.focus();
-    return;
-  }
-
-  // Validate type-specific fields
-  let gameId = '';
-  let accountEmail = '';
-  let accountPassword = '';
-
-  if (productType === 'game-id') {
-    const uidInput = document.getElementById('game-uid');
-    if (!uidInput || !uidInput.value.trim()) {
-      showToast('⚠️ Ingresa tu ID del juego');
-      uidInput?.focus();
-      return;
-    }
-    gameId = uidInput.value.trim();
-  } else if (productType === 'game-id-zone') {
-    const uidInput = document.getElementById('game-uid');
-    const zoneInput = document.getElementById('game-zone');
-    if (!uidInput || !uidInput.value.trim()) {
-      showToast('⚠️ Ingresa el Player ID');
-      uidInput?.focus();
-      return;
-    }
-    if (!zoneInput || !zoneInput.value.trim()) {
-      showToast('⚠️ Ingresa el Zone ID');
-      zoneInput?.focus();
-      return;
-    }
-    gameId = `ID: ${uidInput.value.trim()} | Zona: ${zoneInput.value.trim()}`;
-  } else if (productType === 'account') {
-    const emailInput = document.getElementById('account-email');
-    const passInput = document.getElementById('account-password');
-    if (!emailInput || !emailInput.value.trim()) {
-      showToast('⚠️ Ingresa el correo o usuario de la cuenta');
-      emailInput?.focus();
-      return;
-    }
-    if (!passInput || !passInput.value.trim()) {
-      showToast('⚠️ Ingresa la contraseña de la cuenta');
-      passInput?.focus();
-      return;
-    }
-    accountEmail = emailInput.value.trim();
-    accountPassword = passInput.value.trim();
-  }
-
-  if (appState.selectedPackageIndex === null) {
-    showToast('⚠️ Selecciona un paquete');
-    return;
-  }
-  if (!appState.selectedPaymentId) {
-    showToast('⚠️ Selecciona un método de pago');
-    return;
-  }
-  if (appState.selectedPaymentId !== 'wallet' && !appState.selectedScreenshot) {
-    showToast('⚠️ Sube la captura del comprobante de pago');
-    document.getElementById('screenshot-upload')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => {
-      document.getElementById('screenshot-upload')?.classList.add('error-shake');
-      setTimeout(() => document.getElementById('screenshot-upload')?.classList.remove('error-shake'), 500);
-    }, 300);
-    return;
-  }
-
-  const pkg = product.packages[appState.selectedPackageIndex];
-  let method;
-  if (appState.selectedPaymentId === 'wallet') {
-    method = { id: 'wallet', name: 'Saldo del Monedero', currency: 'usd' };
-  } else {
-    method = PAYMENT_METHODS.find(m => m.id === appState.selectedPaymentId);
-  }
-  
-  let finalUsd = pkg.priceUsd;
-  let discountCode = null;
-  let discountValue = 0;
-  let discountType = null;
-
-  if (appState.appliedDiscount) {
-    const dAmount = calculateDiscountAmount(pkg.priceUsd, appState.appliedDiscount);
-    finalUsd = Math.max(0, pkg.priceUsd - dAmount);
-    discountCode = appState.appliedDiscount.code;
-    discountValue = appState.appliedDiscount.value;
-    discountType = appState.appliedDiscount.type;
-  }
-
-  const priceBs = parseFloat(usdToBs(finalUsd));
-
-  if (appState.selectedPaymentId === 'wallet') {
-    const currentWallet = userProfile?.wallet || 0;
-    if (currentWallet < finalUsd) {
-      showToast('⚠️ Saldo insuficiente en tu monedero');
-      return;
-    }
-    // Deducir saldo inmediatamente
-    db.ref('users/' + currentUser.uid + '/wallet').set(currentWallet - finalUsd);
-    if(typeof addTransaction === 'function') addTransaction(currentUser.uid, 'purchase', -finalUsd, 'Compra con Monedero: ' + product.name);
-  }
-
-  // Create the order
-  const order = createOrder({
-    userId: currentUser ? currentUser.uid : null,
-    userName: currentUser ? currentUser.displayName || currentUser.email : null,
-    productId: product.id,
-    productName: product.name,
-    productType: productType,
-    packageLabel: pkg.label,
-    apiProductId: pkg.apiServiceId,
-    apiProvider: product.apiProvider,
-    priceUsd: finalUsd,
-    priceBs: priceBs,
-    paymentMethodId: method.id,
-    paymentMethodName: method.name,
-    paymentCurrency: method.currency || 'bs',
-    customerContact: contactInput.value.trim(),
-    gameId: gameId,
-    accountEmail: accountEmail,
-    accountPassword: accountPassword,
-    ocrNumbers: appState.selectedScreenshotOcr || [],
-    discountCode: discountCode,
-    discountValue: discountValue,
-    discountType: discountType
-  });
-
-  recordOrderAttempt();
-  
-  if (currentUser) {
-    firebase.database().ref('users/' + currentUser.uid + '/orders/' + order.id).set(true);
-  }
-
-  // Handle Telegram notification in the background
-  triggerTelegramNotification(order);
-
-  // Show success animation then redirect to tracking
   showOrderConfirmation(order);
 }
 
@@ -1496,7 +1545,7 @@ function initPublicAuth() {
     // If the user is the admin, don't mix them into the public UI wallet (or we can just show "Admin")
     if (user && user.email === 'adminshark@gmail.com') {
        if (authNavItem) {
-          authNavItem.innerHTML = `<a onclick="window.location.href='/admin.html'" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Ir al Panel</a>`;
+          authNavItem.innerHTML = `<a onclick="window.location.href='/admin'" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Ir al Panel</a>`;
        }
        return;
     }

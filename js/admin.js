@@ -132,9 +132,6 @@ function initAdminApp() {
           <button class="admin-view-store-btn" onclick="toggleAdminTheme()" style="background:var(--bg-surface); color:var(--text-primary); cursor:pointer;">
             🌓 Alternar Tema
           </button>
-          <a href="index.html" target="_blank" class="admin-view-store-btn">
-            🦈 Ver Tienda
-          </a>
         </div>
       </aside>
       <main class="admin-main" id="admin-main-content"></main>

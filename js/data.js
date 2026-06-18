@@ -938,34 +938,6 @@ function buildOrderTelegramMessage(order) {
   msg += `💰 <b>Precio:</b> $${order.priceUsd.toFixed(2)} USD | Bs. ${formatBs(order.priceBs)}\n`;
   msg += `💳 <b>Pago:</b> ${order.paymentMethodName}\n`;
   msg += `🏷️ <b>Tipo:</b> ${typeLabel}\n`;
-  if (order.productType === 'game-id' && order.gameId) {
-    msg += `🎮 <b>Game ID:</b> <code>${order.gameId}</code>\n`;
-  } else if (order.productType === 'account') {
-    msg += `📧 <b>Email:</b> <code>${order.accountEmail || 'N/A'}</code>\n`;
-    msg += `🔒 <b>Contraseña:</b> <code>${order.accountPassword || 'N/A'}</code>\n`;
-  }
-  msg += `📱 <b>Contacto:</b> ${order.customerContact}\n`;
-  msg += `🕐 <b>Fecha:</b> ${new Date(order.createdAt).toLocaleString('es-VE')}\n`;
-  return msg;
-}
-
-function buildOrderKeyboard(orderId) {
-  const adminUrl = 'https://admin.recargashark.com/admin.html';
-  return [
-    [
-      { text: '✅ Aprobar', url: `${adminUrl}?action=approve&order=${orderId}` },
-      { text: '❌ Rechazar', url: `${adminUrl}?action=reject&order=${orderId}` }
-    ],
-    [
-      { text: '👁️ Ver Detalle', url: `${adminUrl}?action=view&order=${orderId}` }
-    ]
-  ];
-}
-
-// ── Quick Replies CRUD ──
-function getQuickReplies() {
-  if (QUICK_REPLIES.length > 0) return QUICK_REPLIES;
-
   // Default values if empty
   const defaults = [
     { id: 'precios', title: '💰 Precios', keywords: 'precio,tasa,costo', response: '📊 La tasa actual es: 1 USD = Bs. ' + EXCHANGE_RATE.usdToBs + '. Puedes ver los precios de cada producto directamente en el catálogo.' },

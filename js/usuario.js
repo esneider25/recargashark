@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
       currentUser = null;
       userProfile = null;
       // Redirigir a inicio si no está logueado
-      window.location.href = 'index.html';
+      window.location.href = '/';
     }
   });
 });
@@ -39,17 +39,17 @@ function renderApp() {
 
 function navigateTo(view) {
   if (view === 'home') {
-    window.location.href = 'index.html';
+    window.location.href = '/';
   } else if (view === 'wallet-recharge') {
     // Si queremos que la recarga sea en la tienda, mandamos a index.html?recharge=true
     // Pero por ahora, podemos mandarlos al home
-    window.location.href = 'index.html';
+    window.location.href = '/';
   }
 }
 
 function logout() {
   firebase.auth().signOut().then(() => {
-    window.location.href = 'index.html';
+    window.location.href = '/';
   }).catch(error => {
     console.error("Error al cerrar sesión", error);
   });
@@ -210,7 +210,7 @@ function submitAddId() {
 
 function startWalletRecharge() {
   // Redirigir a tienda con parámetro
-  window.location.href = 'index.html?recharge=true';
+  window.location.href = '/?recharge=true';
 }
 
 function redeemPoints() {

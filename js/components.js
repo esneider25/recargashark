@@ -393,12 +393,18 @@ function renderProductDetail(productId) {
       <div class="order-form" id="order-form" style="display:none;">
         <h3>📝 Datos del Pedido</h3>
         ${typeFieldsHtml}
+        ${(typeof currentUser !== 'undefined' && currentUser) ? `
+          <input type="hidden" id="customer-contact" value="${currentUser.email || currentUser.displayName || ''}">
+        ` : `
+        ${(typeof currentUser !== 'undefined' && currentUser) ? '' : `
         <div class="form-group">
           <label for="customer-contact">📱 Teléfono o correo de contacto</label>
           <input type="text" class="form-input" id="customer-contact"
                  placeholder="Ej: +58 412-1234567 o tu-correo@gmail.com" autocomplete="off">
           <div class="form-hint">Te contactaremos para notificarte sobre tu pedido</div>
         </div>
+        `}
+        `}
         <div class="form-group" style="margin-top: 15px; margin-bottom: 25px;">
           <label for="discount-input">🏷️ Código de Descuento (Opcional)</label>
           <div style="display: flex; gap: 10px; align-items: stretch;">
@@ -425,7 +431,7 @@ function renderProductDetail(productId) {
         </div>
         <div id="payment-details-container"></div>
         <div class="order-summary" id="order-summary" style="margin-top: 20px; margin-bottom: 20px;"></div>
-        <div id="screenshot-group" class="form-group">
+        <div id="screenshot-group" class="form-group" style="display:none;">
           <label>📸 Captura del comprobante de pago</label>
           <div class="screenshot-upload" id="screenshot-upload" onclick="document.getElementById('payment-screenshot').click()">
             <input type="file" id="payment-screenshot" accept="image/*" style="display:none;" onchange="previewScreenshot(this)">
