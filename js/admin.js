@@ -1281,7 +1281,7 @@ function renderTempPackages() {
 
   container.innerHTML = adminState.tempPackages.map((pkg, idx) => `
     <div class="admin-package-item" data-package-index="${idx}" style="display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px; background: var(--bg-deep); padding: 12px; border-radius: 8px; border: 1px solid var(--border); flex-wrap: wrap;">
-      <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 80px;">
+      <div style="display: flex; flex-direction: column; gap: 4px; flex: 1.5; min-width: 120px;">
         <label style="font-size: 0.75rem; color: var(--text-muted);">Cantidad o Nombre</label>
         <input type="text" class="admin-form-input" style="padding: 6px 10px; font-size: 0.85rem;" value="${pkg.amount}" onchange="updateTempPackageField(${idx}, 'amount', this.value)" placeholder="100 o Pase">
       </div>
@@ -1293,7 +1293,7 @@ function renderTempPackages() {
         <label style="font-size: 0.75rem; color: var(--text-muted);">Etiqueta</label>
         <input type="text" class="admin-form-input" style="padding: 6px 10px; font-size: 0.85rem;" value="${pkg.label || ''}" onchange="updateTempPackageField(${idx}, 'label', this.value)" placeholder="100 diamantes">
       </div>
-      <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 100px;">
+      <div style="display: flex; flex-direction: column; gap: 4px; flex: 0.8; min-width: 60px;">
         <label style="font-size: 0.75rem; color: var(--text-muted);">ID API (Opc.)</label>
         <input type="text" class="admin-form-input" style="padding: 6px 10px; font-size: 0.85rem;" value="${pkg.apiServiceId || ''}" onchange="updateTempPackageField(${idx}, 'apiServiceId', this.value)" placeholder="Ej. 341">
       </div>
