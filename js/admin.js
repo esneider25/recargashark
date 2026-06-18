@@ -270,10 +270,10 @@ function renderDashboard(container) {
         <div class="admin-stat-value">Bs. ${EXCHANGE_RATE.usdToBs.toFixed(2)}</div>
         <div class="admin-stat-label">Tasa del Dólar</div>
       </div>
-      <div class="admin-stat-card">
+      <div class="admin-stat-card" style="cursor: pointer;" onclick="switchTab('customers')">
         <div class="admin-stat-icon">👥</div>
-        <div class="admin-stat-value">${new Set(allOrders.filter(o => o.status === 'completed' && o.customerContact).map(o => o.customerContact.toLowerCase())).size}</div>
-        <div class="admin-stat-label">Clientes VIP</div>
+        <div class="admin-stat-value" id="dash-total-users">...</div>
+        <div class="admin-stat-label">Usuarios Registrados</div>
       </div>
     </div>
 
@@ -373,6 +373,11 @@ function renderDashboard(container) {
         }
       });
     }
+    // Fetch total users dynamically
+    firebase.database().ref('users').once('value').then(snap => {
+      const el = document.getElementById('dash-total-users');
+      if (el) el.innerText = snap.numChildren();
+    }).catch(e => console.error("Error fetching users count:", e));
   }, 100);
 }
 
@@ -2609,3 +2614,138 @@ function adminDeleteQuickReply(id) {
 }
 
 
+// ════════════════════════════════════════
+// CUSTOMERS (USERS & WALLETS)
+// ════════════════════════════════════════
+
+function renderCustomers(container) {
+  container.innerHTML = `
+    <div class="admin-header-flex">
+      <h2 class="admin-page-title">👥 Gestión de Clientes</h2>
+      <button class="btn btn-secondary" onclick="renderCustomers(document.getElementById('admin-main-content'))">🔄 Refrescar</button>
+    </div>
+    <div class="admin-card" style="margin-top: 20px;">
+      <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <input type="text" id="admin-customers-search" class="admin-form-input" style="flex: 1; margin-bottom: 0;" placeholder="Buscar por Email o Nombre..." onkeyup="filterCustomersSearch(this.value)">
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="admin-table" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Email</th>
+              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Nombre</th>
+              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Fecha Registro</th>
+              <th style="text-align: right; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Monedero</th>
+              <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="customers-table-body">
+            <tr><td colspan="5" style="text-align: center; padding: 20px;">Cargando clientes...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  firebase.database().ref('users').once('value').then(snap => {
+    const usersData = snap.val() || {};
+    const usersList = Object.keys(usersData).map(uid => ({
+      uid: uid,
+      ...usersData[uid]
+    })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    
+    // Store in global state for search filtering
+    window.ADMIN_CUSTOMERS = usersList;
+    renderCustomersTable(usersList);
+  }).catch(err => {
+    console.error(err);
+    document.getElementById('customers-table-body').innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color: red;">Error cargando clientes</td></tr>`;
+  });
+}
+
+function renderCustomersTable(usersList) {
+  const tbody = document.getElementById('customers-table-body');
+  if (!tbody) return;
+
+  if (usersList.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--text-secondary);">No hay clientes registrados o que coincidan con la búsqueda.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = usersList.map(user => {
+    const dateStr = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A';
+    const wallet = user.wallet || 0;
+    return `
+      <tr class="customer-row">
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.email}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.name || '-'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${dateStr}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: right; color: #10b981; font-weight: bold;">$${wallet.toFixed(2)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
+          <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openEditWalletModal('${user.uid}', '${user.email}', ${wallet})">Editar Saldo</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterCustomersSearch(searchTerm) {
+  if (!window.ADMIN_CUSTOMERS) return;
+  const term = searchTerm.toLowerCase().trim();
+  const filtered = window.ADMIN_CUSTOMERS.filter(u => 
+    (u.email && u.email.toLowerCase().includes(term)) || 
+    (u.name && u.name.toLowerCase().includes(term))
+  );
+  renderCustomersTable(filtered);
+}
+
+function openEditWalletModal(uid, email, currentWallet) {
+  const overlay = document.getElementById('admin-modal-overlay');
+  const modalContent = document.getElementById('admin-modal-content');
+  if (!overlay || !modalContent) return;
+
+  modalContent.innerHTML = `
+    <div class="admin-modal-header">
+      <h2 class="admin-modal-title">💰 Editar Monedero</h2>
+      <button class="admin-modal-close" onclick="closeAdminModal()">✕</button>
+    </div>
+    <div style="margin-bottom: 16px;">
+      <p style="color: var(--text-secondary); margin-bottom: 10px;">Cliente: <strong>${email}</strong></p>
+      <label class="admin-form-label">Saldo Actual (USD)</label>
+      <input type="number" id="edit-wallet-amount" class="admin-form-input" value="${currentWallet}" step="0.01" min="0">
+    </div>
+    <div class="admin-modal-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+      <button class="btn btn-secondary" onclick="closeAdminModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveUserWallet('${uid}', '${email}', ${currentWallet})">Guardar Cambios</button>
+    </div>
+  `;
+  overlay.classList.add('active');
+}
+
+function saveUserWallet(uid, email, oldWallet) {
+  const input = document.getElementById('edit-wallet-amount');
+  const newAmount = parseFloat(input.value);
+  
+  if (isNaN(newAmount) || newAmount < 0) {
+    alert("Por favor ingresa un monto válido mayor o igual a cero.");
+    return;
+  }
+
+  firebase.database().ref('users/' + uid + '/wallet').set(newAmount).then(() => {
+    // Optional: Log the change
+    firebase.database().ref('admin_logs').push({
+      action: 'wallet_update',
+      userEmail: email,
+      uid: uid,
+      oldAmount: oldWallet,
+      newAmount: newAmount,
+      timestamp: Date.now()
+    });
+
+    showAdminToast('✅ Saldo actualizado correctamente', 'success');
+    closeAdminModal();
+    renderCustomers(document.getElementById('admin-main-content'));
+  }).catch(err => {
+    alert("Error actualizando saldo: " + err.message);
+  });
+}
