@@ -699,6 +699,8 @@ function createOrder(data) {
   const orders = getOrders();
   const order = {
     id: generateOrderRef(),
+    userId: data.userId || null,
+    userName: data.userName || null,
     productId: data.productId,
     productName: data.productName,
     productType: data.productType || 'game-id',

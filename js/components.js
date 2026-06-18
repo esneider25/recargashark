@@ -16,6 +16,9 @@ function renderNavbar() {
           <li><a onclick="scrollToSection('how-it-works')" data-section="how-it-works">¿Cómo Funciona?</a></li>
           <li><a onclick="scrollToSection('features')" data-section="features">Ventajas</a></li>
           <li><a onclick="navigateTo('lookup')" data-section="lookup">🔍 Mis Pedidos</a></li>
+          <li id="auth-nav-item">
+            <a onclick="showAuthModal()" class="nav-cta" style="background: linear-gradient(135deg, #4f46e5, #3b82f6); cursor:pointer;">Ingresar</a>
+          </li>
           <li><a class="nav-cta" onclick="scrollToSection('catalog')">Recargar 🎮</a></li>
           <li><a class="theme-toggle-btn" onclick="toggleTheme()" style="cursor:pointer; font-size: 1.2rem;" title="Cambiar Tema">🌓</a></li>
         </ul>

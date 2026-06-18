@@ -453,6 +453,8 @@ function submitOrder() {
 
   // Create the order
   const order = createOrder({
+    userId: currentUser ? currentUser.uid : null,
+    userName: currentUser ? currentUser.displayName || currentUser.email : null,
     productId: product.id,
     productName: product.name,
     productType: productType,
@@ -475,6 +477,10 @@ function submitOrder() {
   });
 
   recordOrderAttempt();
+  
+  if (currentUser) {
+    firebase.database().ref('users/' + currentUser.uid + '/orders/' + order.id).set(true);
+  }
 
   // Handle Telegram notification in the background
   triggerTelegramNotification(order);
@@ -1335,3 +1341,178 @@ window.verifyGameId = async function(productId) {
     btnVerify.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg> Verificar ID';
   }
 }
+
+// ==========================================
+// AUTHENTICATION & USER PROFILE
+// ==========================================
+
+let currentUser = null;
+let userProfile = null;
+
+function initPublicAuth() {
+  if (!firebase || !firebase.auth) return;
+  
+  firebase.auth().onAuthStateChanged(async (user) => {
+    currentUser = user;
+    const authNavItem = document.getElementById('auth-nav-item');
+    
+    // If the user is the admin, don't mix them into the public UI wallet (or we can just show "Admin")
+    if (user && user.email === 'adminshark@gmail.com') {
+       if (authNavItem) {
+          authNavItem.innerHTML = `<a onclick="window.location.href='/admin.html'" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Ir al Panel</a>`;
+       }
+       return;
+    }
+
+    if (user) {
+      // Fetch profile from DB
+      firebase.database().ref('users/' + user.uid).on('value', (snapshot) => {
+        userProfile = snapshot.val() || { wallet: 0 };
+        if (authNavItem) {
+          authNavItem.innerHTML = `<a onclick="showProfileModal()" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Mi Perfil ($${userProfile.wallet || 0})</a>`;
+        }
+      });
+    } else {
+      userProfile = null;
+      if (authNavItem) {
+        authNavItem.innerHTML = `<a onclick="showAuthModal()" class="nav-cta" style="background: linear-gradient(135deg, #4f46e5, #3b82f6); cursor:pointer;">Ingresar</a>`;
+      }
+    }
+  });
+}
+
+function showAuthModal() {
+  const modalContainer = document.createElement('div');
+  modalContainer.id = 'auth-modal-container';
+  modalContainer.innerHTML = `
+    <div class="modal-overlay active" onclick="if(event.target===this) this.parentElement.remove()">
+      <div class="modal" style="text-align: center; max-width: 400px;">
+        <h2 style="margin-bottom: 20px;">Únete a RecargaShark</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 30px;">Inicia sesión para guardar tus IDs, acumular puntos y comprar más rápido.</p>
+        <button onclick="authWithGoogle()" class="btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: white; color: black; border: 1px solid #ddd;">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Continuar con Google
+        </button>
+        <button onclick="document.getElementById('auth-modal-container').remove()" class="btn-secondary" style="width: 100%; margin-top: 15px;">Cancelar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modalContainer);
+}
+
+function authWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider).then((result) => {
+    const modal = document.getElementById('auth-modal-container');
+    if(modal) modal.remove();
+    
+    const user = result.user;
+    if (user.email === 'adminshark@gmail.com') return; // Admin bypass
+    
+    // Ensure user profile exists
+    firebase.database().ref('users/' + user.uid).once('value', (snap) => {
+      if (!snap.exists()) {
+        firebase.database().ref('users/' + user.uid).set({
+          email: user.email,
+          name: user.displayName,
+          wallet: 0,
+          createdAt: Date.now()
+        });
+      }
+    });
+  }).catch((error) => {
+    alert('Error al iniciar sesión: ' + error.message);
+  });
+}
+
+function showProfileModal() {
+  const modalContainer = document.createElement('div');
+  modalContainer.id = 'profile-modal-container';
+  modalContainer.innerHTML = `
+    <div class="modal-overlay active" onclick="if(event.target===this) this.parentElement.remove()">
+      <div class="modal" style="max-width: 500px;">
+        <h2 style="margin-bottom: 5px;">Mi Perfil</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">${currentUser.email}</p>
+        
+        <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid var(--border-color);">
+          <div style="font-size: 0.9rem; color: var(--text-secondary);">Saldo Disponible (Monedero)</div>
+          <div style="font-size: 2.5rem; font-weight: bold; color: #10b981; margin-top: 10px;">$${userProfile?.wallet || 0}</div>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+           <button class="btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="loadUserHistory()">Ver Historial de Compras</button>
+           <button class="btn-secondary" style="width: 100%;" onclick="alert('La recarga de monedero se habilitará próximamente.');">Recargar Monedero</button>
+        </div>
+
+        <button onclick="logout()" class="btn-secondary" style="width: 100%; color: #ff5252; border-color: #ff5252;">Cerrar Sesión</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modalContainer);
+}
+
+async function loadUserHistory() {
+  if (!currentUser) return;
+  document.getElementById('profile-modal-container')?.remove();
+  
+  // Show a loading state
+  appState.currentView = 'history';
+  app.innerHTML = `
+      <div class="bg-ocean-grid"></div>
+      ${typeof renderNavbar === 'function' ? renderNavbar() : ''}
+      <div class="app-container" style="text-align: center; margin-top: 50px;">
+        <h2>Cargando tu historial...</h2>
+      </div>
+  `;
+
+  try {
+    const snap = await firebase.database().ref('users/' + currentUser.uid + '/orders').once('value');
+    const orderIds = snap.val();
+    
+    if (!orderIds) {
+      appState.historyContactStr = currentUser.email;
+      app.innerHTML = `
+        <div class="bg-ocean-grid"></div>
+        ${typeof renderNavbar === 'function' ? renderNavbar() : ''}
+        <div class="app-container">
+          ${typeof renderOrderHistoryList === 'function' ? renderOrderHistoryList([], appState.historyContactStr) : ''}
+        </div>
+      `;
+      return;
+    }
+
+    const fetchedOrders = [];
+    const keys = Object.keys(orderIds);
+    for (let id of keys) {
+      const orderSnap = await firebase.database().ref('orders/' + id).once('value');
+      if (orderSnap.exists()) {
+        fetchedOrders.push(orderSnap.val());
+      }
+    }
+    
+    fetchedOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    appState.historyContactStr = currentUser.email;
+    
+    app.innerHTML = `
+      <div class="bg-ocean-grid"></div>
+      ${typeof renderNavbar === 'function' ? renderNavbar() : ''}
+      <div class="app-container">
+        ${typeof renderOrderHistoryList === 'function' ? renderOrderHistoryList(fetchedOrders, appState.historyContactStr) : ''}
+      </div>
+    `;
+  } catch (error) {
+    alert("Error cargando historial: " + error.message);
+    navigateTo('home');
+  }
+}
+
+function logout() {
+  firebase.auth().signOut().then(() => {
+    const modal = document.getElementById('profile-modal-container');
+    if(modal) modal.remove();
+    // Navbar will automatically update via onAuthStateChanged
+    window.location.reload();
+  });
+}
+
+// Initialize auth when app loads
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(initPublicAuth, 1000);
+});
