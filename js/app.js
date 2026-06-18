@@ -1287,7 +1287,7 @@ window.verifyGameId = async function(productId) {
     const data = await response.json();
 
     // Comprobar éxito (código 200 numérico o string, o si existe data.data)
-    const isSuccess = data.ok || data.status == 200 || data.code == 200 || data.success || (data.data && typeof data.data === 'object');
+    const isSuccess = data.ok || data.status == 200 || data.code == 200 || data.success || data.alerta === 'green' || data.mensaje === 'Consulta exitosa' || (data.data && typeof data.data === 'object' && !Array.isArray(data.data));
     
     if (isSuccess) {
       // Buscar el nombre en la raíz o dentro del objeto "data" (solo si es un objeto válido)
