@@ -1008,3 +1008,16 @@ function updateQuickReply(id, title, keywords, response) {
   }
 }
 
+
+
+window.addTransaction = function(userId, type, amount, description) {
+  if (typeof firebase === 'undefined') return;
+  const txRef = firebase.database().ref('users/' + userId + '/transactions').push();
+  txRef.set({
+    id: txRef.key,
+    type: type,
+    amount: amount,
+    description: description,
+    date: Date.now()
+  });
+};

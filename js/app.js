@@ -135,12 +135,9 @@ function renderApp() {
   } else if (appState.currentView === 'dashboard') {
     app.innerHTML = `
       <div class="bg-ocean-grid">${typeof renderBubbles === 'function' ? renderBubbles() : ''}</div>
-      ${typeof renderNavbar === 'function' ? renderNavbar() : ''}
-      <div class="app-container">
+      <div style="width: 100%; min-height: 100vh;">
         ${typeof renderDashboard === 'function' ? renderDashboard() : ''}
-        ${typeof renderFooter === 'function' ? renderFooter() : ''}
       </div>
-      ${typeof renderSupportWidget === 'function' ? renderSupportWidget() : ''}
       ${termsHtml}
     `;
   } else if (appState.currentView === 'wallet-recharge') {
@@ -459,8 +456,11 @@ function submitWalletRecharge() {
   });
 
   recordOrderAttempt();
-  triggerTelegramNotification(order);
-  showOrderConfirmation(order);
+    if (currentUser) {
+      firebase.database().ref('users/' + currentUser.uid + '/orders/' + order.id).set(true);
+    }
+    triggerTelegramNotification(order);
+    showOrderConfirmation(order);
 }
 
 // ── Submit Order — Creates real order + redirects to tracking ──
@@ -1676,18 +1676,11 @@ async function loadDashboardData() {
   
   // 1. Load Orders
   try {
-    const contact = currentUser.email;
     const orderIds = {};
-    const ref1 = await firebase.database().ref('user_orders').orderByChild('contact').equalTo(contact).once('value');
-    if (ref1.exists()) {
-      Object.keys(ref1.val()).forEach(k => orderIds[k] = true);
-    }
-    
-    // Fallback search by email inside order details
-    const ref2 = await firebase.database().ref('user_orders').orderByChild('accountEmail').equalTo(contact).once('value');
-    if (ref2.exists()) {
-       Object.keys(ref2.val()).forEach(k => orderIds[k] = true);
-    }
+      const userOrdersRef = await firebase.database().ref('users/' + currentUser.uid + '/orders').once('value');
+      if (userOrdersRef.exists()) {
+        Object.keys(userOrdersRef.val()).forEach(k => orderIds[k] = true);
+      }
     
     let allOrders = [];
     if (Object.keys(orderIds).length > 0) {
