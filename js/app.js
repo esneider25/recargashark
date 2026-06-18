@@ -1293,7 +1293,7 @@ window.verifyGameId = async function(productId) {
       const src = data.data || data;
       
       // Probar múltiples campos. Ignoramos temporalmente los que tengan "@" (como los correos internos de NetEase)
-      let name = src.nickname || src.nick_name || src.role_name || src.PlayerName || src.player_name || src.nombre || src.Name;
+      let name = src.nickname || src.nick_name || src.rolename || src.role_name || src.PlayerName || src.player_name || src.nombre || src.Name;
       
       if (!name) {
         // Si no encontró los primarios, intentar con estos
