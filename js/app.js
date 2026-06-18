@@ -1025,8 +1025,8 @@ function previewScreenshot(input) {
 
         if (numbers.length > 0) {
           for (const num of numbers) {
-            // Check if any completed order has this exact number string in its OCR data
-            if (orders.some(o => o.status === 'completed' && o.ocrNumbers && o.ocrNumbers.includes(num))) {
+            // Check if any previous order (not rejected) has this exact number string in its OCR data
+            if (orders.some(o => o.status !== 'rejected' && o.ocrNumbers && o.ocrNumbers.includes(num))) {
               duplicateFound = true;
               break;
             }
