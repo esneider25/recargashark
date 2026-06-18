@@ -16,6 +16,11 @@ const appState = {
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('recharge') === 'true') {
+    appState.currentView = 'wallet-recharge';
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
   if (localStorage.getItem('recargashark_theme') === 'light') {
     document.body.classList.add('light-theme');
   }
@@ -132,14 +137,6 @@ function renderApp() {
       ${renderSupportWidget()}
       ${termsHtml}
     `;
-  } else if (appState.currentView === 'dashboard') {
-    app.innerHTML = `
-      <div class="bg-ocean-grid">${typeof renderBubbles === 'function' ? renderBubbles() : ''}</div>
-      <div style="width: 100%; min-height: 100vh;">
-        ${typeof renderDashboard === 'function' ? renderDashboard() : ''}
-      </div>
-      ${termsHtml}
-    `;
   } else if (appState.currentView === 'wallet-recharge') {
     app.innerHTML = `
       <div class="bg-ocean-grid">${typeof renderBubbles === 'function' ? renderBubbles() : ''}</div>
@@ -188,7 +185,8 @@ function navigateTo(view, param) {
     appState.currentView = 'history';
     appState.historyContactStr = param;
   } else if (view === 'dashboard') {
-      appState.currentView = 'dashboard';
+      window.location.href = 'usuario.html';
+      return;
     } else if (view === 'wallet-recharge') {
     appState.currentView = 'wallet-recharge';
     appState.selectedPaymentId = null;
