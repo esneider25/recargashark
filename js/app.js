@@ -1222,29 +1222,76 @@ window.verifyGameId = async function(productId) {
     };
     if (input2) payload.input2 = input2;
 
-    const baseUrl = api.baseUrl.endsWith('/') ? api.baseUrl.slice(0, -1) : api.baseUrl;
+    let bUrl = api.baseUrl.trim();
+    let proxyBaseUrl = bUrl;
+    let proxyEndpoint = 'check'; // Default for Smile.One
+    let finalMethod = 'POST';
+
+    // Manejar formato de TiendaGiftVen o APIs por GET
+    if (bUrl.includes('api.php') || bUrl.includes('action=')) {
+      finalMethod = 'GET';
+      
+      // Si el usuario puso {ID} o {ZONE} en la URL
+      if (bUrl.includes('{ID}')) {
+        bUrl = bUrl.replace('{ID}', encodeURIComponent(id_juego));
+        if (input2 && bUrl.includes('{ZONE}')) bUrl = bUrl.replace('{ZONE}', encodeURIComponent(input2));
+      } else if (bUrl.includes('?action=')) {
+        bUrl = bUrl.endsWith('=') ? bUrl + encodeURIComponent(id_juego) : bUrl + '&id=' + encodeURIComponent(id_juego);
+      } else {
+        bUrl = bUrl.endsWith('/') ? bUrl.slice(0, -1) : bUrl;
+        bUrl = bUrl + '/api.php?action=ValidarParametros&id=' + encodeURIComponent(id_juego);
+      }
+      
+      // Separar baseUrl y endpoint para evitar doble slash en el proxy
+      const queryIndex = bUrl.indexOf('?');
+      const basePath = queryIndex > -1 ? bUrl.substring(0, queryIndex) : bUrl;
+      const queryPart = queryIndex > -1 ? bUrl.substring(queryIndex) : '';
+      
+      const lastSlashIdx = basePath.lastIndexOf('/');
+      if (lastSlashIdx > 8) {
+        proxyBaseUrl = basePath.substring(0, lastSlashIdx);
+        proxyEndpoint = basePath.substring(lastSlashIdx + 1) + queryPart; 
+      } else {
+        proxyBaseUrl = basePath;
+        proxyEndpoint = queryPart.startsWith('?') ? queryPart.substring(1) : queryPart;
+      }
+    } else {
+      proxyBaseUrl = bUrl.endsWith('/') ? bUrl.slice(0, -1) : bUrl;
+    }
+
     const proxyUrl = '/api/proxy';
     
+    const requestBody = {
+      endpoint: proxyEndpoint,
+      method: finalMethod,
+      apiKey: api.apiKey || '',
+      baseUrl: proxyBaseUrl
+    };
+
+    if (finalMethod === 'POST') {
+      requestBody.data = payload;
+    }
+
     const response = await fetch(proxyUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        endpoint: 'check', // Typical verifier endpoint for Smile.One APIs
-        method: 'POST',
-        apiKey: api.apiKey,
-        baseUrl: baseUrl,
-        data: payload
-      })
+      body: JSON.stringify(requestBody)
     });
 
     const data = await response.json();
 
-    if (data.ok || data.status === 200 || data.code === 200 || data.username || data.nickname || data.role || data.nombre) {
-      const name = data.nickname || data.username || data.role || data.nombre || data.name || data.player_name;
-      if (name) {
-        resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ Nombre verificado: <b>${name}</b></span>`;
+    if (data.ok || data.status === 200 || data.code === 200 || data.username || data.nickname || data.role || data.nombre || data.PlayerName || data.name || data.success) {
+      const name = data.nickname || data.username || data.PlayerName || data.role || data.nombre || data.name || data.player_name || data.Name;
+      if (name && typeof name === 'string' && name.trim() !== '') {
+        resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ Nombre: <b>${name}</b></span>`;
       } else {
-        resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ ID Verificado con éxito</span>`;
+        // Si no se encuentra un campo de nombre explícito pero fue exitoso
+        let fallbackName = Object.values(data).find(v => typeof v === 'string' && v.length > 2 && v.length < 30 && v !== 'success' && v !== 'OK');
+        if (fallbackName) {
+           resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ Nombre: <b>${fallbackName}</b></span>`;
+        } else {
+           resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ ID Verificado con éxito</span>`;
+        }
       }
     } else {
       resultDiv.innerHTML = `<span style="color: #ff5252;">❌ ID no encontrado: ${data.error || data.msg || data.mensaje || 'Verifica el ID'}</span>`;
