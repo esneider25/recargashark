@@ -924,7 +924,7 @@ function buildOrderTelegramMessage(order) {
 }
 
 function buildOrderKeyboard(orderId) {
-  const adminUrl = 'https://admin.recargashark.com';
+  const adminUrl = 'https://admin.recargashark.com/admin.html';
   return [
     [
       { text: '✅ Aprobar', url: `${adminUrl}?action=approve&order=${orderId}` },
