@@ -1285,13 +1285,19 @@ window.verifyGameId = async function(productId) {
 
     const data = await response.json();
 
-    if (data.ok || data.status === 200 || data.code === 200 || data.username || data.nickname || data.role || data.nombre || data.PlayerName || data.name || data.success) {
-      const name = data.nickname || data.username || data.PlayerName || data.role || data.nombre || data.name || data.player_name || data.Name;
+    // Comprobar éxito (código 200 numérico o string, o si existe data.data)
+    const isSuccess = data.ok || data.status == 200 || data.code == 200 || data.success || (data.data && typeof data.data === 'object');
+    
+    if (isSuccess) {
+      // Buscar el nombre en la raíz o dentro del objeto "data"
+      const src = data.data || data;
+      const name = src.nickname || src.username || src.PlayerName || src.role || src.nombre || src.name || src.player_name || src.Name || src.role_name;
+      
       if (name && typeof name === 'string' && name.trim() !== '') {
         resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ Nombre: <b>${name}</b></span>`;
       } else {
-        // Si no se encuentra un campo de nombre explícito pero fue exitoso
-        let fallbackName = Object.values(data).find(v => typeof v === 'string' && v.length > 2 && v.length < 30 && v !== 'success' && v !== 'OK');
+        // Fallback genérico si no encuentra el campo exacto
+        let fallbackName = Object.values(src).find(v => typeof v === 'string' && v.length > 2 && v.length < 30 && v !== 'success' && v !== 'OK');
         if (fallbackName) {
            resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ Nombre: <b>${fallbackName}</b></span>`;
         } else {
@@ -1299,7 +1305,13 @@ window.verifyGameId = async function(productId) {
         }
       }
     } else {
-      resultDiv.innerHTML = `<span style="color: #ff5252;">❌ ID no encontrado: ${data.error || data.msg || data.mensaje || 'Verifica el ID'}</span>`;
+      // Mostrar el error o el JSON crudo para depurar
+      const errorMsg = data.error || data.msg || data.mensaje || data.message;
+      if (errorMsg) {
+        resultDiv.innerHTML = `<span style="color: #ff5252;">❌ Error: ${errorMsg}</span>`;
+      } else {
+        resultDiv.innerHTML = `<span style="color: #ff5252;">❌ ID Inválido. Respuesta API: ${JSON.stringify(data).substring(0, 60)}...</span>`;
+      }
     }
   } catch (error) {
     console.error('Error verificando ID:', error);
