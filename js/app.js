@@ -652,13 +652,6 @@ function lookupOrder() {
 
 // ── Rectify Order ID ──
 function rectifyOrderId(orderId) {
-  const input = document.getElementById('rectify-id-input');
-  if (!input || !input.value.trim()) {
-    showToast('⚠️ Ingresa los datos correctos');
-    input?.focus();
-    return;
-  }
-  const newGameId = input.value.trim();
   const orders = getOrders();
   const orderIndex = orders.findIndex(o => o.id === orderId);
   if (orderIndex === -1) {
@@ -667,10 +660,26 @@ function rectifyOrderId(orderId) {
   }
 
   const order = orders[orderIndex];
+  let newGameId = '';
 
   if (order.productType === 'account') {
-    order.accountEmail = newGameId;
+    const emailInput = document.getElementById('rectify-email-input');
+    const passInput = document.getElementById('rectify-pass-input');
+    if (!emailInput || !emailInput.value.trim() || !passInput || !passInput.value.trim()) {
+      showToast('⚠️ Ingresa correo y contraseña');
+      return;
+    }
+    order.accountEmail = emailInput.value.trim();
+    order.accountPassword = passInput.value.trim();
+    newGameId = `Correo: ${order.accountEmail} | Clave: ${order.accountPassword}`;
   } else {
+    const input = document.getElementById('rectify-id-input');
+    if (!input || !input.value.trim()) {
+      showToast('⚠️ Ingresa los datos correctos');
+      input?.focus();
+      return;
+    }
+    newGameId = input.value.trim();
     order.gameId = newGameId;
   }
 

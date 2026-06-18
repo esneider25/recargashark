@@ -612,9 +612,14 @@ function renderOrderTracking(orderId) {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 Corregir Datos del Pedido
               </h4>
-              <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 16px;">El ID o correo proporcionado es incorrecto. Por favor, ingresa los datos correctos a continuación para poder enviarte tu recarga.</p>
+              <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 16px;">Los datos proporcionados son incorrectos. Por favor, ingresa los datos correctos a continuación.</p>
               <div style="display: flex; flex-direction: column; gap: 12px;">
-                <input type="text" id="rectify-id-input" placeholder="Escribe aquí los datos correctos..." style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,167,38,0.4); border-radius: 8px; padding: 14px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#ffa726'" onblur="this.style.borderColor='rgba(255,167,38,0.4)'">
+                ${order.productType === 'account' ? `
+                  <input type="text" id="rectify-email-input" placeholder="Correo de la cuenta" style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,167,38,0.4); border-radius: 8px; padding: 14px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#ffa726'" onblur="this.style.borderColor='rgba(255,167,38,0.4)'">
+                  <input type="text" id="rectify-pass-input" placeholder="Contraseña de la cuenta" style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,167,38,0.4); border-radius: 8px; padding: 14px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#ffa726'" onblur="this.style.borderColor='rgba(255,167,38,0.4)'">
+                ` : `
+                  <input type="text" id="rectify-id-input" placeholder="Escribe aquí los datos correctos (ID)..." style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,167,38,0.4); border-radius: 8px; padding: 14px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#ffa726'" onblur="this.style.borderColor='rgba(255,167,38,0.4)'">
+                `}
                 <button class="btn-primary" onclick="rectifyOrderId('${order.id}')" style="width: 100%; padding: 14px 24px; background: #ffa726; color: #060d1a; box-shadow: 0 4px 15px rgba(255,167,38,0.3); border: none; font-weight: 700;">Re-enviar Pedido</button>
               </div>
             </div>
@@ -627,6 +632,9 @@ function renderOrderTracking(orderId) {
             <div class="tracking-detail-row"><span>Producto</span><span>${order.productName}</span></div>
             <div class="tracking-detail-row"><span>Tipo</span><span>${typeLabel}</span></div>
             <div class="tracking-detail-row"><span>Paquete</span><span>${order.packageLabel}</span></div>
+            ${order.gameId ? `<div class="tracking-detail-row"><span>ID Juego</span><span>${order.gameId}</span></div>` : ''}
+            ${order.accountEmail ? `<div class="tracking-detail-row"><span>Cuenta</span><span>${order.accountEmail}</span></div>` : ''}
+            ${order.accountPassword ? `<div class="tracking-detail-row"><span>Contraseña</span><span>${order.accountPassword}</span></div>` : ''}
             <div class="tracking-detail-row"><span>Total Pagado</span><span>${order.paymentCurrency === 'usd' ? '$' + order.priceUsd.toFixed(2) + ' USD' : 'Bs. ' + formatBs(order.priceBs)}</span></div>
             <div class="tracking-detail-row"><span>Método de Pago</span><span>${order.paymentMethodName}</span></div>
             <div class="tracking-detail-row"><span>Contacto</span><span>${order.customerContact}</span></div>
