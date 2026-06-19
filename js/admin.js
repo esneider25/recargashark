@@ -2786,14 +2786,8 @@ function renderCustomersTable(usersList) {
     return `
       <tr class="customer-row">
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.email || 'N/A'}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">
-          <div style="font-weight: bold;">${user.name || '-'}</div>
-          ${user.cedula ? `<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">C.I: ${user.cedula}</div>` : ''}
-        </td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">
-          <div>${user.whatsapp || 'N/A'}</div>
-          ${user.direccion ? `<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${user.direccion}">${user.direccion}</div>` : ''}
-        </td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.name || '-'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.whatsapp || 'N/A'}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${dateStr}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: right; color: #10b981; font-weight: bold;">${wallet.toFixed(2)}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
@@ -2806,7 +2800,8 @@ function renderCustomersTable(usersList) {
             ${user.isBlocked ? '🚫 Bloqueado' : '✅ Activo'}
           </button>
         </td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; display: flex; flex-direction: column; gap: 5px;">
+          <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openCustomerInfoModal('${user.uid}')">ℹ️ Info</button>
           <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openEditWalletModal('${user.uid}', '${user.email}', ${wallet})">Editar Saldo</button>
         </td>
       </tr>
@@ -2930,6 +2925,84 @@ window.viewUserTransactions = function(userId) {
 };
 
 // ── Roles and Blocking ──
+window.openCustomerInfoModal = function(uid) {
+  if (!window.ADMIN_CUSTOMERS) return;
+  const user = window.ADMIN_CUSTOMERS.find(u => u.uid === uid);
+  if (!user) return;
+
+  const allOrders = typeof getOrders === 'function' ? getOrders() : [];
+  const userOrders = allOrders.filter(o => o.userId === uid);
+  
+  const pending = userOrders.filter(o => o.status === 'pending' || o.status === 'processing').length;
+  const completed = userOrders.filter(o => o.status === 'completed').length;
+  const rejected = userOrders.filter(o => o.status === 'rejected').length;
+
+  const dateStr = user.createdAt ? new Date(user.createdAt).toLocaleString() : 'N/A';
+  const wallet = user.wallet || 0;
+
+  const modalHTML = `
+    <div class="modal-overlay active" id="customer-info-modal-overlay">
+      <div class="modal" style="max-width: 500px;">
+        <h3 style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+          <span>Detalles del Cliente</span>
+          <button onclick="document.getElementById('customer-info-modal-overlay').remove()" style="background:none; border:none; color: white; cursor: pointer; font-size: 1.2rem;">✕</button>
+        </h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+          <div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">Nombre</div>
+            <div style="font-weight: bold;">${user.name || 'N/A'}</div>
+          </div>
+          <div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">Email</div>
+            <div style="font-weight: bold;">${user.email || 'N/A'}</div>
+          </div>
+          <div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">WhatsApp</div>
+            <div style="font-weight: bold;">${user.whatsapp || 'N/A'}</div>
+          </div>
+          <div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">Cédula (C.I)</div>
+            <div style="font-weight: bold;">${user.cedula || 'N/A'}</div>
+          </div>
+          <div style="grid-column: span 2;">
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">Dirección</div>
+            <div style="font-weight: bold;">${user.direccion || 'N/A'}</div>
+          </div>
+          <div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">Fecha de Registro</div>
+            <div style="font-weight: bold;">${dateStr}</div>
+          </div>
+          <div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">Saldo (Monedero)</div>
+            <div style="font-weight: bold; color: #10b981;">$${wallet.toFixed(2)}</div>
+          </div>
+        </div>
+
+        <h4 style="margin-bottom: 10px; color: var(--text-secondary);">Historial de Recargas</h4>
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+          <div style="flex: 1; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 10px; text-align: center;">
+            <div style="font-size: 1.5rem; font-weight: bold; color: #f59e0b;">${pending}</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary);">Pendientes</div>
+          </div>
+          <div style="flex: 1; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 10px; text-align: center;">
+            <div style="font-size: 1.5rem; font-weight: bold; color: #10b981;">${completed}</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary);">Completadas</div>
+          </div>
+          <div style="flex: 1; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 10px; text-align: center;">
+            <div style="font-size: 1.5rem; font-weight: bold; color: #ef4444;">${rejected}</div>
+            <div style="font-size: 0.75rem; color: var(--text-secondary);">Rechazadas</div>
+          </div>
+        </div>
+
+        <div style="text-align: right;">
+          <button class="btn btn-primary" onclick="document.getElementById('customer-info-modal-overlay').remove()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+};
 window.openRoleModal = function(uid, currentRole, currentDiscount) {
   const modalHTML = `
     <div class="modal-overlay active" id="role-modal-overlay">
