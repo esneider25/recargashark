@@ -28,10 +28,43 @@
   --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+body.light-theme {
+  --bg-deep: #f0f4f8;
+  --bg-ocean: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.8);
+  --bg-card-hover: rgba(240, 244, 248, 0.9);
+  --accent: #00a88f; 
+  --accent-light: #00d1b2;
+  --accent-dim: #008773;
+  --accent-glow: rgba(0, 168, 143, 0.2);
+  --text-primary: #1a202c;
+  --text-secondary: #4a5568;
+  --text-muted: #718096;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-active: rgba(0, 168, 143, 0.4);
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+/* ── Custom Scrollbar ── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
 body {
@@ -39,6 +72,7 @@ body {
   background: var(--bg-deep);
   color: var(--text-primary);
   min-height: 100vh;
+  transition: background-color var(--transition), color var(--transition);
 }
 
 /* ── Admin Layout ── */
@@ -175,6 +209,12 @@ body {
   border-radius: var(--radius-lg);
   padding: 24px;
   margin-bottom: 24px;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+}
+
+.admin-card:hover {
+  border-color: var(--border-active);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .admin-card-header {
