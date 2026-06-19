@@ -961,7 +961,7 @@ function buildOrderTelegramMessage(order) {
   msg += `💰 <b>Monto:</b> $${order.priceUsd.toFixed(2)} USD | Bs. ${formatBs(order.priceBs)}\n`;
   
   if (order.discountCode) {
-    const discountStr = order.discountType === 'percent' ? `${order.discountValue}%` : `$${parseFloat(order.discountValue).toFixed(2)} USD`;
+    const discountStr = order.discountType === 'percentage' ? `${order.discountValue}%` : `$${parseFloat(order.discountValue).toFixed(2)} USD`;
     msg += `🎁 <b>Descuento:</b> ${order.discountCode} (-${discountStr})\n`;
   }
   
