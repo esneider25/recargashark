@@ -25,17 +25,89 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+
 function renderApp() {
   const app = document.getElementById('app');
   if (!app) return;
+  
+  if (!currentUser) {
+    app.innerHTML = `<div style="text-align:center; padding: 150px 20px;"><h2>Por favor inicia sesión.</h2></div>`;
+    return;
+  }
+
+  // Inject CSS & Structure
   app.innerHTML = `
+    ${css_styles.replace('`', '\`')}
     <div class="bg-ocean-grid">${typeof renderBubbles === 'function' ? renderBubbles() : ''}</div>
-    <div style="width: 100%; min-height: 100vh;">
-      ${renderDashboard()}
+    
+    <div class="user-panel-layout">
+      
+      <aside class="panel-sidebar">
+        <div style="padding: 0 20px 20px; text-align: center; display: none;" id="mobile-hide-avatar">
+          <img src="${currentUser.photoURL || 'https://ui-avatars.com/api/?name=' + currentUser.email + '&background=0D8ABC&color=fff'}" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--accent); margin-bottom: 10px;">
+          <h3 style="margin:0; font-size: 1.1rem;">${currentUser.displayName || 'Usuario'}</h3>
+        </div>
+        
+        <div class="nav-item active" onclick="switchSection('dashboard')" id="nav-dashboard">
+          <i class="ph ph-squares-four"></i> <span>Resumen</span>
+        </div>
+        <div class="nav-item" onclick="switchSection('orders')" id="nav-orders">
+          <i class="ph ph-package"></i> <span>Mis Pedidos</span>
+        </div>
+        <div class="nav-item" onclick="switchSection('wallet')" id="nav-wallet">
+          <i class="ph ph-wallet"></i> <span>Billetera</span>
+        </div>
+        <div class="nav-item" onclick="switchSection('ids')" id="nav-ids">
+          <i class="ph ph-address-book"></i> <span>IDs</span>
+        </div>
+        <div class="nav-item" onclick="switchSection('profile')" id="nav-profile">
+          <i class="ph ph-user-circle-gear"></i> <span>Mi Perfil</span>
+        </div>
+        <div style="flex:1" id="nav-spacer"></div>
+        <div class="nav-item" onclick="navigateTo('home')" style="color: var(--text-secondary);" id="nav-home">
+          <i class="ph ph-storefront"></i> <span>Tienda</span>
+        </div>
+        <div class="nav-item" onclick="logout()" style="color: #ff5252;" id="nav-logout">
+          <i class="ph ph-sign-out"></i> <span>Salir</span>
+        </div>
+      </aside>
+
+      <main class="panel-main">
+        ${renderDashboardContent()}
+      </main>
+
     </div>
     <div id="terms-modal-container"></div>
   `;
+  
+  // Ocultar avatar en sidebar movil
+  if(window.innerWidth > 900) {
+     const av = document.getElementById('mobile-hide-avatar');
+     if(av) av.style.display = 'block';
+  } else {
+     const sp = document.getElementById('nav-spacer');
+     if(sp) sp.style.display = 'none';
+  }
+
+  // Cargar datos
+  setTimeout(() => { if (typeof loadDashboardData === 'function') loadDashboardData(); }, 100);
 }
+
+window.switchSection = function(sectionId) {
+  // Update Nav
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const navBtn = document.getElementById('nav-' + sectionId);
+  if(navBtn) navBtn.classList.add('active');
+
+  // Update Sections
+  document.querySelectorAll('.panel-section').forEach(el => el.classList.remove('active'));
+  const sec = document.getElementById('sec-' + sectionId);
+  if(sec) sec.classList.add('active');
+  
+  window.scrollTo(0,0);
+}
+
+
 
 function navigateTo(view) {
   if (view === 'home') {
@@ -98,6 +170,7 @@ async function loadDashboardData() {
   renderDashboardTransactions();
 }
 
+
 function switchDashboardTab(tab) {
   const activeBtn = document.getElementById('tab-active-orders');
   const completedBtn = document.getElementById('tab-completed-orders');
@@ -106,19 +179,22 @@ function switchDashboardTab(tab) {
   if (!activeBtn || !completedBtn || !container) return;
 
   if (tab === 'active') {
-    activeBtn.style.color = '#10b981';
-    activeBtn.style.borderBottom = '2px solid #10b981';
+    activeBtn.style.color = 'var(--accent)';
+    activeBtn.style.borderBottom = '2px solid var(--accent)';
     completedBtn.style.color = 'var(--text-secondary)';
     completedBtn.style.borderBottom = 'none';
     container.innerHTML = renderDashboardOrders(dashboardOrders.active, 'active');
   } else {
-    completedBtn.style.color = '#10b981';
-    completedBtn.style.borderBottom = '2px solid #10b981';
+    completedBtn.style.color = 'var(--accent)';
+    completedBtn.style.borderBottom = '2px solid var(--accent)';
     activeBtn.style.color = 'var(--text-secondary)';
     activeBtn.style.borderBottom = 'none';
     container.innerHTML = renderDashboardOrders(dashboardOrders.completed, 'completed');
   }
 }
+
+
+
 
 function renderDashboardSavedIds() {
   const container = document.getElementById('dashboard-saved-ids');
@@ -130,25 +206,31 @@ function renderDashboardSavedIds() {
   }
   
   if (idsList.length === 0) {
-    container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-secondary);">No tienes cuentas guardadas.</div>`;
+    container.innerHTML = `
+      <div style="text-align:center; padding: 40px; color: var(--text-secondary);">
+        <i class="ph ph-address-book" style="font-size: 3rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
+        No tienes cuentas guardadas.<br>Guárdalas para comprar más rápido.
+      </div>`;
     return;
   }
   container.innerHTML = idsList.map((id, index) => `
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 8px;">
-      <div>
-        <div style="font-weight: bold; font-size: 0.9rem;">${id.gameName}</div>
-        <div style="font-size: 0.8rem; color: var(--text-secondary);">ID: ${id.uid} ${id.zoneId ? '| Zona: ' + id.zoneId : ''}</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 10px; transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(0,0,0,0.2)'">
+      <div style="display: flex; gap: 15px; align-items: center;">
+        <div style="width: 40px; height: 40px; border-radius: 10px; background: var(--accent-glow); display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 1.4rem;">
+          <i class="ph ph-game-controller"></i>
+        </div>
+        <div>
+          <div style="font-weight: bold; font-size: 1rem;">${id.gameName}</div>
+          <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">
+            <span style="color: white; font-family: monospace;">UID: ${id.uid}</span> ${id.zoneId ? '<span style="margin: 0 5px;">|</span> <span style="color: white; font-family: monospace;">Zona: ' + id.zoneId + '</span>' : ''}
+          </div>
+        </div>
       </div>
-      <button onclick="removeSavedId(${index})" style="background: none; border: none; color: #ff5252; cursor: pointer;" title="Eliminar">🗑️</button>
+      <button onclick="removeSavedId(${index})" style="background: rgba(255, 82, 82, 0.1); border: 1px solid rgba(255,82,82,0.3); border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: #ff5252; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='#ff5252'; this.style.color='white'" onmouseout="this.style.background='rgba(255,82,82,0.1)'; this.style.color='#ff5252'" title="Eliminar">
+        <i class="ph ph-trash" style="font-size: 1.1rem;"></i>
+      </button>
     </div>
   `).join('');
-}
-
-function removeSavedId(index) {
-  if (!currentUser || !userProfile || !userProfile.savedIds) return;
-  let newIds = Array.isArray(userProfile.savedIds) ? [...userProfile.savedIds] : Object.values(userProfile.savedIds);
-  newIds.splice(index, 1);
-  firebase.database().ref('users/' + currentUser.uid + '/savedIds').set(newIds);
 }
 
 function showAddIdModal() {
@@ -156,16 +238,18 @@ function showAddIdModal() {
   modal.id = 'add-id-modal';
   modal.style.position = 'fixed';
   modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
-  modal.style.background = 'rgba(0,0,0,0.8)'; modal.style.zIndex = '1000';
+  modal.style.background = 'rgba(0,0,0,0.8)'; 
+  modal.style.backdropFilter = 'blur(8px)';
+  modal.style.zIndex = '1000';
   modal.style.display = 'flex'; modal.style.alignItems = 'center'; modal.style.justifyContent = 'center';
   
   modal.innerHTML = `
-    <div style="background: var(--bg-surface); padding: 30px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 400px;">
-      <h3 style="margin-top: 0; margin-bottom: 20px;">Añadir Cuenta Guardada</h3>
+    <div style="background: var(--bg-surface); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); animation: fadeIn 0.3s ease;">
+      <h3 style="margin-top: 0; margin-bottom: 24px; font-size: 1.3rem; display: flex; align-items: center; gap: 8px;"><i class="ph-fill ph-game-controller" style="color: var(--accent);"></i> Añadir Cuenta</h3>
       
       <div class="form-group">
-        <label>Juego</label>
-        <select id="new-id-game" class="form-input">
+        <label style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 8px; display: block;">Juego</label>
+        <select id="new-id-game" class="form-input" style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px;">
           <option value="Free Fire">Free Fire</option>
           <option value="Mobile Legends">Mobile Legends</option>
           <option value="PUBG Mobile">PUBG Mobile</option>
@@ -174,24 +258,35 @@ function showAddIdModal() {
         </select>
       </div>
       
-      <div class="form-group">
-        <label>Player ID / UID</label>
-        <input type="text" id="new-id-uid" class="form-input" placeholder="Ej. 12345678">
+      <div class="form-group" style="margin-top: 15px;">
+        <label style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 8px; display: block;">Player ID / UID</label>
+        <input type="text" id="new-id-uid" class="form-input" style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px;" placeholder="Ej. 12345678">
       </div>
       
-      <div class="form-group">
-        <label>Zone ID (Opcional)</label>
-        <input type="text" id="new-id-zone" class="form-input" placeholder="Ej. 1234 (Solo MLBB)">
+      <div class="form-group" style="margin-top: 15px;">
+        <label style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 8px; display: block;">Zone ID (Opcional)</label>
+        <input type="text" id="new-id-zone" class="form-input" style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px;" placeholder="Ej. 1234 (Solo MLBB)">
       </div>
       
-      <div style="display: flex; gap: 10px; margin-top: 25px;">
-        <button class="btn-secondary" style="flex: 1;" onclick="closeAddIdModal()">Cancelar</button>
-        <button class="btn-primary" style="flex: 1;" onclick="submitAddId()">Guardar</button>
+      <div style="display: flex; gap: 10px; margin-top: 30px;">
+        <button class="btn-secondary" style="flex: 1; border-radius: 12px;" onclick="closeAddIdModal()">Cancelar</button>
+        <button class="btn-primary" style="flex: 1; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="submitAddId()"><i class="ph ph-check"></i> Guardar</button>
       </div>
     </div>
   `;
   document.body.appendChild(modal);
 }
+
+
+
+function removeSavedId(index) {
+  if (!currentUser || !userProfile || !userProfile.savedIds) return;
+  let newIds = Array.isArray(userProfile.savedIds) ? [...userProfile.savedIds] : Object.values(userProfile.savedIds);
+  newIds.splice(index, 1);
+  firebase.database().ref('users/' + currentUser.uid + '/savedIds').set(newIds);
+}
+
+
 
 function closeAddIdModal() {
   const modal = document.getElementById('add-id-modal');
@@ -254,13 +349,8 @@ function redeemPoints() {
 // Componentes HTML
 // ==========================================
 // (Se extrajeron de components.js)
-function renderDashboard() {
-  if (!currentUser) {
-    return `<div style="text-align:center; padding: 100px;"><h2>Por favor inicia sesión.</h2></div>`;
-  }
 
-  setTimeout(() => { if (typeof loadDashboardData === 'function') loadDashboardData(); }, 100);
-
+function renderDashboardContent() {
   const wallet = userProfile?.wallet || 0;
   const spent = userProfile?.totalSpent || 0;
   const points = userProfile?.points || 0;
@@ -270,145 +360,160 @@ function renderDashboard() {
   if (vip.nextThreshold) {
      const percent = Math.min(100, (spent / vip.nextThreshold) * 100);
      progressHtml = `
-       <div style="margin-top: 15px; font-size: 0.8rem; color: var(--text-secondary);">
-         Progreso a siguiente nivel: $${spent.toFixed(2)} / $${vip.nextThreshold}
-         <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 5px; overflow: hidden;">
-           <div style="width: ${percent}%; height: 100%; background: ${vip.gradient}; transition: width 1s ease;"></div>
+       <div style="margin-top: 15px; font-size: 0.85rem; color: var(--text-secondary);">
+         <div style="display:flex; justify-content: space-between; margin-bottom: 6px;">
+           <span>Progreso a siguiente nivel</span>
+           <span style="color: white; font-weight: bold;">$${spent.toFixed(2)} / $${vip.nextThreshold}</span>
+         </div>
+         <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+           <div style="width: ${percent}%; height: 100%; background: ${vip.gradient}; box-shadow: 0 0 10px ${vip.color}; transition: width 1s ease;"></div>
          </div>
        </div>
      `;
   } else {
-     progressHtml = `<div style="margin-top: 15px; font-size: 0.85rem; color: ${vip.color}; font-weight: bold;">¡Has alcanzado el nivel máximo!</div>`;
+     progressHtml = `<div style="margin-top: 15px; font-size: 0.9rem; color: ${vip.color}; font-weight: bold; display: flex; align-items: center; gap: 5px;"><i class="ph-fill ph-star"></i> ¡Has alcanzado el nivel máximo!</div>`;
   }
 
-  return `
-    <div class="dashboard-container" style="max-width: 1200px; margin: 40px auto; padding: 20px; color: white;">
-      <h1 style="margin-bottom: 30px; font-size: 2.5rem; text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);">Panel de Usuario</h1>
-      
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px;">
-        
-        <div style="background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); padding: 25px; border-radius: 16px; display: flex; gap: 20px; align-items: center; position: relative; overflow: hidden;">
-          <div style="position: absolute; top: -50px; right: -50px; width: 100px; height: 100px; background: ${vip.gradient}; filter: blur(50px); opacity: 0.3;"></div>
-          <img src="${currentUser.photoURL || 'https://ui-avatars.com/api/?name=' + currentUser.email + '&background=0D8ABC&color=fff'}" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid ${vip.color}; box-shadow: 0 0 15px ${vip.color}40; position: relative; z-index: 2;">
-          <div style="flex: 1; position: relative; z-index: 2;">
-            <h3 style="margin: 0 0 5px 0; font-size: 1.3rem;">${currentUser.displayName || 'Usuario'}</h3>
-            <span style="background: ${vip.gradient}; color: #000; font-weight: bold; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; box-shadow: 0 2px 10px ${vip.color}50;">VIP ${vip.name}</span>
-            ${progressHtml}
-          </div>
-        </div>
-
-        <div style="background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(16, 185, 129, 0.3); padding: 25px; border-radius: 16px; position: relative; overflow: hidden;">
-          <div style="position: absolute; bottom: -50px; left: -50px; width: 100px; height: 100px; background: #10b981; filter: blur(50px); opacity: 0.2;"></div>
-          <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Saldo Monedero</div>
-          <div style="font-size: 2.8rem; font-weight: 800; color: #10b981; text-shadow: 0 0 15px rgba(16, 185, 129, 0.3);">\$${wallet.toFixed(2)}</div>
-          <div style="margin-top: 15px; display: flex; gap: 10px;">
-            <button onclick="startWalletRecharge()" class="btn-primary" style="flex: 1; padding: 8px;">+ Recargar</button>
-          </div>
-        </div>
-
-        <div style="background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(59, 130, 246, 0.3); padding: 25px; border-radius: 16px; position: relative; overflow: hidden;">
-          <div style="position: absolute; bottom: -50px; right: -50px; width: 100px; height: 100px; background: #3b82f6; filter: blur(50px); opacity: 0.2;"></div>
-          <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Shark Points</div>
-          <div style="font-size: 2.5rem; font-weight: 800; color: #3b82f6; text-shadow: 0 0 15px rgba(59, 130, 246, 0.3);">${points}</div>
-          <div style="margin-top: 15px; display: flex; gap: 10px;">
-            <button onclick="if(typeof redeemPoints==='function')redeemPoints()" class="btn-secondary" style="flex: 1; padding: 8px; border-color: #3b82f6; color: #3b82f6;">Canjear por $1</button>
-          </div>
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
-        
-        <div>
-          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 25px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
-              <h2 style="margin: 0; font-size: 1.5rem;">Mis Pedidos</h2>
-              <div style="display: flex; gap: 15px;">
-                <button id="tab-active-orders" onclick="switchDashboardTab('active')" style="background:none; border:none; color: #10b981; border-bottom: 2px solid #10b981; padding-bottom: 5px; cursor: pointer; font-weight: bold;">En Proceso</button>
-                <button id="tab-completed-orders" onclick="switchDashboardTab('completed')" style="background:none; border:none; color: var(--text-secondary); padding-bottom: 5px; cursor: pointer; font-weight: bold;">Completados</button>
-              </div>
-            </div>
-            <div id="dashboard-orders-container" style="min-height: 200px;">
-              <div style="text-align:center; padding: 40px;"><span class="tracking-spinner" style="display:inline-block; width:24px; height:24px; border:3px solid #10b981; border-bottom-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></span></div>
-            </div>
-          </div>
-          
-          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 25px;">
-             <h2 style="margin: 0 0 20px 0; font-size: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">Historial de Billetera</h2>
-             <div id="dashboard-transactions-container" style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
-                <div style="text-align:center; padding: 20px; color: var(--text-secondary);">Cargando movimientos...</div>
-             </div>
-          </div>
-        </div>
-
-        <div>
-          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 25px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-              <h3 style="margin: 0;">Libreta de IDs</h3>
-              <button onclick="showAddIdModal()" class="btn-primary" style="padding: 5px 12px; font-size: 0.8rem; border-radius: 20px;">+ Añadir</button>
-            </div>
-            <div id="dashboard-saved-ids">
-              <div style="text-align:center; color:var(--text-secondary);"><small>Cargando...</small></div>
-            </div>
-          </div>
-
-          <div style="display: flex; flex-direction: column; gap: 10px;">
-            <button class="btn-primary" style="width: 100%; border-radius: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;" onclick="openSettingsModal()">⚙️ Ajustes de Cuenta</button>
-            <button class="btn-secondary" style="width: 100%; border-radius: 12px;" onclick="navigateTo('home')">Volver a la Tienda</button>
-            <button onclick="logout()" class="btn-secondary" style="width: 100%; border-radius: 12px; color: #ff5252; border-color: rgba(255, 82, 82, 0.3); background: rgba(255, 82, 82, 0.05);">Cerrar Sesión</button>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  `;
-}
-
-function openSettingsModal() {
-  const existing = document.getElementById('settings-modal');
-  if (existing) existing.remove();
-
-  const modal = document.createElement('div');
-  modal.id = 'settings-modal';
-  modal.style.position = 'fixed';
-  modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
-  modal.style.background = 'rgba(0,0,0,0.8)'; modal.style.zIndex = '1000';
-  modal.style.display = 'flex'; modal.style.alignItems = 'center'; modal.style.justifyContent = 'center';
-  
   const currentName = currentUser.displayName || (typeof userProfile !== 'undefined' && userProfile ? userProfile.name : '') || '';
   const currentWhatsapp = (typeof userProfile !== 'undefined' && userProfile ? userProfile.whatsapp : '') || '';
 
-  modal.innerHTML = `
-    <div style="background: var(--bg-surface); padding: 30px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 400px; color: white;">
-      <h3 style="margin-top: 0; margin-bottom: 20px;">Ajustes de Cuenta</h3>
+  return `
+    <!-- SECTION: DASHBOARD RESUMEN -->
+    <section id="sec-dashboard" class="panel-section active">
+      <h2 style="font-family: var(--font-display); font-size: 2rem; margin-bottom: 24px;">Hola, ${currentName || 'Shark'} 👋</h2>
       
-      <div class="form-group" style="margin-bottom: 15px;">
-        <label>Nombre a Mostrar</label>
-        <input type="text" id="setting-name" class="form-input" value="${currentName}" placeholder="Tu nombre">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px;">
+        
+        <!-- VIP Card -->
+        <div class="glass-card">
+          <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: ${vip.gradient}; filter: blur(60px); opacity: 0.2;"></div>
+          <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 15px;">
+            <div style="width: 60px; height: 60px; border-radius: 50%; background: ${vip.gradient}; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: #000; box-shadow: 0 4px 15px ${vip.color}40;">
+              <i class="ph-fill ph-crown"></i>
+            </div>
+            <div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem;">Nivel Actual</div>
+              <div style="font-size: 1.8rem; font-weight: 800; background: ${vip.gradient}; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">VIP ${vip.name}</div>
+            </div>
+          </div>
+          ${progressHtml}
+        </div>
+
+        <!-- Wallet Card -->
+        <div class="glass-card" style="border-color: rgba(16, 185, 129, 0.2);">
+          <div style="position: absolute; bottom: -50px; left: -50px; width: 150px; height: 150px; background: #10b981; filter: blur(60px); opacity: 0.15;"></div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;"><i class="ph ph-wallet"></i> Saldo Monedero</div>
+              <div style="font-size: 2.5rem; font-weight: 800; color: #10b981; text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);">\$${wallet.toFixed(2)}</div>
+            </div>
+            <button onclick="startWalletRecharge()" class="btn-primary" style="padding: 10px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16,185,129,0.3);" title="Recargar">
+              <i class="ph ph-plus" style="font-size: 1.2rem;"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Points Card -->
+        <div class="glass-card" style="border-color: rgba(59, 130, 246, 0.2);">
+          <div style="position: absolute; bottom: -50px; right: -50px; width: 150px; height: 150px; background: #3b82f6; filter: blur(60px); opacity: 0.15;"></div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;"><i class="ph ph-star"></i> Shark Points</div>
+              <div style="font-size: 2.5rem; font-weight: 800; color: #3b82f6; text-shadow: 0 0 20px rgba(59, 130, 246, 0.4);">${points}</div>
+            </div>
+            <button onclick="if(typeof redeemPoints==='function')redeemPoints()" class="btn-secondary" style="padding: 10px 15px; border-radius: 12px; font-size: 0.85rem; border-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,0.1);" title="Canjear 100 PTS = $1">
+              Canjear
+            </button>
+          </div>
+        </div>
       </div>
       
-      <div class="form-group" style="margin-bottom: 15px;">
-        <label>Número de WhatsApp</label>
-        <input type="text" id="setting-whatsapp" class="form-input" value="${currentWhatsapp}" placeholder="Ej. 04120000000">
-      </div>
-      
-      <div class="form-group" style="margin-bottom: 15px;">
-        <label>Nueva Contraseña (Opcional)</label>
-        <input type="password" id="setting-password" class="form-input" placeholder="Dejar en blanco para no cambiar">
+      <!-- Referral Banner Placeholder -->
+      <div class="glass-card" style="background: linear-gradient(90deg, rgba(15,31,56,0.8), rgba(0,229,195,0.1)); border-color: var(--accent); padding: 20px 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+        <div>
+          <h3 style="margin: 0 0 5px 0; color: var(--accent); display: flex; align-items: center; gap: 8px;"><i class="ph-fill ph-users-three"></i> ¡Invita y Gana!</h3>
+          <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">Próximamente: Obtén Shark Points invitando a tus amigos a RecargaShark.</p>
+        </div>
+        <button class="btn-secondary" disabled style="opacity: 0.5; cursor: not-allowed; padding: 8px 20px; font-size: 0.9rem;">Muy pronto</button>
       </div>
 
-      <div class="form-group" style="margin-bottom: 20px;">
-        <label>Confirmar Nueva Contraseña</label>
-        <input type="password" id="setting-password-confirm" class="form-input" placeholder="Repite la contraseña">
+    </section>
+
+    <!-- SECTION: MIS PEDIDOS -->
+    <section id="sec-orders" class="panel-section">
+      <div class="glass-card" style="min-height: 400px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+          <h2 style="margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px;"><i class="ph ph-package"></i> Historial de Pedidos</h2>
+          <div style="display: flex; gap: 15px;">
+            <button id="tab-active-orders" onclick="switchDashboardTab('active')" style="background:none; border:none; color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 5px; cursor: pointer; font-weight: bold; transition: 0.3s;">En Proceso</button>
+            <button id="tab-completed-orders" onclick="switchDashboardTab('completed')" style="background:none; border:none; color: var(--text-secondary); padding-bottom: 5px; cursor: pointer; font-weight: bold; transition: 0.3s;">Completados</button>
+          </div>
+        </div>
+        <div id="dashboard-orders-container">
+          <div style="text-align:center; padding: 60px;"><span class="tracking-spinner" style="display:inline-block; width:30px; height:30px; border:3px solid var(--accent); border-bottom-color:transparent; border-radius:50%; animation:spin 1s linear infinite;"></span></div>
+        </div>
       </div>
-      
-      <div style="display: flex; gap: 10px; margin-top: 25px;">
-        <button class="btn-secondary" style="flex: 1;" onclick="document.getElementById('settings-modal').remove()">Cancelar</button>
-        <button class="btn-primary" style="flex: 1;" id="btn-save-settings" onclick="saveProfileSettings()">Guardar</button>
+    </section>
+
+    <!-- SECTION: BILLETERA -->
+    <section id="sec-wallet" class="panel-section">
+      <div class="glass-card" style="min-height: 400px;">
+         <h2 style="margin: 0 0 20px 0; font-size: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; display: flex; align-items: center; gap: 10px;"><i class="ph ph-wallet"></i> Historial de Movimientos</h2>
+         <div id="dashboard-transactions-container" style="max-height: 500px; overflow-y: auto; padding-right: 10px;">
+            <div style="text-align:center; padding: 40px; color: var(--text-secondary);">Cargando movimientos...</div>
+         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- SECTION: LIBRETA DE IDS -->
+    <section id="sec-ids" class="panel-section">
+      <div class="glass-card" style="min-height: 400px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+          <h2 style="margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px;"><i class="ph ph-address-book"></i> Libreta de IDs</h2>
+          <button onclick="showAddIdModal()" class="btn-primary" style="padding: 8px 16px; font-size: 0.9rem; border-radius: 12px; display: flex; align-items: center; gap: 6px;"><i class="ph ph-plus"></i> Añadir ID</button>
+        </div>
+        <div id="dashboard-saved-ids">
+          <div style="text-align:center; color:var(--text-secondary); padding: 40px;">Cargando...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: PERFIL -->
+    <section id="sec-profile" class="panel-section">
+      <div class="glass-card" style="max-width: 600px; margin: 0 auto;">
+        <h2 style="margin: 0 0 24px 0; font-size: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; display: flex; align-items: center; gap: 10px;"><i class="ph ph-user-circle-gear"></i> Ajustes de Cuenta</h2>
+        
+        <div class="profile-form-group">
+          <label><i class="ph ph-user"></i> Nombre a Mostrar</label>
+          <input type="text" id="setting-name" class="profile-input" value="${currentName}" placeholder="Tu nombre">
+        </div>
+        
+        <div class="profile-form-group">
+          <label><i class="ph ph-whatsapp-logo"></i> Número de WhatsApp</label>
+          <input type="text" id="setting-whatsapp" class="profile-input" value="${currentWhatsapp}" placeholder="Ej. 04120000000">
+        </div>
+        
+        <div class="profile-form-group">
+          <label><i class="ph ph-lock-key"></i> Nueva Contraseña (Opcional)</label>
+          <input type="password" id="setting-password" class="profile-input" placeholder="Dejar en blanco para no cambiar">
+        </div>
+
+        <div class="profile-form-group" style="margin-bottom: 30px;">
+          <label><i class="ph ph-lock-key"></i> Confirmar Nueva Contraseña</label>
+          <input type="password" id="setting-password-confirm" class="profile-input" placeholder="Repite la contraseña">
+        </div>
+        
+        <button class="btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1.05rem;" id="btn-save-settings" onclick="saveProfileSettings()">
+          <i class="ph ph-floppy-disk"></i> Guardar Cambios
+        </button>
+      </div>
+    </section>
   `;
-  document.body.appendChild(modal);
 }
+
+
+
+
 
 async function saveProfileSettings() {
   if (!currentUser) return;
@@ -456,10 +561,12 @@ async function saveProfileSettings() {
       userProfile.whatsapp = whatsapp;
     }
 
+
     alert('Ajustes guardados correctamente.');
-    document.getElementById('settings-modal').remove();
-    renderApp(); // Reload to show new name in UI
+    renderApp();
+    setTimeout(() => switchSection('profile'), 150); // Keep in profile tab
   } catch (err) {
+
     if (err.code === 'auth/requires-recent-login') {
       alert('Por seguridad, debes cerrar sesión y volver a entrar para cambiar tu contraseña.');
     } else {
@@ -477,21 +584,24 @@ function openOrderTracking(orderId) {
   window.location.href = '/?tracking=' + orderId;
 }
 
+
 function renderDashboardOrders(orders, type) {
   if (orders.length === 0) {
     return `
-      <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-        <div style="font-size: 3rem; margin-bottom: 10px; opacity: 0.5;">${type === 'active' ? '📦' : '✅'}</div>
-        <h3 style="font-weight: 500;">No tienes pedidos ${type === 'active' ? 'en proceso' : 'completados'}.</h3>
+      <div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
+        <i class="${type === 'active' ? 'ph ph-package' : 'ph ph-check-circle'}" style="font-size: 4rem; opacity: 0.3; margin-bottom: 15px; display: block;"></i>
+        <h3 style="font-weight: 500; font-size: 1.2rem;">No tienes pedidos ${type === 'active' ? 'en proceso' : 'completados'}.</h3>
+        <button class="btn-primary" onclick="navigateTo('home')" style="margin-top: 20px; padding: 10px 24px; border-radius: 12px; font-size: 0.9rem;">Hacer un pedido</button>
       </div>
     `;
   }
   
   return orders.map(order => {
     let statusColor = '#f59e0b';
-    if (order.status === 'processing') statusColor = '#3b82f6';
-    if (order.status === 'completed') statusColor = '#10b981';
-    if (order.status === 'rejected') statusColor = '#ef4444';
+    let statusIcon = 'ph-clock-countdown';
+    if (order.status === 'processing') { statusColor = '#3b82f6'; statusIcon = 'ph-spinner-gap'; }
+    if (order.status === 'completed') { statusColor = '#10b981'; statusIcon = 'ph-check-circle'; }
+    if (order.status === 'rejected') { statusColor = '#ef4444'; statusIcon = 'ph-x-circle'; }
 
     const STATUS_ES = {
       'pending': 'PENDIENTE',
@@ -502,34 +612,42 @@ function renderDashboardOrders(orders, type) {
     const statusText = STATUS_ES[order.status] || order.status.toUpperCase();
 
     return `
-    <div onclick="openOrderTracking('${order.id}')" style="cursor: pointer; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-left: 4px solid ${statusColor}; border-radius: 8px; padding: 20px; margin-bottom: 15px; transition: transform 0.2s ease, background 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.transform='translateY(0)'">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-        <div>
-          <span style="font-weight: 800; color: #fff; font-size: 1.1rem;">${order.productName || 'Producto'}</span>
-          <div style="color: #10b981; font-weight: bold; margin-top: 5px;">${order.packageLabel || ''}</div>
+    <div onclick="openOrderTracking('${order.id}')" style="cursor: pointer; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-left: 4px solid ${statusColor}; border-radius: 12px; padding: 20px; margin-bottom: 16px; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.3)'" onmouseout="this.style.background='rgba(0,0,0,0.2)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        <div style="display: flex; gap: 15px; align-items: center;">
+          <div style="width: 48px; height: 48px; border-radius: 12px; background: ${statusColor}15; display: flex; align-items: center; justify-content: center; color: ${statusColor}; font-size: 1.5rem;">
+            <i class="ph ${statusIcon}"></i>
+          </div>
+          <div>
+            <span style="font-weight: 800; color: #fff; font-size: 1.1rem;">${order.productName || 'Producto'}</span>
+            <div style="color: var(--accent); font-weight: bold; margin-top: 2px; font-size: 0.9rem;">${order.packageLabel || ''}</div>
+          </div>
         </div>
         <div style="text-align: right;">
-           <span style="background: ${statusColor}20; color: ${statusColor}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid ${statusColor}40;">${statusText}</span>
-           <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px;">Ord: #${order.id}</div>
+           <span style="background: ${statusColor}20; color: ${statusColor}; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; border: 1px solid ${statusColor}40; letter-spacing: 0.5px;">${statusText}</span>
+           <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px; font-family: monospace;">#${order.id}</div>
         </div>
       </div>
-      <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 10px;">
-        Fecha: ${new Date(order.createdAt).toLocaleString()}
+      <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+        <i class="ph ph-calendar-blank"></i> ${new Date(order.createdAt).toLocaleString()}
       </div>
       
       ${type === 'active' ? `
-      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 5px; font-weight: bold;">
-        <span style="color: ${order.status === 'pending' || order.status === 'processing' ? '#10b981' : 'var(--text-secondary)'}">1. Recibido</span>
+      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px; font-weight: bold;">
+        <span style="color: ${order.status === 'pending' || order.status === 'processing' ? 'var(--accent)' : 'var(--text-secondary)'}">1. Recibido</span>
         <span style="color: ${order.status === 'processing' ? '#3b82f6' : 'var(--text-secondary)'}">2. Procesando</span>
         <span>3. Entregado</span>
       </div>
-      <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
-        <div style="width: ${order.status === 'pending' ? '33%' : (order.status === 'processing' ? '66%' : '100%')}; height: 100%; background: ${statusColor}; transition: width 0.5s ease;"></div>
+      <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
+        <div style="width: ${order.status === 'pending' ? '33%' : (order.status === 'processing' ? '66%' : '100%')}; height: 100%; background: ${statusColor}; box-shadow: 0 0 10px ${statusColor}; transition: width 0.5s ease;"></div>
       </div>
       ` : ''}
     </div>
   `}).join('');
 }
+
+
+
 
 function renderDashboardTransactions() {
   const container = document.getElementById('dashboard-transactions-container');
@@ -541,7 +659,11 @@ function renderDashboardTransactions() {
   }
   
   if (txList.length === 0) {
-    container.innerHTML = `<div style="text-align:center; padding: 20px; color: var(--text-secondary);">No hay movimientos recientes.</div>`;
+    container.innerHTML = `
+      <div style="text-align:center; padding: 40px; color: var(--text-secondary);">
+        <i class="ph ph-receipt" style="font-size: 3rem; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
+        No hay movimientos recientes.
+      </div>`;
     return;
   }
   
@@ -550,19 +672,23 @@ function renderDashboardTransactions() {
   container.innerHTML = sortedTx.map(tx => {
     let sign = tx.amount >= 0 ? '+' : '';
     let color = tx.amount >= 0 ? '#10b981' : '#ff5252';
-    let icon = tx.type === 'deposit' ? '💰' : (tx.type === 'purchase' ? '🛒' : '🔄');
+    let icon = tx.type === 'deposit' ? 'ph-arrow-down-left' : (tx.type === 'purchase' ? 'ph-shopping-cart' : 'ph-arrows-left-right');
     return `
-    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 8px;">
-       <div style="display: flex; align-items: center; gap: 12px;">
-         <div style="font-size: 1.5rem; opacity: 0.8;">${icon}</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.03); transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(0,0,0,0.2)'">
+       <div style="display: flex; align-items: center; gap: 15px;">
+         <div style="width: 40px; height: 40px; border-radius: 50%; background: ${color}15; display: flex; align-items: center; justify-content: center; color: ${color}; font-size: 1.2rem;">
+            <i class="ph ${icon}"></i>
+         </div>
          <div>
-           <div style="font-weight: bold; font-size: 0.9rem;">${tx.description || 'Movimiento'}</div>
-           <div style="font-size: 0.75rem; color: var(--text-secondary);">${new Date(tx.date).toLocaleString()}</div>
+           <div style="font-weight: bold; font-size: 0.95rem;">${tx.description || 'Movimiento'}</div>
+           <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; display: flex; align-items: center; gap: 4px;"><i class="ph ph-clock"></i> ${new Date(tx.date).toLocaleString()}</div>
          </div>
        </div>
-       <div style="font-weight: bold; color: ${color};">${sign}\$${parseFloat(tx.amount).toFixed(2)}</div>
+       <div style="font-weight: 900; color: ${color}; font-size: 1.1rem;">${sign}\$${parseFloat(tx.amount).toFixed(2)}</div>
     </div>
     `;
   }).join('');
 }
+
+
 
