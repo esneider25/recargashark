@@ -1,6 +1,6 @@
 const firebaseConfig = {
   apiKey: "AIzaSyB6ePqcFMsY_Z7zJAt2kh-mCrEqyp3M0e4",
-  authDomain: "recargashark.com",
+  authDomain: "recargashark.firebaseapp.com",
   databaseURL: "https://recargashark-default-rtdb.firebaseio.com",
   projectId: "recargashark",
   storageBucket: "recargashark.firebasestorage.app",
