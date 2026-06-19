@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   if (typeof firebase !== 'undefined' && firebase.auth) {
     firebase.auth().onAuthStateChanged((user) => {
-      if (user) {
+      if (user && user.email === 'adminshark@gmail.com') {
         adminAuthVerified = true;
         if (window.DATA_LOADED) initAdminApp();
       } else {
@@ -144,6 +144,19 @@ function initAdminApp() {
   renderActiveTab();
 }
 
+function renderAdminLogin(container) {
+  container.innerHTML = `
+    <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-deep); color: var(--text-primary); text-align: center; padding: 20px;">
+      <div style="font-size: 4rem; margin-bottom: 20px;">🔒</div>
+      <h1 style="color: #ff6b6b; margin-bottom: 10px;">Acceso Denegado</h1>
+      <p style="color: var(--text-secondary); max-width: 400px; line-height: 1.5; margin-bottom: 30px;">
+        Esta área es exclusiva para el administrador principal de RecargaShark.
+      </p>
+      <a href="index.html" class="btn btn-primary" style="text-decoration: none;">Volver a la Tienda</a>
+    </div>
+  `;
+}
+
 // ── Tab Switching ──
 function switchTab(tabId) {
   adminState.currentTab = tabId;
@@ -201,14 +214,28 @@ function renderDashboard(container) {
     allOrders = allOrders.filter(o => o.createdAt <= end.getTime());
   }
 
-  const totalProducts = PRODUCTS.length;
-  const totalCategories = CATEGORIES.length;
-  const activeApis = API_CONFIGS.filter(a => a.enabled).length;
-  const paymentCount = PAYMENT_METHODS.length;
-  
+  const completedOrders = allOrders.filter(o => o.status === 'completed');
   const pendingCount = allOrders.filter(o => o.status === 'pending' || o.status === 'processing').length;
-  const completedCount = allOrders.filter(o => o.status === 'completed').length;
-  const totalRevenue = allOrders.filter(o => o.status === 'completed').reduce((sum, o) => sum + (o.priceUsd || 0), 0);
+  const completedCount = completedOrders.length;
+  
+  let totalRevenue = 0;
+  let totalCost = 0;
+
+  completedOrders.forEach(o => {
+    totalRevenue += (o.priceUsd || 0);
+    let cost = 0;
+    const prod = PRODUCTS.find(p => p.id === o.productId);
+    if (prod && prod.packages) {
+      const pkg = prod.packages.find(pkg => pkg.label === o.packageLabel || pkg.priceUsd === o.priceUsd);
+      if (pkg && pkg.costUsd) {
+        cost = pkg.costUsd;
+      }
+    }
+    totalCost += cost;
+  });
+
+  const totalProfit = totalRevenue - totalCost;
+  const marginPercentage = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0;
 
   // Recent orders (last 5 from the filtered set)
   const recentOrders = allOrders.slice(0, 5);
@@ -230,8 +257,8 @@ function renderDashboard(container) {
   container.innerHTML = `
     <div class="admin-header">
       <div>
-        <h1 class="admin-title">Panel de Control</h1>
-        <p class="admin-subtitle">Resumen general de RecargaShark</p>
+        <h1 class="admin-title">Panel de Control Financiero</h1>
+        <p class="admin-subtitle">Resumen y métricas de ganancias de RecargaShark</p>
       </div>
       <div style="display: flex; gap: 8px; align-items: center; background: var(--bg-surface); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);">
         <input type="date" id="dash-start-date" class="admin-form-input" style="margin-bottom: 0; padding: 6px;" value="${adminState.dashboardStartDate}" onchange="updateDashboardDates()">
@@ -241,11 +268,31 @@ function renderDashboard(container) {
       </div>
     </div>
 
-    <div class="admin-stats-grid">
+    <!-- Financial Core Widgets -->
+    <div class="admin-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 24px;">
+      <div class="admin-stat-card" style="background: linear-gradient(135deg, rgba(66, 165, 245, 0.1), rgba(66, 165, 245, 0.02)); border-color: rgba(66, 165, 245, 0.3);">
+        <div class="admin-stat-icon">💰</div>
+        <div class="admin-stat-value" style="color: #42a5f5;">$${totalRevenue.toFixed(2)}</div>
+        <div class="admin-stat-label">Ingresos Brutos</div>
+      </div>
+      <div class="admin-stat-card" style="background: linear-gradient(135deg, rgba(239, 83, 80, 0.1), rgba(239, 83, 80, 0.02)); border-color: rgba(239, 83, 80, 0.3);">
+        <div class="admin-stat-icon">📉</div>
+        <div class="admin-stat-value" style="color: #ef5350;">$${totalCost.toFixed(2)}</div>
+        <div class="admin-stat-label">Costos Proveedor</div>
+      </div>
+      <div class="admin-stat-card" style="background: linear-gradient(135deg, rgba(102, 187, 106, 0.1), rgba(102, 187, 106, 0.02)); border-color: rgba(102, 187, 106, 0.3);">
+        <div class="admin-stat-icon">💎</div>
+        <div class="admin-stat-value" style="color: #66bb6a;">$${totalProfit.toFixed(2)}</div>
+        <div class="admin-stat-label">Ganancia Neta</div>
+      </div>
+    </div>
+
+    <!-- General Stats -->
+    <div class="admin-stats-grid" style="margin-bottom: 24px;">
       <div class="admin-stat-card" style="cursor: pointer;" onclick="switchTab('orders')">
         <div class="admin-stat-icon">📋</div>
         <div class="admin-stat-value" style="color: #ffb74d;">${pendingCount}</div>
-        <div class="admin-stat-label">Pedidos Pendientes</div>
+        <div class="admin-stat-label">Pendientes</div>
       </div>
       <div class="admin-stat-card" onclick="switchTab('orders')" style="cursor: pointer;">
         <div class="admin-stat-icon">✅</div>
@@ -253,24 +300,14 @@ function renderDashboard(container) {
         <div class="admin-stat-label">Completados</div>
       </div>
       <div class="admin-stat-card">
-        <div class="admin-stat-icon">💰</div>
-        <div class="admin-stat-value">$${totalRevenue.toFixed(2)}</div>
-        <div class="admin-stat-label">Ingresos (USD)</div>
-      </div>
-      <div class="admin-stat-card">
-        <div class="admin-stat-icon">🛍️</div>
-        <div class="admin-stat-value">${totalProducts}</div>
-        <div class="admin-stat-label">Productos</div>
-      </div>
-      <div class="admin-stat-card">
-        <div class="admin-stat-icon">💵</div>
-        <div class="admin-stat-value">Bs. ${EXCHANGE_RATE.usdToBs.toFixed(2)}</div>
-        <div class="admin-stat-label">Tasa del Dólar</div>
+        <div class="admin-stat-icon">📈</div>
+        <div class="admin-stat-value" style="color: var(--accent);">${marginPercentage}%</div>
+        <div class="admin-stat-label">Margen Promedio</div>
       </div>
       <div class="admin-stat-card" style="cursor: pointer;" onclick="switchTab('customers')">
         <div class="admin-stat-icon">👥</div>
         <div class="admin-stat-value" id="dash-total-users">...</div>
-        <div class="admin-stat-label">Usuarios Registrados</div>
+        <div class="admin-stat-label">Usuarios</div>
       </div>
     </div>
 
@@ -1387,6 +1424,10 @@ function renderTempPackages() {
         <label style="font-size: 0.75rem; color: var(--text-muted);">Precio ($)</label>
         <input type="number" class="admin-form-input" style="padding: 6px 10px; font-size: 0.85rem;" step="0.01" value="${pkg.priceUsd}" onchange="updateTempPackageField(${idx}, 'priceUsd', this.value)" placeholder="1.09">
       </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 80px;">
+        <label style="font-size: 0.75rem; color: var(--text-muted);">Costo Prov. ($)</label>
+        <input type="number" class="admin-form-input" style="padding: 6px 10px; font-size: 0.85rem;" step="0.01" value="${pkg.costUsd || ''}" onchange="updateTempPackageField(${idx}, 'costUsd', this.value)" placeholder="0.80">
+      </div>
       <div style="display: flex; flex-direction: column; gap: 4px; flex: 1.5; min-width: 120px;">
         <label style="font-size: 0.75rem; color: var(--text-muted);">Etiqueta</label>
         <input type="text" class="admin-form-input" style="padding: 6px 10px; font-size: 0.85rem;" value="${pkg.label || ''}" onchange="updateTempPackageField(${idx}, 'label', this.value)" placeholder="100 diamantes">
@@ -1417,6 +1458,7 @@ function updateTempPackageField(index, field, value) {
   if (!pkg) return;
   if (field === 'amount') pkg.amount = value;
   else if (field === 'priceUsd') pkg.priceUsd = parseFloat(value) || 0.0;
+  else if (field === 'costUsd') pkg.costUsd = parseFloat(value) || 0.0;
   else if (field === 'apiServiceId') pkg.apiServiceId = value.trim();
   else pkg.label = value.trim();
 }
