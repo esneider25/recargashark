@@ -953,14 +953,14 @@ async function sendTelegramPhoto(photoBlob, caption, inlineKeyboard) {
 }
 
 function buildOrderTelegramMessage(order) {
-  const typeLabels = { 'game-id': '🎮 Por ID', 'account': '🔐 Interna', 'code': '🎫 Código' };
-  const typeLabel = typeLabels[order.productType] || '🎮 Por ID';
-  let msg = `🦈 <b>NUEVO PEDIDO — #${order.id}</b>\n\n`;
-  msg += `📦 <b>Producto:</b> ${order.productName}\n`;
-  msg += `📋 <b>Paquete:</b> ${order.packageLabel}\n`;
-  msg += `💰 <b>Precio:</b> $${order.priceUsd.toFixed(2)} USD | Bs. ${formatBs(order.priceBs)}\n`;
-  msg += `💳 <b>Pago:</b> ${order.paymentMethodName}\n`;
-  msg += `🏷️ <b>Tipo:</b> ${typeLabel}\n`;
+  let msg = `🦈 <b>NUEVO PEDIDO —</b>\n`;
+  msg += `👤 <b>Jugador:</b> ㅤ\n`;
+  msg += `🆔 <b>ID:</b> <code>${order.gameId || order.accountEmail || 'N/A'}</code>\n`;
+  msg += `🔥 <b>Producto:</b> ${order.productName} (${order.packageLabel})\n`;
+  msg += `💰 <b>Monto:</b> $${order.priceUsd.toFixed(2)} USD | Bs. ${formatBs(order.priceBs)}\n`;
+  msg += `🔢 <b>Ref:</b> <code>${order.id}</code>\n`;
+  msg += `🏦 <b>metodo de pago:</b> ${order.paymentMethodName}\n`;
+  msg += `📱 <b>contacto:</b> ${order.customerContact || 'N/A'}\n`;
   return msg;
 }
 
