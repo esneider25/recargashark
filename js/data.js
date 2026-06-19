@@ -91,30 +91,30 @@ const SPAM_TRACKER = {
 const API_CONFIGS = [
   {
     id: 'api-1',
-    name: 'Pasarela de Pagos',
-    baseUrl: '',
+    name: 'TiendaGiftVen',
+    baseUrl: 'https://tiendagiftven.net/conexion_api/api.php?action=ValidarParametros&id={ID}',
     apiKey: '',
     port: '443',
-    enabled: false,
-    description: 'Procesamiento de pagos en línea'
+    enabled: true,
+    description: 'Verificador Puerto 1'
   },
   {
     id: 'api-2',
-    name: 'WhatsApp Business API',
-    baseUrl: '',
+    name: 'NetEase Bloodstrike',
+    baseUrl: 'https://pay.neteasegames.com/gameclub/bloodstrike/-1/login-role?roleid={PLAYER_ID}&client_type=gameclub',
     apiKey: '',
     port: '443',
-    enabled: false,
-    description: 'Notificaciones automáticas de pedidos'
+    enabled: true,
+    description: 'Verificador Puerto 2'
   },
   {
     id: 'api-3',
-    name: 'Crypto Payments',
-    baseUrl: '',
+    name: 'Mobile Legends Verifier',
+    baseUrl: 'https://api.isan.eu.org/nickname/ml?id={ID_JUGADOR}&zone={ZONE_ID}',
     apiKey: '',
     port: '443',
-    enabled: false,
-    description: 'Pagos con criptomonedas (USDT, BTC)'
+    enabled: true,
+    description: 'Verificador Puerto 3'
   },
   {
     id: 'api-4',

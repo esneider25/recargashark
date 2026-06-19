@@ -1425,8 +1425,8 @@ window.verifyGameId = async function(productId) {
 
   const verifierIdx = parseInt(product.apiVerifierProvider);
   const api = API_CONFIGS[verifierIdx];
-  if (!api || !api.baseUrl.trim()) {
-    resultDiv.innerHTML = '<span style="color: #ff5252;">❌ Verificador no configurado (URL vacía).</span>';
+  if (!api || !api.enabled) {
+    resultDiv.innerHTML = '<span style="color: #ff5252;">❌ Verificador inactivo o eliminado.</span>';
     return;
   }
 
@@ -1460,18 +1460,24 @@ window.verifyGameId = async function(productId) {
 
     // Manejar formato de TiendaGiftVen, NetEase Bloodstrike o cualquier API por GET
     // Solo asumimos GET si el usuario incluyó explícitamente tokens o action=
-    if (bUrl.includes('{ID}') || bUrl.includes('{PLAYER_ID}') || bUrl.includes('action=') || bUrl.includes('api.php')) {
+    if (bUrl.includes('{ID}') || bUrl.includes('{PLAYER_ID}') || bUrl.includes('{ID_JUGADOR}') || bUrl.includes('action=') || bUrl.includes('api.php')) {
       finalMethod = 'GET';
       
-      // Reemplazar tokens {ID} o {PLAYER_ID}
+      // Reemplazar tokens {ID} o {PLAYER_ID} o {ID_JUGADOR}
       if (bUrl.includes('{ID}')) {
         bUrl = bUrl.replace(/{ID}/g, encodeURIComponent(id_juego));
       }
       if (bUrl.includes('{PLAYER_ID}')) {
         bUrl = bUrl.replace(/{PLAYER_ID}/g, encodeURIComponent(id_juego));
       }
+      if (bUrl.includes('{ID_JUGADOR}')) {
+        bUrl = bUrl.replace(/{ID_JUGADOR}/g, encodeURIComponent(id_juego));
+      }
       if (input2 && bUrl.includes('{ZONE}')) {
         bUrl = bUrl.replace(/{ZONE}/g, encodeURIComponent(input2));
+      }
+      if (input2 && bUrl.includes('{ZONE_ID}')) {
+        bUrl = bUrl.replace(/{ZONE_ID}/g, encodeURIComponent(input2));
       }
       
       // Si el usuario puso un ? pero olvidó el token de ID, lo agregamos al final (fallback)
