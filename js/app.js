@@ -1251,8 +1251,18 @@ function previewScreenshot(input) {
       try {
         const { data: { text } } = await Tesseract.recognize(dataUrl, 'spa');
         
-        // Extract numbers that are at least 5 digits long (e.g. references)
-        const numbers = text.match(/\b\d{5,}\b/g) || [];
+        // Buscar específicamente referencias o números de operación
+        let numbers = [];
+        const regexKeywords = /(?:ref(?:erencia)?|operaci[oó]n|orden|recibo)[\s:.\-]*([A-Za-z0-9]{5,})/gi;
+        let match;
+        while ((match = regexKeywords.exec(text)) !== null) {
+          numbers.push(match[1]);
+        }
+        
+        // Si no encontró nada con las palabras claves, usar fallback a cualquier número largo
+        if (numbers.length === 0) {
+          numbers = text.match(/\b\d{6,}\b/g) || []; // Aumentamos a 6 para reducir falsos positivos
+        }
         const orders = getOrders();
         let duplicateFound = false;
 
