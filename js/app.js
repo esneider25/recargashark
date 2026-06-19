@@ -658,15 +658,14 @@ async function processWalletOrderAuto(order) {
           firebase.database().ref('orders/' + order.id).update({ adminNote: 'En proceso por API' });
         }
       } else {
-        const refundMsg = data.reembolsado ? ' (Reembolsado a la cuenta proveedora)' : '';
-        updateOrderStatus(order.id, 'invalid-id', `ID Incorrecto o Inválido detectado (${data.error})${refundMsg}`);
+        updateOrderStatus(order.id, 'invalid-id', `Verifica que el ID o la cuenta sean correctos.`);
       }
     } else if (typeof firebase !== 'undefined') {
       // Fallback
       if (data.ok && data.estado === 'completado') {
         firebase.database().ref('orders/' + order.id).update({ status: 'completed' });
       } else if (!data.ok || data.estado === 'rechazado') {
-        firebase.database().ref('orders/' + order.id).update({ status: 'invalid-id', adminNote: 'ID Incorrecto detectado por API: ' + data.error });
+        firebase.database().ref('orders/' + order.id).update({ status: 'invalid-id', adminNote: 'Verifica que el ID o la cuenta sean correctos.' });
       }
     }
   } catch (error) {
