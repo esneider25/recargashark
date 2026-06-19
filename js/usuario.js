@@ -152,12 +152,13 @@ function renderApp() {
   }
   .nav-item {
     flex-direction: column;
-    padding: 8px;
+    padding: 8px 4px;
     gap: 4px;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     text-align: center;
   }
   .nav-item:hover { transform: none; }
+  #nav-spacer { display: none; }
   .panel-main { padding: 20px 20px 100px 20px; }
 }
 

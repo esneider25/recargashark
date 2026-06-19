@@ -1630,14 +1630,14 @@ function showAuthModal() {
   const modalContainer = document.createElement('div');
   modalContainer.id = 'auth-modal-container';
   modalContainer.innerHTML = `
-    <div class="modal-overlay active" onclick="if(event.target===this) this.parentElement.remove()">
-      <div class="modal" style="text-align: center; max-width: 400px;">
-        <h2 style="margin-bottom: 20px;">Únete a RecargaShark</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 30px;">Inicia sesión para guardar tus IDs, acumular puntos y comprar más rápido.</p>
-        <button onclick="authWithGoogle()" class="btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: white; color: black; border: 1px solid #ddd;">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Continuar con Google
+    <div class="modal-overlay active" onclick="if(event.target===this) this.parentElement.remove()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 99999; display: flex; align-items: center; justify-content: center;">
+      <div class="modal" style="background: var(--bg-surface); padding: 40px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); text-align: center; max-width: 400px; width: 90%;">
+        <h2 style="margin-bottom: 20px; font-size: 1.8rem; color: white;">Únete a RecargaShark</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 0.95rem; line-height: 1.5;">Inicia sesión para guardar tus IDs, acumular puntos y comprar más rápido.</p>
+        <button onclick="authWithGoogle()" class="btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: white; color: black; border: none; border-radius: 12px; padding: 14px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: transform 0.2s;">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="24"> Continuar con Google
         </button>
-        <button onclick="document.getElementById('auth-modal-container').remove()" class="btn-secondary" style="width: 100%; margin-top: 15px;">Cancelar</button>
+        <button onclick="document.getElementById('auth-modal-container').remove()" class="btn-secondary" style="width: 100%; margin-top: 15px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 14px; font-weight: 500; font-size: 1rem; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">Cancelar</button>
       </div>
     </div>`;
   document.body.appendChild(modalContainer);
