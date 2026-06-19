@@ -686,6 +686,10 @@ function saveOrderToDb(order) {
     const cleanOrder = JSON.parse(JSON.stringify(order));
     firebase.database().ref('orders/' + order.id).set(cleanOrder)
       .catch(err => console.error("Firebase write error:", err));
+    if (order.userId) {
+      firebase.database().ref('users/' + order.userId + '/orders/' + order.id).set(true)
+        .catch(err => console.error("Firebase user index write error:", err));
+    }
   }
 }
 
