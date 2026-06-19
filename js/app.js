@@ -947,6 +947,13 @@ function rectifyOrderId(orderId) {
   const msgText = `🔄 <b>PEDIDO RECTIFICADO — #${order.id}</b>\n\nEl cliente ha corregido sus datos.\nNuevos datos: <code>${newGameId}</code>`;
   sendTelegramMessage(msgText, buildOrderKeyboard(order.id));
 
+  // Auto-process again if it was paid with wallet
+  if (order.paymentMethodId === 'wallet' && typeof window !== 'undefined') {
+    if (typeof processWalletOrderAuto === 'function') {
+      processWalletOrderAuto(order);
+    }
+  }
+
   // Refresh view
   setTimeout(() => navigateTo('tracking', orderId), 500);
 }
