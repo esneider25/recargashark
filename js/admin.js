@@ -2729,10 +2729,11 @@ function renderCustomersTable(usersList) {
     const wallet = user.wallet || 0;
     return `
       <tr class="customer-row">
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.email}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.email || 'N/A'}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.name || '-'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.whatsapp || 'N/A'}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${dateStr}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: right; color: #10b981; font-weight: bold;">$${wallet.toFixed(2)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: right; color: #10b981; font-weight: bold;">${wallet.toFixed(2)}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
           <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openEditWalletModal('${user.uid}', '${user.email}', ${wallet})">Editar Saldo</button>
         </td>
@@ -2746,7 +2747,8 @@ function filterCustomersSearch(searchTerm) {
   const term = searchTerm.toLowerCase().trim();
   const filtered = window.ADMIN_CUSTOMERS.filter(u => 
     (u.email && u.email.toLowerCase().includes(term)) || 
-    (u.name && u.name.toLowerCase().includes(term))
+    (u.name && u.name.toLowerCase().includes(term)) ||
+    (u.whatsapp && u.whatsapp.toLowerCase().includes(term))
   );
   renderCustomersTable(filtered);
 }
