@@ -2910,3 +2910,57 @@ window.viewUserTransactions = function(userId) {
   `;
   document.body.appendChild(modal);
 };
+
+// ── Roles and Blocking ──
+window.openRoleModal = function(uid, currentRole, currentDiscount) {
+  const modalHTML = `
+    <div class="modal-overlay active" id="role-modal-overlay">
+      <div class="modal">
+        <h3>Editar Rol de Usuario</h3>
+        <div class="form-group" style="margin-top: 15px;">
+          <label>Rol</label>
+          <select id="role-select" class="form-input" onchange="document.getElementById('discount-group').style.display = this.value === 'revendedor' ? 'block' : 'none'">
+            <option value="cliente" ${currentRole !== 'revendedor' ? 'selected' : ''}>Cliente Normal</option>
+            <option value="revendedor" ${currentRole === 'revendedor' ? 'selected' : ''}>Revendedor</option>
+          </select>
+        </div>
+        <div class="form-group" id="discount-group" style="display: ${currentRole === 'revendedor' ? 'block' : 'none'};">
+          <label>Porcentaje de Descuento (%)</label>
+          <input type="number" id="discount-input" class="form-input" value="${currentDiscount || 0}" min="0" max="100">
+          <div class="form-hint">Se descontará silenciosamente este porcentaje a este revendedor en todas sus compras de catálogo (excepto recarga de saldo).</div>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button class="btn btn-secondary" onclick="document.getElementById('role-modal-overlay').remove()">Cancelar</button>
+          <button class="btn btn-primary" onclick="saveUserRole('${uid}')">Guardar</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+};
+
+window.saveUserRole = function(uid) {
+  const role = document.getElementById('role-select').value;
+  const discount = parseFloat(document.getElementById('discount-input').value) || 0;
+  
+  firebase.database().ref('users/' + uid).update({
+    role: role,
+    discountPercentage: role === 'revendedor' ? discount : 0
+  }).then(() => {
+    showAdminToast('✅ Rol actualizado', 'success');
+    document.getElementById('role-modal-overlay').remove();
+    renderActiveTab();
+  });
+};
+
+window.toggleBlockUser = function(uid, isBlocked) {
+  if (confirm(isBlocked ? '¿Seguro que deseas DESBLOQUEAR a este usuario?' : '¿Seguro que deseas BLOQUEAR a este usuario? Se cerrará su sesión y no podrá comprar.')) {
+    firebase.database().ref('users/' + uid).update({
+      isBlocked: !isBlocked
+    }).then(() => {
+      showAdminToast(isBlocked ? '✅ Usuario desbloqueado' : '🚫 Usuario bloqueado', 'success');
+      renderActiveTab();
+    });
+  }
+};
+
