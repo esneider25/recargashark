@@ -961,7 +961,11 @@ function buildOrderTelegramMessage(order) {
   msg += `💰 <b>Precio:</b> $${order.priceUsd.toFixed(2)} USD | Bs. ${formatBs(order.priceBs)}\n`;
   msg += `💳 <b>Pago:</b> ${order.paymentMethodName}\n`;
   msg += `🏷️ <b>Tipo:</b> ${typeLabel}\n`;
-  // Default values if empty
+  return msg;
+}
+
+function getQuickReplies() {
+  if (QUICK_REPLIES && QUICK_REPLIES.length > 0) return QUICK_REPLIES;
   const defaults = [
     { id: 'precios', title: '💰 Precios', keywords: 'precio,tasa,costo', response: '📊 La tasa actual es: 1 USD = Bs. ' + EXCHANGE_RATE.usdToBs + '. Puedes ver los precios de cada producto directamente en el catálogo.' },
     { id: 'pagos', title: '💳 Pagos', keywords: 'pago,pagar,transferencia,problema', response: '💳 Aceptamos Pago Móvil, Binance Pay y Transferencias. Si tuviste un problema con tu pago, por favor aguarda en línea.' },
