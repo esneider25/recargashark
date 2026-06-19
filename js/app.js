@@ -712,6 +712,11 @@ function submitWalletRecharge() {
   });
 
   recordOrderAttempt();
+
+  if (typeof triggerTelegramNotification === 'function') {
+    triggerTelegramNotification(order);
+  }
+
   showOrderConfirmation(order);
 }
 
