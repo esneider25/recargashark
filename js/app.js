@@ -1425,8 +1425,8 @@ window.verifyGameId = async function(productId) {
 
   const verifierIdx = parseInt(product.apiVerifierProvider);
   const api = API_CONFIGS[verifierIdx];
-  if (!api || !api.enabled) {
-    resultDiv.innerHTML = '<span style="color: #ff5252;">❌ Verificador inactivo o eliminado.</span>';
+  if (!api || !api.baseUrl.trim()) {
+    resultDiv.innerHTML = '<span style="color: #ff5252;">❌ Verificador no configurado (URL vacía).</span>';
     return;
   }
 
