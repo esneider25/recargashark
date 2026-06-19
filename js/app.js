@@ -613,7 +613,7 @@ async function processWalletOrderAuto(order) {
   try {
     const payload = {
       producto_id: apiProductId,
-      merchant_ref: order.id,
+      merchant_ref: order.id + '_' + Date.now(),
       cantidad: 1
     };
 
@@ -918,6 +918,15 @@ function rectifyOrderId(orderId) {
     order.accountEmail = emailInput.value.trim();
     order.accountPassword = passInput.value.trim();
     newGameId = `Correo: ${order.accountEmail} | Clave: ${order.accountPassword}`;
+  } else if (order.productType === 'game-id-zone') {
+    const idInput = document.getElementById('rectify-id-input');
+    const zoneInput = document.getElementById('rectify-zone-input');
+    if (!idInput || !idInput.value.trim() || !zoneInput || !zoneInput.value.trim()) {
+      showToast('⚠️ Ingresa el ID y la Zona');
+      return;
+    }
+    newGameId = `ID: ${idInput.value.trim()} | Zona: ${zoneInput.value.trim()}`;
+    order.gameId = newGameId;
   } else {
     const input = document.getElementById('rectify-id-input');
     if (!input || !input.value.trim()) {

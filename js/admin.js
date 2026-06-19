@@ -1101,7 +1101,7 @@ async function processAutomaticTopup(orderId, fromModal = false) {
   try {
     const payload = {
       producto_id: apiProductId,
-      merchant_ref: orderId,
+      merchant_ref: orderId + '_' + Date.now(),
       cantidad: 1
     };
 

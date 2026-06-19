@@ -683,6 +683,11 @@ function renderOrderTracking(orderId) {
                 ${order.productType === 'account' ? `
                   <input type="text" id="rectify-email-input" placeholder="Correo de la cuenta" style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,167,38,0.4); border-radius: 8px; padding: 14px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#ffa726'" onblur="this.style.borderColor='rgba(255,167,38,0.4)'">
                   <input type="text" id="rectify-pass-input" placeholder="Contraseña de la cuenta" style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,167,38,0.4); border-radius: 8px; padding: 14px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#ffa726'" onblur="this.style.borderColor='rgba(255,167,38,0.4)'">
+                ` : order.productType === 'game-id-zone' ? `
+                  <div style="display: flex; gap: 10px;">
+                    <input type="text" id="rectify-id-input" placeholder="ID del Jugador" style="flex: 2; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,167,38,0.4); border-radius: 8px; padding: 14px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#ffa726'" onblur="this.style.borderColor='rgba(255,167,38,0.4)'">
+                    <input type="text" id="rectify-zone-input" placeholder="Zona" style="flex: 1; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,167,38,0.4); border-radius: 8px; padding: 14px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#ffa726'" onblur="this.style.borderColor='rgba(255,167,38,0.4)'">
+                  </div>
                 ` : `
                   <input type="text" id="rectify-id-input" placeholder="Escribe aquí los datos correctos (ID)..." style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,167,38,0.4); border-radius: 8px; padding: 14px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#ffa726'" onblur="this.style.borderColor='rgba(255,167,38,0.4)'">
                 `}
