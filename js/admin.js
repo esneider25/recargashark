@@ -2516,7 +2516,7 @@ function renderAdminLogin(container) {
         <h2 style="color:var(--text-primary); margin-bottom:30px;">RecargaShark Admin</h2>
         <input type="email" id="admin-user" class="admin-input" placeholder="Correo de Administrador" style="margin-bottom:15px; text-align:center;">
         <input type="password" id="admin-pass" class="admin-input" placeholder="Contraseña" style="margin-bottom:20px; text-align:center;" onkeydown="if(event.key==='Enter')adminLogin()">
-        <button class="admin-btn-primary" style="width:100%;" onclick="adminLogin()">Ingresar</button>
+        <button class="admin-btn-primary" style="width:100%;" onclick="adminLogin()">Iniciar Sesión</button>
       </div>
     </div>
   `;
@@ -2541,7 +2541,7 @@ function adminLogin() {
     })
     .catch((error) => {
       alert('Error de inicio de sesión: ' + error.message);
-      btn.innerHTML = 'Ingresar';
+      btn.innerHTML = 'Iniciar Sesión';
       btn.disabled = false;
     });
 }

@@ -1620,7 +1620,7 @@ function initPublicAuth() {
     } else {
       userProfile = null;
       if (authNavItem) {
-        authNavItem.innerHTML = `<a onclick="showAuthModal()" class="nav-cta" style="background: linear-gradient(135deg, #4f46e5, #3b82f6); cursor:pointer;">Ingresar</a>`;
+        authNavItem.innerHTML = `<a onclick="showAuthModal()" class="nav-cta" style="background: linear-gradient(135deg, #4f46e5, #3b82f6); cursor:pointer;">Iniciar Sesión</a>`;
       }
     }
   });
