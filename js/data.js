@@ -954,12 +954,15 @@ async function sendTelegramPhoto(photoBlob, caption, inlineKeyboard) {
 }
 
 function buildOrderTelegramMessage(order) {
-  let msg = `🦈 <b>NUEVO PEDIDO —</b>\n`;
+  let msg = `🦈 <b>NUEVO PEDIDO — ${order.id}</b>\n`;
   msg += `👤 <b>Jugador:</b> ${order.playerName || 'ㅤ'}\n`;
   msg += `🆔 <b>ID:</b> <code>${order.gameId || order.accountEmail || 'N/A'}</code>\n`;
   msg += `🔥 <b>Producto:</b> ${order.productName} (${order.packageLabel})\n`;
   msg += `💰 <b>Monto:</b> $${order.priceUsd.toFixed(2)} USD | Bs. ${formatBs(order.priceBs)}\n`;
-  msg += `🔢 <b>Ref:</b> <code>${order.id}</code>\n`;
+  
+  const refNumbers = (order.ocrNumbers && order.ocrNumbers.length > 0) ? order.ocrNumbers.join(', ') : 'Ver comprobante adjunto';
+  msg += `🔢 <b>Ref:</b> <code>${refNumbers}</code>\n`;
+  
   msg += `🏦 <b>metodo de pago:</b> ${order.paymentMethodName}\n`;
   msg += `📱 <b>contacto:</b> ${order.customerContact || 'N/A'}\n`;
   return msg;
