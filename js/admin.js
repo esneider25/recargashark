@@ -442,111 +442,198 @@ function renderProducts(container) {
 // ════════════════════════════════════════
 // 2.5 CUSTOMERS (CRM)
 // ════════════════════════════════════════
-function renderCustomers(container) {
+async function renderCustomers(container) {
+  container.innerHTML = `
+    <div class="admin-header">
+      <div>
+        <h1 class="admin-title">Clientes VIP (CRM)</h1>
+        <p class="admin-subtitle">Usuarios registrados y mejores compradores</p>
+      </div>
+      <button class="btn btn-secondary" onclick="exportCustomersCSV()">
+        <span>📥</span> Exportar a CSV
+      </button>
+    </div>
+    <div id="customers-loading" style="padding: 40px; text-align: center; color: var(--text-muted);">Cargando clientes...</div>
+    <div id="customers-content" style="display: none;"></div>
+  `;
+
+  let users = [];
+  try {
+    const snap = await firebase.database().ref('users').once('value');
+    if (snap.exists()) {
+      const data = snap.val();
+      users = Object.keys(data).map(uid => ({ uid, ...data[uid] }));
+    }
+  } catch (error) {
+    console.error("Error fetching users:", error);
+  }
+
   const allOrders = getOrders();
-  const completedOrders = allOrders.filter(o => o.status === 'completed' && o.customerContact);
+  const completedOrders = allOrders.filter(o => o.status === 'completed');
   
   const customersMap = {};
+  
+  users.forEach(u => {
+    customersMap[u.uid] = {
+      uid: u.uid,
+      contact: u.email || 'Sin correo',
+      whatsapp: u.whatsapp || '',
+      name: u.name || '',
+      totalOrders: 0,
+      totalSpent: u.totalSpent || 0,
+      firstOrder: null,
+      lastOrder: null
+    };
+  });
+
   completedOrders.forEach(o => {
-    const contact = o.customerContact.toLowerCase().trim();
-    if (!customersMap[contact]) {
-      customersMap[contact] = {
+    let key = o.userId;
+    if (!key) {
+      if (!o.customerContact) return;
+      key = o.customerContact.toLowerCase().trim();
+    }
+    
+    if (!customersMap[key]) {
+      customersMap[key] = {
+        uid: null,
         contact: o.customerContact,
+        whatsapp: '',
+        name: '',
         totalOrders: 0,
         totalSpent: 0,
         firstOrder: o.createdAt,
         lastOrder: o.createdAt
       };
     }
-    customersMap[contact].totalOrders += 1;
-    customersMap[contact].totalSpent += (o.priceUsd || 0);
-    if (o.createdAt < customersMap[contact].firstOrder) customersMap[contact].firstOrder = o.createdAt;
-    if (o.createdAt > customersMap[contact].lastOrder) customersMap[contact].lastOrder = o.createdAt;
+    customersMap[key].totalOrders += 1;
+    // Si no tiene UID (guest), sumar lo gastado aquí
+    if (!customersMap[key].uid) {
+      customersMap[key].totalSpent += (o.priceUsd || 0);
+    }
+    if (!customersMap[key].firstOrder || o.createdAt < customersMap[key].firstOrder) customersMap[key].firstOrder = o.createdAt;
+    if (!customersMap[key].lastOrder || o.createdAt > customersMap[key].lastOrder) customersMap[key].lastOrder = o.createdAt;
   });
 
   let customers = Object.values(customersMap).sort((a, b) => b.totalSpent - a.totalSpent);
   
-  // Filter by search
   const searchTerm = (adminState.customersSearch || '').toLowerCase().trim();
   if (searchTerm) {
-    customers = customers.filter(c => c.contact.toLowerCase().includes(searchTerm));
+    customers = customers.filter(c => 
+      c.contact.toLowerCase().includes(searchTerm) || 
+      (c.whatsapp && c.whatsapp.toLowerCase().includes(searchTerm)) ||
+      (c.name && c.name.toLowerCase().includes(searchTerm))
+    );
   }
 
   const customersHtml = customers.map(c => `
     <div class="admin-crm-row">
       <div style="font-weight: 500; display: flex; align-items: center; gap: 10px;">
         <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: var(--bg-deep); font-weight: bold; flex-shrink: 0;">
-          ${c.contact.charAt(0).toUpperCase()}
+          ${(c.name || c.contact).charAt(0).toUpperCase()}
         </div>
-        <span style="word-break: break-all;">${c.contact}</span>
+        <div style="display: flex; flex-direction: column;">
+          <span style="word-break: break-all;">${c.name ? c.name + ' (' + c.contact + ')' : c.contact}</span>
+          ${c.whatsapp ? `<span style="font-size: 0.8rem; color: #25D366; margin-top: 2px;">WhatsApp: ${c.whatsapp}</span>` : ''}
+        </div>
       </div>
       <div style="color: var(--text-secondary);">Pedidos: <b>${c.totalOrders}</b></div>
       <div style="font-weight: bold; color: #00e5c3;">$${c.totalSpent.toFixed(2)}</div>
       <div style="font-size: 0.85rem; color: var(--text-muted);">
-        Último: ${new Date(c.lastOrder).toLocaleDateString('es-VE')}
+        ${c.lastOrder ? 'Último: ' + new Date(c.lastOrder).toLocaleDateString('es-VE') : 'Sin compras'}
       </div>
     </div>
   `).join('') || '<div style="text-align: center; padding: 40px; color: var(--text-muted);">No se encontraron clientes.</div>';
 
-  container.innerHTML = `
-    <div class="admin-header">
-      <div>
-        <h1 class="admin-title">Clientes VIP (CRM)</h1>
-        <p class="admin-subtitle">Tus mejores compradores basados en sus recargas completadas</p>
+  const loadingEl = document.getElementById('customers-loading');
+  if (loadingEl) loadingEl.style.display = 'none';
+  
+  const contentEl = document.getElementById('customers-content');
+  if (contentEl) {
+    contentEl.style.display = 'block';
+    contentEl.innerHTML = `
+      <div class="admin-card" style="padding: 0; overflow: hidden;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 15px; background: rgba(0,0,0,0.2); padding: 16px; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border);">
+          <div>Cliente</div>
+          <div>Total Pedidos</div>
+          <div>Total Gastado (USD)</div>
+          <div>Última Compra</div>
+        </div>
+        <div style="padding: 16px;">
+          ${customersHtml}
+        </div>
       </div>
-      <button class="btn btn-secondary" onclick="exportCustomersCSV()">
-        <span>📥</span> Exportar a CSV
-      </button>
-    </div>
-    
-    <div class="admin-card" style="padding: 0; overflow: hidden;">
-      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 15px; background: rgba(0,0,0,0.2); padding: 16px; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border);">
-        <div>Contacto del Cliente</div>
-        <div>Total Pedidos</div>
-        <div>Total Gastado (USD)</div>
-        <div>Última Compra</div>
-      </div>
-      <div style="padding: 16px;">
-        ${customersHtml}
-      </div>
-    </div>
-  `;
+    `;
+  }
 }
 
-function exportCustomersCSV() {
+async function exportCustomersCSV() {
+  let users = [];
+  try {
+    const snap = await firebase.database().ref('users').once('value');
+    if (snap.exists()) {
+      const data = snap.val();
+      users = Object.keys(data).map(uid => ({ uid, ...data[uid] }));
+    }
+  } catch (error) {
+    console.error("Error fetching users for CSV:", error);
+  }
+
   const allOrders = getOrders();
-  const completedOrders = allOrders.filter(o => o.status === 'completed' && o.customerContact);
+  const completedOrders = allOrders.filter(o => o.status === 'completed');
   const customersMap = {};
+  
+  users.forEach(u => {
+    customersMap[u.uid] = {
+      uid: u.uid,
+      contact: u.email || 'Sin correo',
+      whatsapp: u.whatsapp || '',
+      name: u.name || '',
+      totalOrders: 0,
+      totalSpent: u.totalSpent || 0,
+      lastOrder: null
+    };
+  });
+
   completedOrders.forEach(o => {
-    const contact = o.customerContact.toLowerCase().trim();
-    if (!customersMap[contact]) {
-      customersMap[contact] = {
+    let key = o.userId;
+    if (!key) {
+      if (!o.customerContact) return;
+      key = o.customerContact.toLowerCase().trim();
+    }
+    
+    if (!customersMap[key]) {
+      customersMap[key] = {
+        uid: null,
         contact: o.customerContact,
+        whatsapp: '',
+        name: '',
         totalOrders: 0,
         totalSpent: 0,
-        firstOrder: o.createdAt,
         lastOrder: o.createdAt
       };
     }
-    customersMap[contact].totalOrders += 1;
-    customersMap[contact].totalSpent += (o.priceUsd || 0);
-    if (o.createdAt > customersMap[contact].lastOrder) customersMap[contact].lastOrder = o.createdAt;
+    customersMap[key].totalOrders += 1;
+    if (!customersMap[key].uid) {
+      customersMap[key].totalSpent += (o.priceUsd || 0);
+    }
+    if (!customersMap[key].lastOrder || o.createdAt > customersMap[key].lastOrder) customersMap[key].lastOrder = o.createdAt;
   });
 
   const customers = Object.values(customersMap).sort((a, b) => b.totalSpent - a.totalSpent);
   
   if(customers.length === 0) return showAdminToast('No hay clientes para exportar', 'error');
 
-  let csv = 'Contacto,Total Pedidos,Total Gastado (USD),Ultima Compra\n';
+  let csv = 'Nombre,Contacto,WhatsApp,Total Pedidos,Total Gastado (USD),Ultima Compra\n';
   customers.forEach(c => {
-    csv += `"${c.contact}",${c.totalOrders},${c.totalSpent.toFixed(2)},"${new Date(c.lastOrder).toLocaleDateString('es-VE')}"\n`;
+    const lastOrd = c.lastOrder ? new Date(c.lastOrder).toLocaleDateString('es-VE') : '';
+    csv += `"${c.name}","${c.contact}","${c.whatsapp}",${c.totalOrders},${c.totalSpent.toFixed(2)},"${lastOrd}"\n`;
   });
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.setAttribute("href", url);
-  link.setAttribute("download", `clientes_vip_${new Date().toISOString().slice(0,10)}.csv`);
+  link.setAttribute("download", `clientes_${new Date().toISOString().slice(0,10)}.csv`);
   link.style.visibility = 'hidden';
   document.body.appendChild(link);
   link.click();
@@ -2624,7 +2711,7 @@ function renderCustomers(container) {
     renderCustomersTable(usersList);
   }).catch(err => {
     console.error(err);
-    document.getElementById('customers-table-body').innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color: red;">Error cargando clientes</td></tr>`;
+    document.getElementById('customers-table-body').innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: red;">Error cargando clientes</td></tr>`;
   });
 }
 
@@ -2633,7 +2720,7 @@ function renderCustomersTable(usersList) {
   if (!tbody) return;
 
   if (usersList.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--text-secondary);">No hay clientes registrados o que coincidan con la búsqueda.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-secondary);">No hay clientes registrados o que coincidan con la búsqueda.</td></tr>`;
     return;
   }
 
