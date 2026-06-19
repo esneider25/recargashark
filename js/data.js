@@ -717,6 +717,7 @@ function createOrder(data) {
     paymentMethodName: data.paymentMethodName,
     customerContact: data.customerContact || '',
     gameId: data.gameId || '',
+    playerName: data.playerName || null,
     accountEmail: data.accountEmail || '',
     accountPassword: data.accountPassword || '',
     ocrNumbers: data.ocrNumbers || [],
