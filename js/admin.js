@@ -2303,6 +2303,201 @@ function updateAdminMessagesUI() {
           </div>
           <div id="admin-chat-messages" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg-surface);">
             ${messagesHtml}
+function renderDiscounts(container) {
+  const discounts = getDiscounts();
+  const listHtml = discounts.length > 0 ? discounts.map(d => `
+    <div style="background: var(--bg-deep); padding: 16px; border-radius: 8px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <span class="admin-order-ref" style="font-size: 1.1rem; padding: 6px 12px;">${d.code}</span>
+        <span style="font-size: 1rem; color: var(--text-secondary); font-weight: 500;">
+          ${d.type === 'percentage' ? '-' + d.value + '%' : '-$' + parseFloat(d.value).toFixed(2)}
+        </span>
+      </div>
+      <button class="btn btn-secondary" style="padding: 6px 12px; color: #ff6b6b; border-color: rgba(220,53,69,0.2);" onclick="adminDeleteDiscount('${d.code}')" title="Eliminar cupón">🗑️ Eliminar</button>
+    </div>
+  `).join('') : '<p style="color: var(--text-muted); padding: 20px; text-align: center; background: rgba(0,0,0,0.02); border-radius: 8px;">No hay cupones activos.</p>';
+
+  container.innerHTML = `
+    <div class="admin-header">
+      <div>
+        <h1 class="admin-title">🏷️ Códigos de Descuento</h1>
+        <p class="admin-subtitle">Crea y gestiona los cupones promocionales.</p>
+      </div>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px;">
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h3 class="admin-card-title">✨ Crear Cupón</h3>
+        </div>
+        <form id="admin-discount-form" onsubmit="adminCreateDiscount(event)">
+          <div class="admin-form-group">
+            <label class="admin-form-label">Código (Ej: VERANO20)</label>
+            <input type="text" id="discount-code" class="admin-form-input" required style="text-transform: uppercase;" placeholder="CÓDIGO" pattern="[A-Za-z0-9]+" title="Solo letras y números, sin espacios">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="admin-form-group">
+              <label class="admin-form-label">Tipo de Descuento</label>
+              <select id="discount-type" class="admin-form-input" required>
+                <option value="percentage">Porcentaje (%)</option>
+                <option value="fixed">Monto Fijo ($)</option>
+              </select>
+            </div>
+            <div class="admin-form-group">
+              <label class="admin-form-label">Valor</label>
+              <input type="number" id="discount-value" class="admin-form-input" required min="0.1" step="0.1" placeholder="Ej: 10">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">➕ Crear Cupón</button>
+        </form>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h3 class="admin-card-title">🎟️ Cupones Activos (${discounts.length})</h3>
+        </div>
+        <div>
+          ${listHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function adminCreateDiscount(event) {
+  event.preventDefault();
+  const code = document.getElementById('discount-code').value;
+  const type = document.getElementById('discount-type').value;
+  const value = document.getElementById('discount-value').value;
+
+  if (createDiscount(code, type, value)) {
+    showAdminToast('✅ Cupón creado exitosamente', 'success');
+    renderActiveTab();
+  } else {
+    showAdminToast('⚠️ Ese código ya existe', 'error');
+  }
+}
+
+function adminDeleteDiscount(code) {
+  if (confirm(`¿Seguro que deseas eliminar el cupón ${code}?`)) {
+    deleteDiscount(code);
+    showAdminToast('Cupón eliminado', 'info');
+    renderActiveTab();
+  }
+}
+
+// ════════════════════════════════════════
+// MESSAGES & SETTINGS
+// ════════════════════════════════════════
+
+// ── Messages ──
+let currentChatSessionId = null;
+
+function renderMessages(main) {
+  if (!document.getElementById('admin-chat-container')) {
+    main.innerHTML = `
+      <header class="admin-header">
+        <h2>💬 Mensajería de Soporte</h2>
+      </header>
+      <div style="display: grid; grid-template-columns: 350px 1fr; gap: 20px; align-items: start; margin-top: 20px;" class="admin-messages-grid">
+        <div class="admin-card" style="padding: 15px; max-height: 600px; overflow-y: auto; display: flex; flex-direction: column;">
+          <div class="admin-card-header" style="border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;">
+            <h3 class="admin-card-title">Bandeja de Entrada</h3>
+          </div>
+          <div id="admin-chat-list" style="flex: 1; overflow-y: auto; padding-right: 5px;">
+            <!-- List loaded via JS -->
+          </div>
+        </div>
+        <div class="admin-card" id="admin-chat-container" style="padding: 0; overflow: hidden; max-height: 600px;">
+          <!-- Chat loaded via JS -->
+        </div>
+      </div>
+    `;
+  }
+
+  updateAdminMessagesUI();
+}
+
+function updateAdminMessagesUI() {
+  const allConversations = getMessages();
+  allConversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+  const listContainer = document.getElementById('admin-chat-list');
+  const chatContainer = document.getElementById('admin-chat-container');
+  if (!listContainer || !chatContainer) return;
+
+  // Render List
+  let listHtml = '';
+  if (allConversations.length === 0) {
+    listHtml = '<p style="color:var(--text-muted); padding: 15px;">No hay mensajes aún.</p>';
+  } else {
+    allConversations.forEach(conv => {
+      const isUnread = conv.hasUnreadAdmin;
+      const unreadBadge = isUnread ? '<span style="background:var(--error); width:10px; height:10px; border-radius:50%; display:inline-block; margin-left:10px;"></span>' : '';
+      const lastMsg = conv.messages.length > 0 ? conv.messages[conv.messages.length - 1].text : '';
+      const selectedStr = (currentChatSessionId === conv.sessionId) ? 'background: rgba(0, 229, 195, 0.1); border-left: 3px solid var(--accent);' : 'background: var(--bg-deep); border-left: 3px solid transparent;';
+      
+      const contactLabel = conv.contact || `Anónimo (${conv.sessionId.substring(0,8)})`;
+      listHtml += `
+        <div style="padding: 15px; margin-bottom: 10px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; ${selectedStr}" onclick="openAdminChat('${conv.sessionId}')">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+            <strong style="color:var(--text-primary); font-size: 0.95rem;">📱 ${contactLabel}</strong>
+            ${unreadBadge}
+          </div>
+          <div style="color:var(--text-secondary); font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            ${lastMsg}
+          </div>
+          <div style="color:var(--text-muted); font-size: 0.75rem; margin-top: 5px; text-align: right;">
+            ${new Date(conv.updatedAt).toLocaleString('es-VE')}
+          </div>
+        </div>
+      `;
+    });
+  }
+  listContainer.innerHTML = listHtml;
+
+  // Render Chat
+  if (!currentChatSessionId) {
+    chatContainer.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; color:var(--text-muted);">Selecciona una conversación</div>';
+    return;
+  }
+
+  const conv = allConversations.find(m => m.sessionId === currentChatSessionId);
+  if (conv) {
+    let messagesHtml = '';
+    conv.messages.forEach(msg => {
+      const isAdmin = msg.sender === 'admin';
+      const align = isAdmin ? 'flex-end' : 'flex-start';
+      const bg = isAdmin ? 'var(--accent)' : 'var(--bg-surface)';
+      const color = isAdmin ? 'var(--bg-deep)' : 'var(--text-primary)';
+      const time = new Date(msg.timestamp).toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'});
+      messagesHtml += `
+        <div style="display:flex; flex-direction:column; align-items:${align}; margin-bottom:15px;">
+          <div style="background:${bg}; color:${color}; padding:10px 15px; border-radius:15px; max-width:80%;">
+            ${msg.text}
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">${time}</div>
+        </div>
+      `;
+    });
+
+    const contactLabel = conv.contact || `Anónimo (${conv.sessionId.substring(0,8)})`;
+    
+    // Si ya existe el contenedor de mensajes, solo actualizar la lista para no perder foco del input
+    const msgBox = document.getElementById('admin-chat-messages');
+    if (msgBox) {
+      // Check if scrolled to bottom before update
+      const isAtBottom = msgBox.scrollHeight - msgBox.scrollTop <= msgBox.clientHeight + 50;
+      msgBox.innerHTML = messagesHtml;
+      if (isAtBottom) msgBox.scrollTop = msgBox.scrollHeight;
+    } else {
+      chatContainer.innerHTML = `
+        <div style="display: flex; flex-direction: column; height: 500px;">
+          <div class="admin-card-header" style="border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 0;">
+            <h3 class="admin-card-title">📱 Conversación con: ${contactLabel}</h3>
+          </div>
+          <div id="admin-chat-messages" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg-surface);">
+            ${messagesHtml}
           </div>
           <div style="padding: 15px; border-top: 1px solid var(--border); background: var(--bg-deep); display: flex; gap: 10px; align-items: center;">
             <input type="text" id="admin-chat-input" class="admin-input" placeholder="Escribe una respuesta..." style="flex:1; border-radius: 20px; padding: 10px 15px;" onkeydown="if(event.key==='Enter')adminReplyMessage()">
@@ -2310,6 +2505,18 @@ function updateAdminMessagesUI() {
           </div>
         </div>
       `;
+    }
+  }
+}
+
+function renderSettings(container) {
+  const config = getSettings();
+  container.innerHTML = `
+    <div class="admin-header">
+      <div>
+        <h1 class="admin-title">Configuración</h1>
+        <p class="admin-subtitle">Ajustes generales de la tienda</p>
+      </div>
       <button class="btn btn-primary" onclick="adminSaveSettings()">
         <span>💾</span> Guardar Cambios
       </button>
