@@ -510,11 +510,22 @@ function renderDashboardContent() {
 
   const currentName = currentUser.displayName || (typeof userProfile !== 'undefined' && userProfile ? userProfile.name : '') || '';
   const currentWhatsapp = (typeof userProfile !== 'undefined' && userProfile ? userProfile.whatsapp : '') || '';
+  const currentRole = (typeof userProfile !== 'undefined' && userProfile && userProfile.role) ? userProfile.role : 'cliente';
+
+  let roleBadge = '';
+  if (currentRole === 'revendedor') {
+    roleBadge = `<span style="font-size: 0.8rem; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; letter-spacing: 0.5px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); display: flex; align-items: center; gap: 4px;"><i class="ph-fill ph-star"></i> REVENDEDOR</span>`;
+  } else {
+    roleBadge = `<span style="font-size: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); padding: 4px 12px; border-radius: 20px; font-weight: bold; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;"><i class="ph-fill ph-user"></i> CLIENTE</span>`;
+  }
 
   return `
     <!-- SECTION: DASHBOARD RESUMEN -->
     <section id="sec-dashboard" class="panel-section active">
-      <h2 style="font-family: var(--font-display); font-size: 2rem; margin-bottom: 24px;">Hola, ${currentName || 'Shark'} 👋</h2>
+      <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 24px;">
+        <h2 style="font-family: var(--font-display); font-size: 2rem; margin: 0;">Hola, ${currentName || 'Shark'} 👋</h2>
+        ${roleBadge}
+      </div>
       
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px;">
         
