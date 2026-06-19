@@ -1746,8 +1746,8 @@ function renderOrders(container) {
         <button class="btn btn-secondary" onclick="exportOrders()" style="padding: 8px 16px; font-size: 0.85rem;">
           📥 Exportar
         </button>
-        <button class="btn btn-danger" onclick="clearCompletedOrders()" style="padding: 8px 16px; font-size: 0.85rem; background: rgba(220,53,69,0.15); color: #ff6b6b; border: 1px solid rgba(220,53,69,0.3);">
-          🗑️ Limpiar Completados
+        <button class="btn btn-danger" onclick="clearHistoryOrders()" style="padding: 8px 16px; font-size: 0.85rem; background: rgba(220,53,69,0.15); color: #ff6b6b; border: 1px solid rgba(220,53,69,0.3);">
+          🗑️ Limpiar Historial
         </button>
       </div>
     </div>
@@ -2059,18 +2059,18 @@ function confirmDeleteOrder(orderId) {
   }
 }
 
-function clearCompletedOrders() {
+function clearHistoryOrders() {
   const orders = getOrders();
-  const completed = orders.filter(o => o.status === 'completed');
-  if (completed.length === 0) {
-    showAdminToast('ℹ️ No hay pedidos completados para eliminar', 'error');
+  const toDelete = orders.filter(o => o.status === 'completed' || o.status === 'rejected');
+  if (toDelete.length === 0) {
+    showAdminToast('ℹ️ No hay pedidos completados o rechazados para eliminar', 'error');
     return;
   }
-  if (confirm(`¿Eliminar ${completed.length} pedido(s) completados? Esta acción no se puede deshacer.`)) {
-    const remaining = orders.filter(o => o.status !== 'completed');
-    completed.forEach(o => removeOrderFromDb(o.id));
+  if (confirm(`¿Eliminar ${toDelete.length} pedido(s) completados y rechazados? Esta acción no se puede deshacer.`)) {
+    const remaining = orders.filter(o => o.status !== 'completed' && o.status !== 'rejected');
+    toDelete.forEach(o => removeOrderFromDb(o.id));
     ORDERS = remaining;
-    showAdminToast(`🗑️ ${completed.length} pedido(s) completados eliminados`, 'success');
+    showAdminToast(`🗑️ ${toDelete.length} pedido(s) eliminados del historial`, 'success');
     refreshOrdersView();
   }
 }
