@@ -352,6 +352,7 @@ function renderDashboard() {
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn-primary" style="width: 100%; border-radius: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white;" onclick="openSettingsModal()">⚙️ Ajustes de Cuenta</button>
             <button class="btn-secondary" style="width: 100%; border-radius: 12px;" onclick="navigateTo('home')">Volver a la Tienda</button>
             <button onclick="logout()" class="btn-secondary" style="width: 100%; border-radius: 12px; color: #ff5252; border-color: rgba(255, 82, 82, 0.3); background: rgba(255, 82, 82, 0.05);">Cerrar Sesión</button>
           </div>
@@ -360,6 +361,113 @@ function renderDashboard() {
       </div>
     </div>
   `;
+}
+
+function openSettingsModal() {
+  const existing = document.getElementById('settings-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'settings-modal';
+  modal.style.position = 'fixed';
+  modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
+  modal.style.background = 'rgba(0,0,0,0.8)'; modal.style.zIndex = '1000';
+  modal.style.display = 'flex'; modal.style.alignItems = 'center'; modal.style.justifyContent = 'center';
+  
+  const currentName = currentUser.displayName || (typeof userProfile !== 'undefined' && userProfile ? userProfile.name : '') || '';
+  const currentWhatsapp = (typeof userProfile !== 'undefined' && userProfile ? userProfile.whatsapp : '') || '';
+
+  modal.innerHTML = `
+    <div style="background: var(--bg-surface); padding: 30px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 400px; color: white;">
+      <h3 style="margin-top: 0; margin-bottom: 20px;">Ajustes de Cuenta</h3>
+      
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label>Nombre a Mostrar</label>
+        <input type="text" id="setting-name" class="form-input" value="${currentName}" placeholder="Tu nombre">
+      </div>
+      
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label>Número de WhatsApp</label>
+        <input type="text" id="setting-whatsapp" class="form-input" value="${currentWhatsapp}" placeholder="Ej. 04120000000">
+      </div>
+      
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label>Nueva Contraseña (Opcional)</label>
+        <input type="password" id="setting-password" class="form-input" placeholder="Dejar en blanco para no cambiar">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label>Confirmar Nueva Contraseña</label>
+        <input type="password" id="setting-password-confirm" class="form-input" placeholder="Repite la contraseña">
+      </div>
+      
+      <div style="display: flex; gap: 10px; margin-top: 25px;">
+        <button class="btn-secondary" style="flex: 1;" onclick="document.getElementById('settings-modal').remove()">Cancelar</button>
+        <button class="btn-primary" style="flex: 1;" id="btn-save-settings" onclick="saveProfileSettings()">Guardar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+async function saveProfileSettings() {
+  if (!currentUser) return;
+  const btn = document.getElementById('btn-save-settings');
+  const name = document.getElementById('setting-name').value.trim();
+  const whatsapp = document.getElementById('setting-whatsapp').value.trim();
+  const pass1 = document.getElementById('setting-password').value;
+  const pass2 = document.getElementById('setting-password-confirm').value;
+
+  if (pass1 || pass2) {
+    if (pass1 !== pass2) {
+      alert('Las contraseñas no coinciden');
+      return;
+    }
+    if (pass1.length < 6) {
+      alert('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+  }
+
+  btn.innerHTML = 'Guardando...';
+  btn.disabled = true;
+
+  try {
+    const promises = [];
+    
+    if (name !== currentUser.displayName) {
+      promises.push(currentUser.updateProfile({ displayName: name }));
+    }
+
+    if (pass1) {
+      promises.push(currentUser.updatePassword(pass1));
+    }
+
+    promises.push(firebase.database().ref('users/' + currentUser.uid).update({
+      name: name,
+      whatsapp: whatsapp
+    }));
+
+    await Promise.all(promises);
+    
+    // Update local profile object
+    if (typeof userProfile !== 'undefined' && userProfile) {
+      userProfile.name = name;
+      userProfile.whatsapp = whatsapp;
+    }
+
+    alert('Ajustes guardados correctamente.');
+    document.getElementById('settings-modal').remove();
+    renderApp(); // Reload to show new name in UI
+  } catch (err) {
+    if (err.code === 'auth/requires-recent-login') {
+      alert('Por seguridad, debes cerrar sesión y volver a entrar para cambiar tu contraseña.');
+    } else {
+      alert('Error al guardar: ' + err.message);
+    }
+    btn.innerHTML = 'Guardar';
+    btn.disabled = false;
+  }
 }
 
 function openOrderTracking(orderId) {

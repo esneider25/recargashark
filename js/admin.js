@@ -2310,50 +2310,6 @@ function updateAdminMessagesUI() {
           </div>
         </div>
       `;
-      setTimeout(() => {
-        const newMsgBox = document.getElementById('admin-chat-messages');
-        if (newMsgBox) newMsgBox.scrollTop = newMsgBox.scrollHeight;
-      }, 50);
-    }
-  }
-}
-
-function updateAdminSidebarBadges() {
-  document.querySelectorAll('.admin-nav-item').forEach(item => {
-    if (item.getAttribute('data-tab') === 'messages') {
-      const count = getUnreadMessagesCount();
-      item.innerHTML = `<span class="admin-nav-icon">💬</span> Mensajes ${count > 0 ? `<span class="admin-nav-badge" style="background:var(--error);">${count}</span>` : ''}`;
-    }
-  });
-}
-
-function openAdminChat(sessionId) {
-  currentChatSessionId = sessionId;
-  markMessagesAsRead(sessionId, 'admin');
-  updateAdminSidebarBadges();
-  updateAdminMessagesUI();
-}
-
-function adminReplyMessage() {
-  if (!currentChatSessionId) return;
-  const input = document.getElementById('admin-chat-input');
-  if (!input || !input.value.trim()) return;
-  const text = input.value.trim();
-  addMessage(currentChatSessionId, 'admin', text);
-  input.value = '';
-  updateAdminMessagesUI();
-}
-
-// ── Settings ──
-function renderSettings(main) {
-  const config = getSettings();
-  
-  main.innerHTML = `
-    <div class="admin-header">
-      <div>
-        <h1 class="admin-title">⚙️ Configuración Global</h1>
-        <p class="admin-subtitle">Ajusta la información pública de tu tienda</p>
-      </div>
       <button class="btn btn-primary" onclick="adminSaveSettings()">
         <span>💾</span> Guardar Cambios
       </button>
@@ -2432,7 +2388,7 @@ function checkAdminNotifications() {
   const currentUnread = getUnreadMessagesCount();
   
   if (currentPending > lastPendingOrders || currentUnread > lastUnreadMessages) {
-    notifySound.play().catch(e => console.log('Audio autoplay blocked'));
+    if (typeof notifySound !== 'undefined' && notifySound.play) notifySound.play().catch(e => console.log('Audio autoplay blocked'));
     
     // Web Push Notification
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -2610,7 +2566,6 @@ function adminDeleteQuickReply(id) {
   }
 }
 
-
 // ════════════════════════════════════════
 // CUSTOMERS (USERS & WALLETS)
 // ════════════════════════════════════════
@@ -2623,7 +2578,7 @@ function renderCustomers(container) {
     </div>
     <div class="admin-card" style="margin-top: 20px;">
       <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <input type="text" id="admin-customers-search" class="admin-form-input" style="flex: 1; margin-bottom: 0;" placeholder="Buscar por Email o Nombre..." onkeyup="filterCustomersSearch(this.value)">
+        <input type="text" id="admin-customers-search" class="admin-form-input" style="flex: 1; margin-bottom: 0;" placeholder="Buscar por Email, Nombre o WhatsApp..." onkeyup="filterCustomersSearch(this.value)">
       </div>
       <div style="overflow-x: auto;">
         <table class="admin-table" style="width: 100%; border-collapse: collapse;">
@@ -2631,13 +2586,14 @@ function renderCustomers(container) {
             <tr>
               <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Email</th>
               <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Nombre</th>
+              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">WhatsApp</th>
               <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Fecha Registro</th>
               <th style="text-align: right; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Monedero</th>
               <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Acciones</th>
             </tr>
           </thead>
           <tbody id="customers-table-body">
-            <tr><td colspan="5" style="text-align: center; padding: 20px;">Cargando clientes...</td></tr>
+            <tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando clientes...</td></tr>
           </tbody>
         </table>
       </div>
