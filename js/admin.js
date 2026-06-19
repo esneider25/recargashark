@@ -2737,17 +2737,18 @@ function renderCustomers(container) {
       <div style="overflow-x: auto;">
         <table class="admin-table" style="width: 100%; border-collapse: collapse;">
           <thead>
-            <tr>
               <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Email</th>
               <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Nombre</th>
               <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">WhatsApp</th>
               <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Fecha Registro</th>
               <th style="text-align: right; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Monedero</th>
+              <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Rol / Descuento</th>
+              <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Estado</th>
               <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Acciones</th>
             </tr>
           </thead>
           <tbody id="customers-table-body">
-            <tr><td colspan="6" style="text-align: center; padding: 20px;">Cargando clientes...</td></tr>
+            <tr><td colspan="8" style="text-align: center; padding: 20px;">Cargando clientes...</td></tr>
           </tbody>
         </table>
       </div>
@@ -2766,7 +2767,7 @@ function renderCustomers(container) {
     renderCustomersTable(usersList);
   }).catch(err => {
     console.error(err);
-    document.getElementById('customers-table-body').innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: red;">Error cargando clientes</td></tr>`;
+    document.getElementById('customers-table-body').innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: red;">Error cargando clientes</td></tr>`;
   });
 }
 
@@ -2775,7 +2776,7 @@ function renderCustomersTable(usersList) {
   if (!tbody) return;
 
   if (usersList.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-secondary);">No hay clientes registrados o que coincidan con la búsqueda.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--text-secondary);">No hay clientes registrados o que coincidan con la búsqueda.</td></tr>`;
     return;
   }
 
@@ -2789,6 +2790,16 @@ function renderCustomersTable(usersList) {
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.whatsapp || 'N/A'}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${dateStr}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: right; color: #10b981; font-weight: bold;">${wallet.toFixed(2)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
+          <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openRoleModal('${user.uid}', '${user.role || 'cliente'}', ${user.discountPercentage || 0})">
+            ${(user.role === 'revendedor') ? '💼 Revend (' + (user.discountPercentage || 0) + '%)' : '👤 Cliente'}
+          </button>
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
+          <button class="btn ${user.isBlocked ? 'btn-danger' : 'btn-secondary'}" style="padding: 6px 12px; font-size: 0.8rem;" onclick="toggleBlockUser('${user.uid}', ${!!user.isBlocked})">
+            ${user.isBlocked ? '🚫 Bloqueado' : '✅ Activo'}
+          </button>
+        </td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
           <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openEditWalletModal('${user.uid}', '${user.email}', ${wallet})">Editar Saldo</button>
         </td>
