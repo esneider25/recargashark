@@ -487,8 +487,10 @@ function renderOrderSummary(product, pkg, method, discount = null) {
   let finalUsd = pkg.priceUsd;
 
   if (typeof userProfile !== 'undefined' && userProfile && userProfile.role === 'revendedor' && userProfile.discountPercentage > 0 && product.id !== 'wallet-recharge') {
-    finalUsd = finalUsd - (finalUsd * (userProfile.discountPercentage / 100));
-    originalPriceUsd = finalUsd;
+    if (pkg.costUsd && pkg.costUsd > 0) {
+      finalUsd = pkg.costUsd + (pkg.costUsd * (userProfile.discountPercentage / 100));
+      originalPriceUsd = finalUsd;
+    }
   }
 
   let discountHtml = '';

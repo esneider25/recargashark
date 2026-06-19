@@ -2792,7 +2792,7 @@ function renderCustomersTable(usersList) {
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: right; color: #10b981; font-weight: bold;">${wallet.toFixed(2)}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
           <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openRoleModal('${user.uid}', '${user.role || 'cliente'}', ${user.discountPercentage || 0})">
-            ${(user.role === 'revendedor') ? '💼 Revend (' + (user.discountPercentage || 0) + '%)' : '👤 Cliente'}
+            ${(user.role === 'revendedor') ? '💼 Revend (+' + (user.discountPercentage || 0) + '%)' : '👤 Cliente'}
           </button>
         </td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
@@ -2936,9 +2936,9 @@ window.openRoleModal = function(uid, currentRole, currentDiscount) {
           </select>
         </div>
         <div class="form-group" id="discount-group" style="display: ${currentRole === 'revendedor' ? 'block' : 'none'};">
-          <label>Porcentaje de Descuento (%)</label>
-          <input type="number" id="discount-input" class="form-input" value="${currentDiscount || 0}" min="0" max="100">
-          <div class="form-hint">Se descontará silenciosamente este porcentaje a este revendedor en todas sus compras de catálogo (excepto recarga de saldo).</div>
+          <label>Margen de Ganancia sobre Costo (%)</label>
+          <input type="number" id="discount-input" class="form-input" value="${currentDiscount || 0}" min="0" max="1000">
+          <div class="form-hint">El precio para este revendedor será: Costo del Producto + Este Porcentaje. (Si el producto no tiene costo configurado, se usará el precio normal).</div>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 20px;">
           <button class="btn btn-secondary" onclick="document.getElementById('role-modal-overlay').remove()">Cancelar</button>
