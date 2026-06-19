@@ -11,7 +11,8 @@ const appState = {
   selectedCategory: 'todos',
   trackingOrderId: null,
   appliedDiscount: null,
-  historyContactStr: null
+  historyContactStr: null,
+  verifiedPlayerName: null
 };
 
 // ── Init ──
@@ -571,7 +572,8 @@ function submitOrder() {
     ocrNumbers: appState.selectedScreenshotOcr || [],
     discountCode: discountCode,
     discountValue: discountValue,
-    discountType: discountType
+    discountType: discountType,
+    playerName: appState.verifiedPlayerName
   });
 
   if (typeof recordOrderAttempt === 'function') recordOrderAttempt();
@@ -1412,6 +1414,7 @@ setInterval(() => {
 
 // ── Verificador de ID ──
 window.verifyGameId = async function(productId) {
+  appState.verifiedPlayerName = null;
   const product = PRODUCTS.find(p => p.id === productId);
   if (!product || !product.apiVerifierProvider) return;
 
@@ -1542,12 +1545,14 @@ window.verifyGameId = async function(productId) {
       }
 
       if (name && typeof name === 'string' && name.trim() !== '' && !name.includes('@')) {
+        appState.verifiedPlayerName = name;
         resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ Nombre: <b>${name}</b></span>`;
       } else {
         // Fallback inteligente: buscar cualquier string que no sea un correo y tenga longitud de nombre
         let fallbackName = Object.values(src).find(v => typeof v === 'string' && v.length > 2 && v.length < 30 && v !== 'success' && v !== 'OK' && !v.includes('@'));
         
         if (fallbackName) {
+           appState.verifiedPlayerName = fallbackName;
            resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ Nombre: <b>${fallbackName}</b></span>`;
         } else {
            // Imprimir un mini-resumen de los datos recibidos para que el usuario pueda decirnos qué llaves llegaron

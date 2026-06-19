@@ -954,7 +954,7 @@ async function sendTelegramPhoto(photoBlob, caption, inlineKeyboard) {
 
 function buildOrderTelegramMessage(order) {
   let msg = `🦈 <b>NUEVO PEDIDO —</b>\n`;
-  msg += `👤 <b>Jugador:</b> ㅤ\n`;
+  msg += `👤 <b>Jugador:</b> ${order.playerName || 'ㅤ'}\n`;
   msg += `🆔 <b>ID:</b> <code>${order.gameId || order.accountEmail || 'N/A'}</code>\n`;
   msg += `🔥 <b>Producto:</b> ${order.productName} (${order.packageLabel})\n`;
   msg += `💰 <b>Monto:</b> $${order.priceUsd.toFixed(2)} USD | Bs. ${formatBs(order.priceBs)}\n`;
