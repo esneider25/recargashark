@@ -915,7 +915,7 @@ async function sendTelegramMessage(text, inlineKeyboard) {
       parse_mode: 'HTML'
     };
     if (inlineKeyboard) {
-      body.reply_markup = JSON.stringify({ inline_keyboard: inlineKeyboard });
+      body.reply_markup = { inline_keyboard: inlineKeyboard };
     }
     const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/sendMessage`, {
       method: 'POST',

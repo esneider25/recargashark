@@ -653,12 +653,18 @@ async function processWalletOrderAuto(order) {
         else if (data.codigo) note = 'Código entregado: ' + data.codigo;
         
         updateOrderStatus(order.id, 'completed', note);
+        if (typeof sendTelegramMessage === 'function') {
+          sendTelegramMessage(`✅ <b>PEDIDO AUTO-COMPLETADO — #${order.id}</b>\n\nEl sistema API entregó la recarga exitosamente.\nNota: ${note}`);
+        }
       } else if (data.ok && data.estado === 'procesando') {
         if (typeof firebase !== 'undefined') {
           firebase.database().ref('orders/' + order.id).update({ adminNote: 'En proceso por API' });
         }
       } else {
         updateOrderStatus(order.id, 'invalid-id', `Verifica que el ID o la cuenta sean correctos.`);
+        if (typeof sendTelegramMessage === 'function') {
+          sendTelegramMessage(`⚠️ <b>DATOS INVÁLIDOS — #${order.id}</b>\n\nLa API rechazó el pedido automáticamente. El cliente debe corregir los datos.`);
+        }
       }
     } else if (typeof firebase !== 'undefined') {
       // Fallback
@@ -672,6 +678,9 @@ async function processWalletOrderAuto(order) {
     console.error('Error auto API:', error);
     if (typeof firebase !== 'undefined') {
       firebase.database().ref('orders/' + order.id).update({ status: 'pending', adminNote: 'Fallo auto-API. Requiere revisión manual' });
+      if (typeof sendTelegramMessage === 'function') {
+        sendTelegramMessage(`❌ <b>FALLO API — #${order.id}</b>\n\nOcurrió un error de conexión con la API externa. Requiere revisión manual en el panel.`);
+      }
     }
   }
 }
