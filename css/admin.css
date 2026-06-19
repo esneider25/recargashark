@@ -73,13 +73,11 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   transition: background-color var(--transition), color var(--transition);
-  position: relative;
-  z-index: 1;
 }
 
 /* ── Animated Background ── */
 .bg-ocean-grid {
-  position: fixed; inset: 0; z-index: -1;
+  position: fixed; inset: 0; z-index: 0;
   overflow: hidden; pointer-events: none;
 }
 .bg-ocean-grid::before {
@@ -102,7 +100,7 @@ body {
   position: fixed; border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, rgba(0, 229, 195, 0.12), transparent);
   border: 1px solid rgba(0, 229, 195, 0.06);
-  pointer-events: none; z-index: -1;
+  pointer-events: none; z-index: 0;
   animation: float linear infinite;
 }
 @keyframes float {
@@ -116,6 +114,8 @@ body {
 .admin-container {
   display: flex;
   min-height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
 .admin-sidebar {
