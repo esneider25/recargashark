@@ -37,7 +37,140 @@ function renderApp() {
 
   // Inject CSS & Structure
   app.innerHTML = `
-    ${css_styles.replace('`', '\`')}
+    <style>
+/* User Panel Specific Styles */
+.user-panel-layout {
+  display: flex;
+  min-height: 100vh;
+  padding-top: 70px; /* navbar height */
+  color: white;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.panel-sidebar {
+  width: 280px;
+  background: rgba(15, 31, 56, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 30px 20px;
+  position: sticky;
+  top: 70px;
+  height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 50;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  transform: translateX(4px);
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(0, 229, 195, 0.15), rgba(0, 229, 195, 0.05));
+  color: var(--accent);
+  border: 1px solid rgba(0, 229, 195, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 229, 195, 0.05);
+}
+
+.nav-item i {
+  font-size: 1.4rem;
+}
+
+.panel-main {
+  flex: 1;
+  padding: 40px;
+  overflow-y: auto;
+}
+
+.panel-section {
+  display: none;
+  animation: fadeIn 0.4s ease forwards;
+}
+
+.panel-section.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Glass Cards */
+.glass-card {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  padding: 25px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .user-panel-layout { flex-direction: column; }
+  .panel-sidebar {
+    width: 100%;
+    height: auto;
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    flex-direction: row;
+    padding: 10px;
+    z-index: 100;
+    border-right: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(6, 13, 26, 0.95);
+    justify-content: space-around;
+  }
+  .nav-item {
+    flex-direction: column;
+    padding: 8px;
+    gap: 4px;
+    font-size: 0.7rem;
+    text-align: center;
+  }
+  .nav-item:hover { transform: none; }
+  .panel-main { padding: 20px 20px 100px 20px; }
+}
+
+/* Form inputs for profile */
+.profile-form-group { margin-bottom: 20px; }
+.profile-form-group label { display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.9rem; }
+.profile-input { 
+  width: 100%; padding: 14px; border-radius: 12px;
+  background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
+  color: white; outline: none; transition: 0.3s;
+}
+.profile-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+</style>
     <div class="bg-ocean-grid">${typeof renderBubbles === 'function' ? renderBubbles() : ''}</div>
     
     <div class="user-panel-layout">
