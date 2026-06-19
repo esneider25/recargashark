@@ -767,20 +767,20 @@ function showOrderConfirmation(order) {
               </div>
               <div class="pf-confetti" id="pf-confetti"></div>
             </div>
-            <h3>¡Pedido Registrado!</h3>
-            <p>Tu pedido ha sido registrado. Puedes rastrear su estado en tiempo real.</p>
-            <div class="modal-ref">${order.id}</div>
-            <div class="pf-completed-info">
-              <div class="pf-info-row">
-                <span>📋 Referencia</span>
-                <span class="pf-ref-code">${order.id}</span>
+            <h3 style="margin-top: 20px; margin-bottom: 10px;">¡Pedido Registrado!</h3>
+            <p style="margin-bottom: 25px; color: var(--text-secondary);">Tu pedido ha sido registrado exitosamente. Por favor, guarda tu número de referencia.</p>
+            
+            <div style="background: rgba(0, 229, 195, 0.05); border: 1px dashed rgba(0, 229, 195, 0.4); border-radius: var(--radius-md); padding: 20px; margin-bottom: 25px;">
+              <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Código de Referencia</div>
+              <div style="font-family: 'Courier New', monospace; font-size: 1.6rem; font-weight: 800; color: var(--accent); letter-spacing: 2px; margin-bottom: 12px; text-shadow: 0 0 10px rgba(0,229,195,0.3);">
+                ${order.id}
               </div>
-              <div class="pf-info-row">
-                <span>⏱️ Estado</span>
-                <span class="pf-status-badge">Pendiente de verificación</span>
+              <div style="display: inline-block; background: rgba(255, 183, 77, 0.1); border: 1px solid rgba(255, 183, 77, 0.3); color: #ffb74d; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                ⏳ Pendiente de verificación
               </div>
             </div>
-            <button class="btn-primary pf-done-btn" onclick="goToTracking('${order.id}')">
+
+            <button class="btn-primary pf-done-btn" onclick="goToTracking('${order.id}')" style="width: 100%; border-radius: 12px; padding: 16px; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
               📡 Ver Estado del Pedido
             </button>
           </div>
