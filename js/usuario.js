@@ -366,14 +366,10 @@ function openOrderTracking(orderId) {
   const modal = document.getElementById('profile-modal-container');
   if(modal) modal.remove();
   
-  if (typeof firebase !== 'undefined') {
-    firebase.database().ref('orders/' + orderId).once('value').then(snap => {
-      if (snap.exists() && typeof showOrderConfirmation === 'function') {
-        showOrderConfirmation(snap.val());
-      } else {
-        if (typeof showToast === 'function') showToast('No se pudo cargar la información del pedido');
-      }
-    });
+  if (typeof navigateTo === 'function') {
+    navigateTo('tracking', orderId);
+  } else {
+    window.location.href = '#tracking/' + orderId;
   }
 }
 
