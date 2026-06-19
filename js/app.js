@@ -611,9 +611,12 @@ async function processWalletOrderAuto(order) {
   }
   
   try {
+    const rectificationCount = (order.statusHistory || []).filter(h => h.note && h.note.includes('rectificó')).length;
+    const finalMerchantRef = rectificationCount > 0 ? `${order.id}_R${rectificationCount}` : order.id;
+
     const payload = {
       producto_id: apiProductId,
-      merchant_ref: order.id + '_' + Date.now(),
+      merchant_ref: finalMerchantRef,
       cantidad: 1
     };
 

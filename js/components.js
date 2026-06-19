@@ -691,7 +691,7 @@ function renderOrderTracking(orderId) {
                 ` : `
                   <input type="text" id="rectify-id-input" placeholder="Escribe aquí los datos correctos (ID)..." style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,167,38,0.4); border-radius: 8px; padding: 14px 16px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#ffa726'" onblur="this.style.borderColor='rgba(255,167,38,0.4)'">
                 `}
-                <button class="btn-primary" onclick="rectifyOrderId('${order.id}')" style="width: 100%; padding: 14px 24px; background: #ffa726; color: #060d1a; box-shadow: 0 4px 15px rgba(255,167,38,0.3); border: none; font-weight: 700;">Re-enviar Pedido</button>
+                <button class="btn-primary" onclick="this.disabled=true; this.innerHTML='Enviando...'; rectifyOrderId('${order.id}')" style="width: 100%; padding: 14px 24px; background: #ffa726; color: #060d1a; box-shadow: 0 4px 15px rgba(255,167,38,0.3); border: none; font-weight: 700;">Re-enviar Pedido</button>
               </div>
             </div>
           ` : ''}

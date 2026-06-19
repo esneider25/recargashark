@@ -1099,9 +1099,12 @@ async function processAutomaticTopup(orderId, fromModal = false) {
   refreshOrdersView();
 
   try {
+    const rectificationCount = (order.statusHistory || []).filter(h => h.note && h.note.includes('rectificó')).length;
+    const finalMerchantRef = rectificationCount > 0 ? `${orderId}_R${rectificationCount}` : orderId;
+
     const payload = {
       producto_id: apiProductId,
-      merchant_ref: orderId + '_' + Date.now(),
+      merchant_ref: finalMerchantRef,
       cantidad: 1
     };
 
