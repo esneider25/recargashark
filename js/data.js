@@ -964,6 +964,19 @@ function buildOrderTelegramMessage(order) {
   return msg;
 }
 
+function buildOrderKeyboard(orderId) {
+  const baseUrl = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : 'https://recargashark.com';
+  return [
+    [
+      { text: '✅ Aprobar', callback_data: `approve_${orderId}` },
+      { text: '❌ Rechazar', callback_data: `reject_${orderId}` }
+    ],
+    [
+      { text: '🔍 Ver en Panel Admin', url: `${baseUrl}/admin.html` }
+    ]
+  ];
+}
+
 function getQuickReplies() {
   if (QUICK_REPLIES && QUICK_REPLIES.length > 0) return QUICK_REPLIES;
   const defaults = [
