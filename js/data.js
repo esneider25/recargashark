@@ -696,6 +696,9 @@ function saveOrderToDb(order) {
 function removeOrderFromDb(orderId) {
   if (typeof firebase !== 'undefined' && orderId) {
     firebase.database().ref('orders/' + orderId).remove();
+    firebase.database().ref('orders').orderByChild('id').equalTo(orderId).once('value', snapshot => {
+      snapshot.forEach(child => child.ref.remove());
+    });
   }
 }
 
