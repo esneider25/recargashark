@@ -366,11 +366,7 @@ function openOrderTracking(orderId) {
   const modal = document.getElementById('profile-modal-container');
   if(modal) modal.remove();
   
-  if (typeof navigateTo === 'function') {
-    navigateTo('tracking', orderId);
-  } else {
-    window.location.href = '#tracking/' + orderId;
-  }
+  window.location.href = '/?tracking=' + orderId;
 }
 
 function renderDashboardOrders(orders, type) {

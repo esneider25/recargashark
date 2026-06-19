@@ -21,6 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
     appState.currentView = 'wallet-recharge';
     window.history.replaceState({}, document.title, window.location.pathname);
   }
+  if (urlParams.get('tracking')) {
+    appState.currentView = 'tracking';
+    appState.trackingOrderId = urlParams.get('tracking');
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
   if (localStorage.getItem('recargashark_theme') === 'light') {
     document.body.classList.add('light-theme');
   }
