@@ -519,7 +519,10 @@ async function renderCustomers(container) {
       totalOrders: 0,
       totalSpent: u.totalSpent || 0,
       firstOrder: null,
-      lastOrder: null
+      lastOrder: null,
+      role: u.role || 'cliente',
+      discountPercentage: u.discountPercentage || 0,
+      isBlocked: !!u.isBlocked
     };
   });
 
@@ -575,8 +578,15 @@ async function renderCustomers(container) {
       </div>
       <div style="color: var(--text-secondary);">Pedidos: <b>${c.totalOrders}</b></div>
       <div style="font-weight: bold; color: #00e5c3;">$${c.totalSpent.toFixed(2)}</div>
-      <div style="font-size: 0.85rem; color: var(--text-muted);">
-        ${c.lastOrder ? 'Último: ' + new Date(c.lastOrder).toLocaleDateString('es-VE') : 'Sin compras'}
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        ${c.uid ? `
+          <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; width: fit-content;" onclick="openRoleModal('${c.uid}', '${c.role}', ${c.discountPercentage})">
+            ${c.role === 'revendedor' ? '💼 Revend (' + c.discountPercentage + '%)' : '👤 Cliente'}
+          </button>
+          <button class="btn ${c.isBlocked ? 'btn-danger' : 'btn-secondary'}" style="padding: 4px 10px; font-size: 0.75rem; width: fit-content;" onclick="toggleBlockUser('${c.uid}', ${c.isBlocked})">
+            ${c.isBlocked ? '🚫 Bloqueado' : '✅ Activo'}
+          </button>
+        ` : `<span style="font-size: 0.8rem; color: var(--text-muted);">Invitado</span>`}
       </div>
     </div>
   `).join('') || '<div style="text-align: center; padding: 40px; color: var(--text-muted);">No se encontraron clientes.</div>';
@@ -589,11 +599,11 @@ async function renderCustomers(container) {
     contentEl.style.display = 'block';
     contentEl.innerHTML = `
       <div class="admin-card" style="padding: 0; overflow: hidden;">
-        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 15px; background: rgba(0,0,0,0.2); padding: 16px; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border);">
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; background: rgba(0,0,0,0.2); padding: 16px; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border);">
           <div>Cliente</div>
           <div>Total Pedidos</div>
-          <div>Total Gastado (USD)</div>
-          <div>Última Compra</div>
+          <div>Gastado (USD)</div>
+          <div>Gestión</div>
         </div>
         <div style="padding: 16px;">
           ${customersHtml}

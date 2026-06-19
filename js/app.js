@@ -503,13 +503,18 @@ function submitOrder() {
   }
   
   let finalUsd = pkg.priceUsd;
+
+  if (typeof userProfile !== 'undefined' && userProfile && userProfile.role === 'revendedor' && userProfile.discountPercentage > 0 && product.id !== 'wallet-recharge') {
+    finalUsd = finalUsd - (finalUsd * (userProfile.discountPercentage / 100));
+  }
+
   let discountCode = null;
   let discountValue = 0;
   let discountType = null;
 
   if (appState.appliedDiscount) {
-    const dAmount = calculateDiscountAmount(pkg.priceUsd, appState.appliedDiscount);
-    finalUsd = Math.max(0, pkg.priceUsd - dAmount);
+    const dAmount = calculateDiscountAmount(finalUsd, appState.appliedDiscount);
+    finalUsd = Math.max(0, finalUsd - dAmount);
     discountCode = appState.appliedDiscount.code;
     discountValue = appState.appliedDiscount.value;
     discountType = appState.appliedDiscount.type;
@@ -1647,6 +1652,13 @@ function initPublicAuth() {
       // Fetch profile from DB
       firebase.database().ref('users/' + user.uid).on('value', (snapshot) => {
         userProfile = snapshot.val() || { wallet: 0 };
+        
+        if (userProfile.isBlocked) {
+          firebase.auth().signOut();
+          showToast('🚫 Tu cuenta ha sido suspendida. Contacta a soporte.', 'error');
+          return;
+        }
+
         if (authNavItem) {
           authNavItem.innerHTML = `<a onclick="navigateTo('dashboard')" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Mi Perfil ($${userProfile.wallet || 0})</a>`;
         }

@@ -483,7 +483,14 @@ function formatDetailLabel(key) {
 }
 
 function renderOrderSummary(product, pkg, method, discount = null) {
+  let originalPriceUsd = pkg.priceUsd;
   let finalUsd = pkg.priceUsd;
+
+  if (typeof userProfile !== 'undefined' && userProfile && userProfile.role === 'revendedor' && userProfile.discountPercentage > 0 && product.id !== 'wallet-recharge') {
+    finalUsd = finalUsd - (finalUsd * (userProfile.discountPercentage / 100));
+    originalPriceUsd = finalUsd;
+  }
+
   let discountHtml = '';
   const displayCurrency = method.currency || 'bs';
 
@@ -523,7 +530,7 @@ function renderOrderSummary(product, pkg, method, discount = null) {
     basePriceHtml = `
       <div class="order-summary-row">
         <span>Precio base</span>
-        <span>$${pkg.priceUsd.toFixed(2)} USD</span>
+        <span>$${originalPriceUsd.toFixed(2)} USD</span>
       </div>
     `;
     totalHtml = `
@@ -536,7 +543,7 @@ function renderOrderSummary(product, pkg, method, discount = null) {
     basePriceHtml = `
       <div class="order-summary-row">
         <span>Precio base</span>
-        <span>Bs. ${formatBs(usdToBs(pkg.priceUsd))}</span>
+        <span>Bs. ${formatBs(usdToBs(originalPriceUsd))}</span>
       </div>
     `;
     totalHtml = `
