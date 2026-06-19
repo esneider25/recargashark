@@ -960,6 +960,11 @@ function buildOrderTelegramMessage(order) {
   msg += `🔥 <b>Producto:</b> ${order.productName} (${order.packageLabel})\n`;
   msg += `💰 <b>Monto:</b> $${order.priceUsd.toFixed(2)} USD | Bs. ${formatBs(order.priceBs)}\n`;
   
+  if (order.discountCode) {
+    const discountStr = order.discountType === 'percent' ? `${order.discountValue}%` : `$${parseFloat(order.discountValue).toFixed(2)} USD`;
+    msg += `🎁 <b>Descuento:</b> ${order.discountCode} (-${discountStr})\n`;
+  }
+  
   const refNumbers = (order.ocrNumbers && order.ocrNumbers.length > 0) ? order.ocrNumbers.join(', ') : 'Ver comprobante adjunto';
   msg += `🔢 <b>Ref:</b> <code>${refNumbers}</code>\n`;
   
