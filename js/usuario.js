@@ -362,6 +362,21 @@ function renderDashboard() {
   `;
 }
 
+function openOrderTracking(orderId) {
+  const modal = document.getElementById('profile-modal-container');
+  if(modal) modal.remove();
+  
+  if (typeof firebase !== 'undefined') {
+    firebase.database().ref('orders/' + orderId).once('value').then(snap => {
+      if (snap.exists() && typeof showOrderConfirmation === 'function') {
+        showOrderConfirmation(snap.val());
+      } else {
+        if (typeof showToast === 'function') showToast('No se pudo cargar la información del pedido');
+      }
+    });
+  }
+}
+
 function renderDashboardOrders(orders, type) {
   if (orders.length === 0) {
     return `
@@ -378,15 +393,23 @@ function renderDashboardOrders(orders, type) {
     if (order.status === 'completed') statusColor = '#10b981';
     if (order.status === 'rejected') statusColor = '#ef4444';
 
+    const STATUS_ES = {
+      'pending': 'PENDIENTE',
+      'processing': 'PROCESANDO',
+      'completed': 'COMPLETADO',
+      'rejected': 'RECHAZADO'
+    };
+    const statusText = STATUS_ES[order.status] || order.status.toUpperCase();
+
     return `
-    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-left: 4px solid ${statusColor}; border-radius: 8px; padding: 20px; margin-bottom: 15px; transition: transform 0.2s ease, background 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.transform='translateY(0)'">
+    <div onclick="openOrderTracking('${order.id}')" style="cursor: pointer; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-left: 4px solid ${statusColor}; border-radius: 8px; padding: 20px; margin-bottom: 15px; transition: transform 0.2s ease, background 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'; this.style.transform='translateY(0)'">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
         <div>
           <span style="font-weight: 800; color: #fff; font-size: 1.1rem;">${order.productName || 'Producto'}</span>
           <div style="color: #10b981; font-weight: bold; margin-top: 5px;">${order.packageLabel || ''}</div>
         </div>
         <div style="text-align: right;">
-           <span style="background: ${statusColor}20; color: ${statusColor}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid ${statusColor}40;">${order.status.toUpperCase()}</span>
+           <span style="background: ${statusColor}20; color: ${statusColor}; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid ${statusColor}40;">${statusText}</span>
            <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 8px;">Ord: #${order.id}</div>
         </div>
       </div>
