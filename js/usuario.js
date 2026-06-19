@@ -510,6 +510,8 @@ function renderDashboardContent() {
 
   const currentName = currentUser.displayName || (typeof userProfile !== 'undefined' && userProfile ? userProfile.name : '') || '';
   const currentWhatsapp = (typeof userProfile !== 'undefined' && userProfile ? userProfile.whatsapp : '') || '';
+  const currentCedula = (typeof userProfile !== 'undefined' && userProfile ? userProfile.cedula : '') || '';
+  const currentDireccion = (typeof userProfile !== 'undefined' && userProfile ? userProfile.direccion : '') || '';
   const currentRole = (typeof userProfile !== 'undefined' && userProfile && userProfile.role) ? userProfile.role : 'cliente';
 
   let roleBadge = '';
@@ -639,13 +641,13 @@ function renderDashboardContent() {
         </div>
         
         <div class="profile-form-group">
-          <label><i class="ph ph-lock-key"></i> Nueva Contraseña (Opcional)</label>
-          <input type="password" id="setting-password" class="profile-input" placeholder="Dejar en blanco para no cambiar">
+          <label><i class="ph ph-identification-card"></i> Cédula del Titular</label>
+          <input type="text" id="setting-cedula" class="profile-input" value="${currentCedula}" placeholder="Ej. V-12345678">
         </div>
 
         <div class="profile-form-group" style="margin-bottom: 30px;">
-          <label><i class="ph ph-lock-key"></i> Confirmar Nueva Contraseña</label>
-          <input type="password" id="setting-password-confirm" class="profile-input" placeholder="Repite la contraseña">
+          <label><i class="ph ph-map-pin"></i> Dirección</label>
+          <input type="text" id="setting-direccion" class="profile-input" value="${currentDireccion}" placeholder="Tu dirección completa">
         </div>
         
         <button class="btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1.05rem;" id="btn-save-settings" onclick="saveProfileSettings()">
@@ -665,19 +667,8 @@ async function saveProfileSettings() {
   const btn = document.getElementById('btn-save-settings');
   const name = document.getElementById('setting-name').value.trim();
   const whatsapp = document.getElementById('setting-whatsapp').value.trim();
-  const pass1 = document.getElementById('setting-password').value;
-  const pass2 = document.getElementById('setting-password-confirm').value;
-
-  if (pass1 || pass2) {
-    if (pass1 !== pass2) {
-      alert('Las contraseñas no coinciden');
-      return;
-    }
-    if (pass1.length < 6) {
-      alert('La contraseña debe tener al menos 6 caracteres');
-      return;
-    }
-  }
+  const cedula = document.getElementById('setting-cedula').value.trim();
+  const direccion = document.getElementById('setting-direccion').value.trim();
 
   btn.innerHTML = 'Guardando...';
   btn.disabled = true;
@@ -689,13 +680,11 @@ async function saveProfileSettings() {
       promises.push(currentUser.updateProfile({ displayName: name }));
     }
 
-    if (pass1) {
-      promises.push(currentUser.updatePassword(pass1));
-    }
-
     promises.push(firebase.database().ref('users/' + currentUser.uid).update({
       name: name,
-      whatsapp: whatsapp
+      whatsapp: whatsapp,
+      cedula: cedula,
+      direccion: direccion
     }));
 
     await Promise.all(promises);
@@ -704,6 +693,8 @@ async function saveProfileSettings() {
     if (typeof userProfile !== 'undefined' && userProfile) {
       userProfile.name = name;
       userProfile.whatsapp = whatsapp;
+      userProfile.cedula = cedula;
+      userProfile.direccion = direccion;
     }
 
 

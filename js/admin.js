@@ -2786,8 +2786,14 @@ function renderCustomersTable(usersList) {
     return `
       <tr class="customer-row">
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.email || 'N/A'}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.name || '-'}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.whatsapp || 'N/A'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">
+          <div style="font-weight: bold;">${user.name || '-'}</div>
+          ${user.cedula ? `<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">C.I: ${user.cedula}</div>` : ''}
+        </td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">
+          <div>${user.whatsapp || 'N/A'}</div>
+          ${user.direccion ? `<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${user.direccion}">${user.direccion}</div>` : ''}
+        </td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${dateStr}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: right; color: #10b981; font-weight: bold;">${wallet.toFixed(2)}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
@@ -2814,7 +2820,8 @@ function filterCustomersSearch(searchTerm) {
   const filtered = window.ADMIN_CUSTOMERS.filter(u => 
     (u.email && u.email.toLowerCase().includes(term)) || 
     (u.name && u.name.toLowerCase().includes(term)) ||
-    (u.whatsapp && u.whatsapp.toLowerCase().includes(term))
+    (u.whatsapp && u.whatsapp.toLowerCase().includes(term)) ||
+    (u.cedula && u.cedula.toLowerCase().includes(term))
   );
   renderCustomersTable(filtered);
 }
