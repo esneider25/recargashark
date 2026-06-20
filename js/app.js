@@ -430,7 +430,7 @@ function updateOrderSummary() {
 }
 
 // ── Submit Order — Creates real order + redirects to tracking ──
-function submitOrder() {
+async function submitOrder() {
   const product = PRODUCTS.find(g => g.id === appState.selectedProductId);
   if (!product) return;
   const productType = product.type || 'game-id';
@@ -585,9 +585,9 @@ function submitOrder() {
 
   if (typeof recordOrderAttempt === 'function') recordOrderAttempt();
 
-  // Handle Telegram notification in the background
+  // Handle Telegram notification first so it arrives before any auto-completion messages
   if (typeof triggerTelegramNotification === 'function') {
-    triggerTelegramNotification(order);
+    await triggerTelegramNotification(order);
   }
 
   // Show success animation then redirect to tracking
@@ -665,14 +665,14 @@ async function processWalletOrderAuto(order, isReseller = false) {
 
     if (typeof updateOrderStatus === 'function') {
       if (data.ok && data.estado === 'completado') {
-        const methodSource = order.paymentMethodId === 'wallet' ? 'Pago con Saldo' : 'Revendedor VIP';
-        let note = 'Aprobado y entregado automáticamente por API (' + methodSource + ')';
+        const methodSource = order.paymentMethodId === 'wallet' ? 'Pago con Saldo' : 'Usuario Revendedor';
+        let note = 'Aprobado y entregado de forma inmediata (' + methodSource + ')';
         if (data.codigos && data.codigos.length > 0) note = 'Códigos entregados:\n' + data.codigos.join('\n');
         else if (data.codigo) note = 'Código entregado: ' + data.codigo;
         
         updateOrderStatus(order.id, 'completed', note);
         if (typeof sendTelegramMessage === 'function') {
-          sendTelegramMessage(`✅ <b>PEDIDO AUTO-COMPLETADO — #${order.id}</b>\n\nEl sistema API entregó la recarga exitosamente.\nNota: ${note}`);
+          sendTelegramMessage(`✅ <b>PEDIDO AUTO-COMPLETADO — #${order.id}</b>\n\nEl pedido fue procesado y entregado exitosamente al cliente.\nNota: ${note}`);
         }
       } else if (data.ok && data.estado === 'procesando') {
         if (typeof firebase !== 'undefined') {
