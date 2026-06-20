@@ -723,13 +723,14 @@ function renderDashboardContent() {
         `}
       </div>
       
+      ${currentRole !== 'revendedor' ? `
       <!-- Referral Banner -->
       <div class="glass-card" style="background: linear-gradient(90deg, rgba(15,31,56,0.8), rgba(0,229,195,0.1)); border-color: var(--accent); padding: 20px 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
         <div style="flex: 1; min-width: 250px;">
           <h3 style="margin: 0 0 5px 0; color: var(--accent); display: flex; align-items: center; gap: 8px;"><i class="ph-fill ph-users-three"></i> ¡Invita y Gana!</h3>
           <p style="margin: 0 0 10px 0; color: var(--text-secondary); font-size: 0.9rem;">Gana Shark Points cada vez que tus invitados realicen compras.</p>
           <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.85rem;">
-            <div style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;"><span style="color: var(--accent); font-weight: bold;">${userProfile.referralsCount || 0}</span> Amigos</div>
+            <div style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;"><span style="color: var(--accent); font-weight: bold;">${userProfile.referralsCount || 0} / 10</span> Amigos</div>
             <div style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;"><span style="color: #3b82f6; font-weight: bold;">${userProfile.referralsEarnedPoints || 0}</span> Puntos Ganados</div>
           </div>
         </div>
@@ -740,6 +741,7 @@ function renderDashboardContent() {
           </button>
         </div>
       </div>
+      ` : ''}
 
     </section>
 

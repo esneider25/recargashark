@@ -529,28 +529,36 @@ function updateOrderStatus(orderId, newStatus, note) {
           db.ref('users/' + order.userId).update(updates).then(() => {
             // --- LÓGICA DE REFERIDOS ---
             if (p.referredBy) {
-              let referrerReward = 0;
-              let isFirst = false;
-              
-              if (!p.hasMadeFirstPurchase) {
-                referrerReward = 15;
-                isFirst = true;
-                db.ref('users/' + order.userId).update({ hasMadeFirstPurchase: true });
-              } else {
-                if (price >= 2) referrerReward = 2;
-                else referrerReward = 1;
-              }
-              
-              if (referrerReward > 0) {
-                db.ref('users').orderByChild('referralCode').equalTo(p.referredBy).once('value').then(refSnap => {
-                  if (refSnap.exists()) {
-                    const referrerUid = Object.keys(refSnap.val())[0];
-                    const referrerData = refSnap.val()[referrerUid];
-                    
-                    let refPoints = referrerData.points || 0;
-                    let refCount = referrerData.referralsCount || 0;
-                    let refEarned = referrerData.referralsEarnedPoints || 0;
-                    
+              db.ref('users').orderByChild('referralCode').equalTo(p.referredBy).once('value').then(refSnap => {
+                if (refSnap.exists()) {
+                  const referrerUid = Object.keys(refSnap.val())[0];
+                  const referrerData = refSnap.val()[referrerUid];
+                  
+                  // Solo clientes pueden ganar por referidos
+                  if (referrerData.role === 'revendedor') return;
+                  
+                  let refPoints = referrerData.points || 0;
+                  let refCount = referrerData.referralsCount || 0;
+                  let refEarned = referrerData.referralsEarnedPoints || 0;
+                  
+                  let referrerReward = 0;
+                  let isFirst = false;
+                  
+                  if (!p.hasMadeFirstPurchase) {
+                    // Si ya tiene 10 amigos, quitamos el referido para que este usuario ya no genere ganancias
+                    if (refCount >= 10) {
+                      db.ref('users/' + order.userId).update({ referredBy: null, hasMadeFirstPurchase: true });
+                      return;
+                    }
+                    referrerReward = 15;
+                    isFirst = true;
+                    db.ref('users/' + order.userId).update({ hasMadeFirstPurchase: true });
+                  } else {
+                    if (price >= 2) referrerReward = 2;
+                    else referrerReward = 1;
+                  }
+                  
+                  if (referrerReward > 0) {
                     if (isFirst) refCount++;
                     
                     db.ref('users/' + referrerUid).update({
@@ -567,8 +575,8 @@ function updateOrderStatus(orderId, newStatus, note) {
                       date: Date.now()
                     });
                   }
-                });
-              }
+                }
+              });
             }
             // ---------------------------
           });
