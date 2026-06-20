@@ -1290,3 +1290,10 @@ function renderDashboardTransactions() {
     `;
   }).join('');
 }
+
+// ── Theme Toggle ──
+function toggleTheme() {
+  document.body.classList.toggle('light-theme');
+  const isLight = document.body.classList.contains('light-theme');
+  localStorage.setItem('recargashark_theme', isLight ? 'light' : 'dark');
+}
