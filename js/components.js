@@ -772,6 +772,7 @@ function renderOrderTracking(orderId) {
             <div class="tracking-detail-row"><span>Producto</span><span>${order.productName}</span></div>
             <div class="tracking-detail-row"><span>Tipo</span><span>${typeLabel}</span></div>
             <div class="tracking-detail-row"><span>Paquete</span><span>${order.packageLabel}</span></div>
+            ${order.playerName ? `<div class="tracking-detail-row"><span>Jugador</span><span>${order.playerName}</span></div>` : ''}
             ${order.gameId ? `<div class="tracking-detail-row"><span>ID Juego</span><span>${order.gameId}</span></div>` : ''}
             ${order.accountEmail ? `<div class="tracking-detail-row"><span>Cuenta</span><span>${order.accountEmail}</span></div>` : ''}
             ${order.accountPassword ? `<div class="tracking-detail-row"><span>Contraseña</span><span>${order.accountPassword}</span></div>` : ''}
