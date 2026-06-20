@@ -186,7 +186,7 @@ function initFirebaseData() {
     });
   }
 
-  const keysToLoad = ['products', 'categories', 'payment_methods', 'exchange_rate', 'settings', 'api_configs', 'discounts', 'messages', 'orders', 'telegram_config', 'quick_replies', 'spam_tracker', 'order_counter'];
+  const keysToLoad = ['products', 'categories', 'payment_methods', 'exchange_rate', 'settings', 'api_configs', 'discounts', 'messages', 'orders', 'telegram_config', 'quick_replies', 'spam_tracker', 'order_counter', 'banners'];
   const loadedKeys = new Set();
 
   function checkLoadComplete(key) {
@@ -231,11 +231,10 @@ function initFirebaseData() {
           SPAM_TRACKER.blocked = data.blocked || [];
         }
         else if (key === 'order_counter') localStorage.setItem('recargashark_order_counter', data.toString());
+        else if (key === 'banners') BANNERS = data || [];
       }
-      // Mark as loaded
       checkLoadComplete(key);
     }, (error) => {
-      // If permission denied (e.g. public trying to read orders), ignore and continue loading
       console.warn('Acceso denegado a ' + key + ' (normal si no es admin)');
       checkLoadComplete(key);
     });
@@ -243,7 +242,6 @@ function initFirebaseData() {
 }
 
 initFirebaseData();
-
 
 function saveToDb(path, data) {
   if (typeof firebase !== 'undefined') {
@@ -793,7 +791,23 @@ function updateQuickReply(id, title, keywords, response) {
   }
 }
 
+window.deleteQuickReply = function(id) {
+  const replies = getQuickReplies();
+  const idx = replies.findIndex(r => r.id === id);
+  if (idx !== -1) {
+    replies.splice(idx, 1);
+    saveQuickReplies(replies);
+  }
+}
 
+window.editQuickReply = function(id, title, keywords, response) {
+  const replies = getQuickReplies();
+  const idx = replies.findIndex(r => r.id === id);
+  if (idx !== -1) {
+    replies[idx] = { ...replies[idx], title, keywords, response };
+    saveQuickReplies(replies);
+  }
+}
 
 window.addTransaction = function(userId, type, amount, description) {
   if (typeof firebase === 'undefined') return;
@@ -806,32 +820,3 @@ window.addTransaction = function(userId, type, amount, description) {
     date: Date.now()
   });
 };
-
-// ── Firebase Catalog Loader ──
-window.DATA_LOADED = false;
-
-document.addEventListener('DOMContentLoaded', () => {
-  if (typeof firebase !== 'undefined') {
-    firebase.database().ref('catalog').on('value', snap => {
-      const data = snap.val();
-      if (data) {
-        if (data.products) PRODUCTS = data.products;
-        if (data.categories) CATEGORIES = data.categories;
-        if (data.payment_methods) PAYMENT_METHODS = data.payment_methods;
-        if (data.exchange_rate) EXCHANGE_RATE = data.exchange_rate;
-        if (data.site_settings) SITE_SETTINGS = data.site_settings;
-        if (data.api_configs) API_CONFIGS = data.api_configs;
-        if (data.discounts) DISCOUNT_CODES = data.discounts;
-        if (data.banners) BANNERS = data.banners;
-        if (data.telegram_config) TELEGRAM_CONFIG = data.telegram_config;
-      }
-      window.DATA_LOADED = true;
-      if (typeof renderApp === 'function') renderApp();
-      if (typeof initAdminApp === 'function') initAdminApp();
-      if (typeof updateDashboardUI === 'function') updateDashboardUI();
-    });
-  } else {
-    // Falback if firebase is completely missing
-    window.DATA_LOADED = true;
-  }
-});

@@ -3222,7 +3222,7 @@ function handleBannerImageUpload(input) {
 
 function adminSaveBanner(id) {
   const title = document.getElementById('banner-title').value.trim();
-  if (!title) return alert('El título es obligatorio');
+  if (!title) { showToast('⚠️ El título es obligatorio'); return; }
 
   const b = {
     id: id,
@@ -3248,12 +3248,27 @@ function adminSaveBanner(id) {
 }
 
 function adminDeleteBanner(id) {
-  if (!confirm('¿Eliminar este banner?')) return;
+  const modalHtml = `
+    <div class="admin-modal-content" style="max-width: 400px; text-align: center;">
+      <h3 style="color: #ef5350;">⚠️ Eliminar Banner</h3>
+      <p style="margin: 15px 0; color: var(--text-secondary);">¿Estás seguro que deseas eliminar este banner?</p>
+      <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+        <button class="btn-secondary" onclick="closeAdminModal()">Cancelar</button>
+        <button class="btn-danger" onclick="executeDeleteBanner('${id}')">Sí, Eliminar</button>
+      </div>
+    </div>
+  `;
+  showAdminModal(modalHtml);
+}
+
+function executeDeleteBanner(id) {
   const idx = BANNERS.findIndex(x => x.id === id);
   if (idx >= 0) {
     BANNERS.splice(idx, 1);
     saveToDb('banners', BANNERS);
+    closeAdminModal();
     renderActiveTab();
+    showToast('🗑️ Banner eliminado');
   }
 }
 
