@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
       currentUser = user;
       firebase.database().ref('users/' + user.uid).on('value', snap => {
         userProfile = snap.val() || {};
+        if (!userProfile.referralCode) {
+          const newCode = 'RS-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+          firebase.database().ref('users/' + user.uid).update({ referralCode: newCode });
+          userProfile.referralCode = newCode;
+        }
         renderApp();
       });
     } else {
@@ -718,13 +723,22 @@ function renderDashboardContent() {
         `}
       </div>
       
-      <!-- Referral Banner Placeholder -->
+      <!-- Referral Banner -->
       <div class="glass-card" style="background: linear-gradient(90deg, rgba(15,31,56,0.8), rgba(0,229,195,0.1)); border-color: var(--accent); padding: 20px 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
-        <div>
+        <div style="flex: 1; min-width: 250px;">
           <h3 style="margin: 0 0 5px 0; color: var(--accent); display: flex; align-items: center; gap: 8px;"><i class="ph-fill ph-users-three"></i> ¡Invita y Gana!</h3>
-          <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">Próximamente: Obtén Shark Points invitando a tus amigos a RecargaShark.</p>
+          <p style="margin: 0 0 10px 0; color: var(--text-secondary); font-size: 0.9rem;">Gana Shark Points cada vez que tus invitados realicen compras.</p>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.85rem;">
+            <div style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;"><span style="color: var(--accent); font-weight: bold;">${userProfile.referralsCount || 0}</span> Amigos</div>
+            <div style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;"><span style="color: #3b82f6; font-weight: bold;">${userProfile.referralsEarnedPoints || 0}</span> Puntos Ganados</div>
+          </div>
         </div>
-        <button class="btn-secondary" disabled style="opacity: 0.5; cursor: not-allowed; padding: 8px 20px; font-size: 0.9rem;">Muy pronto</button>
+        <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
+          <input type="text" readonly value="https://recargashark.com/?ref=${userProfile.referralCode || ''}" style="flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 15px; border-radius: 10px; font-size: 0.9rem; outline: none;">
+          <button onclick="navigator.clipboard.writeText('https://recargashark.com/?ref=${userProfile.referralCode || ''}'); usuarioToast('¡Enlace copiado!', 'success')" class="btn-primary" style="padding: 10px 20px; font-size: 0.9rem; border-radius: 10px; display: flex; align-items: center; gap: 6px;">
+            <i class="ph ph-copy"></i> Copiar
+          </button>
+        </div>
       </div>
 
     </section>

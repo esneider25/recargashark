@@ -18,6 +18,9 @@ const appState = {
 // ── Init ──
 document.addEventListener('DOMContentLoaded', () => {
   const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('ref')) {
+    localStorage.setItem('recargashark_referredBy', urlParams.get('ref'));
+  }
   if (urlParams.get('recharge') === 'true') {
     appState.currentView = 'wallet-recharge';
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -1765,13 +1768,16 @@ function registerWithEmail() {
     const user = result.user;
     user.updateProfile({ displayName: name });
     
+    const referredBy = localStorage.getItem('recargashark_referredBy') || null;
     firebase.database().ref('users/' + user.uid).set({
       email: email,
       name: name,
       wallet: 0,
       points: 0,
       totalSpent: 0,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      referredBy: referredBy,
+      hasMadeFirstPurchase: false
     });
     
     const modal = document.getElementById('auth-modal-container');
@@ -1811,13 +1817,16 @@ function authWithGoogle() {
     // Ensure user profile exists
     firebase.database().ref('users/' + user.uid).once('value', (snap) => {
       if (!snap.exists()) {
+        const referredBy = localStorage.getItem('recargashark_referredBy') || null;
         firebase.database().ref('users/' + user.uid).set({
           email: user.email,
           name: user.displayName,
           wallet: 0,
           points: 0,
           totalSpent: 0,
-          createdAt: Date.now()
+          createdAt: Date.now(),
+          referredBy: referredBy,
+          hasMadeFirstPurchase: false
         });
       }
     });

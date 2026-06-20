@@ -526,7 +526,52 @@ function updateOrderStatus(orderId, newStatus, note) {
             }
           }
 
-          db.ref('users/' + order.userId).update(updates);
+          db.ref('users/' + order.userId).update(updates).then(() => {
+            // --- LÓGICA DE REFERIDOS ---
+            if (p.referredBy) {
+              let referrerReward = 0;
+              let isFirst = false;
+              
+              if (!p.hasMadeFirstPurchase) {
+                referrerReward = 15;
+                isFirst = true;
+                db.ref('users/' + order.userId).update({ hasMadeFirstPurchase: true });
+              } else {
+                if (price >= 2) referrerReward = 2;
+                else referrerReward = 1;
+              }
+              
+              if (referrerReward > 0) {
+                db.ref('users').orderByChild('referralCode').equalTo(p.referredBy).once('value').then(refSnap => {
+                  if (refSnap.exists()) {
+                    const referrerUid = Object.keys(refSnap.val())[0];
+                    const referrerData = refSnap.val()[referrerUid];
+                    
+                    let refPoints = referrerData.points || 0;
+                    let refCount = referrerData.referralsCount || 0;
+                    let refEarned = referrerData.referralsEarnedPoints || 0;
+                    
+                    if (isFirst) refCount++;
+                    
+                    db.ref('users/' + referrerUid).update({
+                      points: refPoints + referrerReward,
+                      referralsCount: refCount,
+                      referralsEarnedPoints: refEarned + referrerReward
+                    });
+                    
+                    db.ref('users/' + referrerUid + '/transactions').push({
+                      id: Date.now().toString(),
+                      type: 'deposit',
+                      amount: 0,
+                      description: `Bono referido (${p.name || 'Amigo'}): +${referrerReward} PTS`,
+                      date: Date.now()
+                    });
+                  }
+                });
+              }
+            }
+            // ---------------------------
+          });
         });
       }
     }
