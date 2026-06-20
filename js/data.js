@@ -534,8 +534,9 @@ function updateOrderStatus(orderId, newStatus, note) {
                   const referrerUid = Object.keys(refSnap.val())[0];
                   const referrerData = refSnap.val()[referrerUid];
                   
+                  const referrerRole = referrerData.role || 'cliente';
                   // Solo clientes pueden ganar por referidos
-                  if (referrerData.role === 'revendedor') return;
+                  if (referrerRole !== 'cliente') return;
                   
                   let refPoints = referrerData.points || 0;
                   let refCount = referrerData.referralsCount || 0;

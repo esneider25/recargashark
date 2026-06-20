@@ -622,6 +622,8 @@ function renderDashboardContent() {
   let roleBadge = '';
   if (currentRole === 'revendedor') {
     roleBadge = `<span style="font-size: 0.8rem; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; letter-spacing: 0.5px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); display: flex; align-items: center; gap: 4px;"><i class="ph-fill ph-star"></i> REVENDEDOR</span>`;
+  } else if (currentRole === 'influencer') {
+    roleBadge = `<span style="font-size: 0.8rem; background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; letter-spacing: 0.5px; box-shadow: 0 0 10px rgba(59, 130, 246, 0.6), 0 0 20px rgba(59, 130, 246, 0.4); border: 1px solid #93c5fd; display: flex; align-items: center; gap: 4px;"><i class="ph-fill ph-sparkle"></i> INFLUENCER SHARK</span>`;
   } else {
     roleBadge = `<span style="font-size: 0.8rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); padding: 4px 12px; border-radius: 20px; font-weight: bold; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;"><i class="ph-fill ph-user"></i> CLIENTE</span>`;
   }
@@ -723,7 +725,7 @@ function renderDashboardContent() {
         `}
       </div>
       
-      ${currentRole !== 'revendedor' ? `
+      ${currentRole === 'cliente' ? `
       <!-- Referral Banner -->
       <div class="glass-card" style="background: linear-gradient(90deg, rgba(15,31,56,0.8), rgba(0,229,195,0.1)); border-color: var(--accent); padding: 20px 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
         <div style="flex: 1; min-width: 250px;">
