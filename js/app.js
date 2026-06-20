@@ -2030,7 +2030,6 @@ function showAddIdModal() {
           <label>Zone ID (Opcional)</label>
           <input type="text" id="new-id-zone" placeholder="Ej: 1234" class="form-input">
         </div>
-        
         <div style="display: flex; gap: 10px;">
           <button onclick="document.getElementById('add-id-modal-container').remove()" class="btn-secondary" style="flex: 1;">Cancelar</button>
           <button onclick="saveNewId()" class="btn-primary" style="flex: 1;">Guardar</button>
@@ -2039,6 +2038,7 @@ function showAddIdModal() {
     </div>`;
   document.body.appendChild(modalContainer);
 }
+
 
 async function saveNewId() {
   if (!currentUser) return;
@@ -2085,39 +2085,60 @@ let carouselInterval = null;
 function initCarousel() {
   const carousel = document.getElementById('promo-carousel');
   if (!carousel) return;
-  
+
+  const cards = Array.from(carousel.querySelectorAll('.promo-card'));
+  if (cards.length === 0) return;
+
+  // Add active styling dynamically
+  const updateActiveCard = () => {
+    const center = carousel.scrollLeft + carousel.clientWidth / 2;
+    cards.forEach(card => {
+      const cardCenter = card.offsetLeft + card.clientWidth / 2;
+      const distance = Math.abs(center - cardCenter);
+      if (distance < card.clientWidth / 2) {
+        card.classList.add('active');
+      } else {
+        card.classList.remove('active');
+      }
+    });
+  };
+
+  carousel.addEventListener('scroll', updateActiveCard, { passive: true });
+
+  // Start at the center banner (or the second one if even)
+  setTimeout(() => {
+    const middleIndex = Math.floor(cards.length / 2);
+    const middleCard = cards[middleIndex];
+    if (middleCard) {
+      const targetScroll = middleCard.offsetLeft - carousel.clientWidth / 2 + middleCard.clientWidth / 2;
+      carousel.scrollTo({ left: targetScroll, behavior: 'instant' });
+    }
+    updateActiveCard();
+  }, 100);
+
   if (carouselInterval) clearInterval(carouselInterval);
-  
-  carouselInterval = setInterval(() => {
-    // If the user has hovered over the carousel, don't scroll
+
+  const autoScroll = () => {
     if (carousel.matches(':hover')) return;
 
-    const isAtEnd = carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 10;
-    if (isAtEnd) {
-      carousel.scrollTo({ left: 0, behavior: 'smooth' });
-    } else {
-      const card = carousel.querySelector('.promo-card');
-      const cardWidth = card ? card.clientWidth + 20 : 340;
-      carousel.scrollBy({ left: cardWidth, behavior: 'smooth' });
-    }
-  }, 10000);
+    let currentIndex = 0;
+    cards.forEach((c, i) => { if (c.classList.contains('active')) currentIndex = i; });
 
-  // Reset interval on user interaction
+    if (currentIndex + 1 < cards.length) {
+      const next = cards[currentIndex + 1];
+      carousel.scrollTo({ left: next.offsetLeft - carousel.clientWidth / 2 + next.clientWidth / 2, behavior: 'smooth' });
+    } else {
+      carousel.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  };
+
+  carouselInterval = setInterval(autoScroll, 6000);
+
   const resetInterval = () => {
     clearInterval(carouselInterval);
-    carouselInterval = setInterval(() => {
-      if (carousel.matches(':hover')) return;
-      const isAtEnd = carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 10;
-      if (isAtEnd) {
-        carousel.scrollTo({ left: 0, behavior: 'smooth' });
-      } else {
-        const card = carousel.querySelector('.promo-card');
-        const cardWidth = card ? card.clientWidth + 20 : 340;
-        carousel.scrollBy({ left: cardWidth, behavior: 'smooth' });
-      }
-    }, 10000);
+    carouselInterval = setInterval(autoScroll, 6000);
   };
   
   carousel.addEventListener('pointerdown', resetInterval);
-  carousel.addEventListener('touchstart', resetInterval, {passive: true});
+  carousel.addEventListener('touchstart', resetInterval, { passive: true });
 }

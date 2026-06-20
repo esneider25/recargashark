@@ -146,21 +146,31 @@ function renderPromoCarousel() {
         .promo-card {
           flex: 0 0 var(--card-width);
           width: var(--card-width);
-          height: 200px;
+          aspect-ratio: 21 / 9;
+          min-height: 140px;
+          max-height: 360px;
           border-radius: 16px;
           scroll-snap-align: center;
           position: relative;
           overflow: hidden;
           box-shadow: 0 15px 35px rgba(0,0,0,0.2);
           border: 1px solid rgba(255,255,255,0.08);
-          transition: transform 0.3s ease, filter 0.3s ease;
+          transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), filter 0.4s ease, opacity 0.4s ease;
           padding: 24px;
+          transform: scale(0.92);
+          filter: brightness(0.4) grayscale(0.2);
+          opacity: 0.8;
+        }
+        .promo-card.active {
+          transform: scale(1);
+          filter: brightness(1) grayscale(0);
+          opacity: 1;
         }
         @media (min-width: 768px) {
-          .promo-card { height: 300px; border-radius: 24px; padding: 40px; }
+          .promo-card { border-radius: 24px; padding: 40px; }
         }
         @media (min-width: 1200px) {
-          .promo-card { height: 360px; }
+          /* Inherits max-height and aspect-ratio */
         }
         
         .promo-card:hover { 
