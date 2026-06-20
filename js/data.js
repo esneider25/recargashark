@@ -761,15 +761,53 @@ function updateOrderStatus(orderId, newStatus, note) {
           addTransaction(order.userId, 'deposit', parseFloat(order.priceUsd || 0), 'Recarga de monedero aprobada');
         }
       } else {
-        // Product Purchase: Give points (10 per dollar) and update total spent
+        // Product Purchase: Update points, spent, and cashback
         db.ref('users/' + order.userId).once('value').then(snap => {
           let p = snap.val() || {};
           let currentPoints = p.points || 0;
           let totalSpent = p.totalSpent || 0;
+          let currentWallet = parseFloat(p.wallet || 0);
           let price = parseFloat(order.priceUsd || 0);
-          let newPoints = currentPoints + Math.floor(price * 10);
+          let role = p.role || 'cliente';
+          
           let newSpent = totalSpent + price;
-          db.ref('users/' + order.userId).update({ points: newPoints, totalSpent: newSpent });
+          let updates = { totalSpent: newSpent };
+
+          if (role !== 'revendedor') {
+            // 1. Calculate Points
+            let earnedPoints = 0;
+            if (price < 6) earnedPoints = 8;
+            else if (price <= 12) earnedPoints = 10;
+            else earnedPoints = 15;
+            
+            updates.points = currentPoints + earnedPoints;
+
+            // 2. Calculate Cashback (if no discount code used)
+            if (!order.discountCode) {
+              let cashbackPercent = 0;
+              if (totalSpent < 50) cashbackPercent = 0; // Bronce
+              else if (totalSpent < 150) cashbackPercent = 1; // Plata
+              else if (totalSpent < 500) cashbackPercent = 2; // Oro
+              else if (totalSpent < 1000) cashbackPercent = 3; // Platino
+              else cashbackPercent = 4; // Diamante
+
+              if (cashbackPercent > 0) {
+                let cashbackAmount = price * (cashbackPercent / 100);
+                updates.wallet = currentWallet + cashbackAmount;
+                
+                // Record the cashback transaction
+                db.ref('users/' + order.userId + '/transactions').push({
+                  id: Date.now().toString(),
+                  type: 'deposit',
+                  amount: cashbackAmount,
+                  description: `Cashback VIP (${cashbackPercent}%) por pedido #${order.id}`,
+                  date: Date.now()
+                });
+              }
+            }
+          }
+
+          db.ref('users/' + order.userId).update(updates);
         });
       }
     }
