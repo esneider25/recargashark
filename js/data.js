@@ -196,8 +196,14 @@ function initFirebaseData() {
       if (typeof renderApp === 'function') renderApp();
       if (typeof initAdminApp === 'function') initAdminApp();
     } else if (window.DATA_LOADED) {
-      if (typeof renderApp === 'function' && typeof appState !== 'undefined' && appState.currentView === 'home') renderApp();
-      if (typeof renderActiveTab === 'function') renderActiveTab();
+      const uiKeys = ['products', 'categories', 'payment_methods', 'exchange_rate', 'settings', 'banners'];
+      const adminKeys = [...uiKeys, 'orders', 'api_configs', 'discounts', 'quick_replies'];
+      if (uiKeys.includes(key)) {
+        if (typeof renderApp === 'function' && typeof appState !== 'undefined' && appState.currentView === 'home') renderApp();
+      }
+      if (adminKeys.includes(key)) {
+        if (typeof renderActiveTab === 'function') renderActiveTab();
+      }
     }
   }
 
