@@ -8,9 +8,9 @@
     "messages": { ".read": true, ".write": true },
     "orders": { 
       ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
-      ".write": true,
       "$orderId": {
-        ".read": "auth != null && auth.token.email === 'adminshark@gmail.com' || (auth != null && data.child('userId').val() === auth.uid) || (!data.hasChild('userId') || data.child('userId').val() == null)"
+        ".read": "auth != null && auth.token.email === 'adminshark@gmail.com' || (auth != null && data.child('userId').val() === auth.uid) || (!data.hasChild('userId') || data.child('userId').val() == null)",
+        ".write": "auth != null && auth.token.email === 'adminshark@gmail.com' || !data.exists() || (auth != null && data.child('userId').val() === auth.uid)"
       }
     },
     "telegram_config": { ".read": true },

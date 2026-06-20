@@ -593,15 +593,17 @@ function submitOrder() {
   // Show success animation then redirect to tracking
   showOrderConfirmation(order);
 
-  // Auto-process if paid with wallet
-  if (order.paymentMethodId === 'wallet' && typeof window !== 'undefined') {
+  const isReseller = typeof userProfile !== 'undefined' && userProfile && userProfile.role === 'revendedor';
+
+  // Auto-process if paid with wallet or is a reseller
+  if ((order.paymentMethodId === 'wallet' || isReseller) && typeof window !== 'undefined') {
     if (typeof processWalletOrderAuto === 'function') {
-      processWalletOrderAuto(order);
+      processWalletOrderAuto(order, isReseller);
     }
   }
 }
 
-async function processWalletOrderAuto(order) {
+async function processWalletOrderAuto(order, isReseller = false) {
   const apiIdx = parseInt(order.apiProvider);
   if (isNaN(apiIdx) || typeof API_CONFIGS === 'undefined' || !API_CONFIGS[apiIdx] || !API_CONFIGS[apiIdx].enabled) {
     return;
@@ -614,7 +616,11 @@ async function processWalletOrderAuto(order) {
   const baseUrl = api.baseUrl.endsWith('/') ? api.baseUrl.slice(0, -1) : api.baseUrl;
   
   if (typeof firebase !== 'undefined') {
-    const noteMsg = order.paymentMethodId === 'wallet' ? 'Auto-procesando por pago con billetera...' : 'Re-procesando automáticamente ID rectificado...';
+    let noteMsg = 'Auto-procesando...';
+    if (order.paymentMethodId === 'wallet') noteMsg = 'Auto-procesando por pago con billetera...';
+    else if (isReseller) noteMsg = 'Auto-procesando por ser Revendedor VIP...';
+    else if ((order.statusHistory || []).length > 0) noteMsg = 'Re-procesando automáticamente ID rectificado...';
+    
     firebase.database().ref('orders/' + order.id).update({ status: 'processing', adminNote: noteMsg });
   }
   
@@ -659,7 +665,8 @@ async function processWalletOrderAuto(order) {
 
     if (typeof updateOrderStatus === 'function') {
       if (data.ok && data.estado === 'completado') {
-        let note = 'Aprobado y entregado automáticamente por API (Pago con Saldo)';
+        const methodSource = order.paymentMethodId === 'wallet' ? 'Pago con Saldo' : 'Revendedor VIP';
+        let note = 'Aprobado y entregado automáticamente por API (' + methodSource + ')';
         if (data.codigos && data.codigos.length > 0) note = 'Códigos entregados:\n' + data.codigos.join('\n');
         else if (data.codigo) note = 'Código entregado: ' + data.codigo;
         
