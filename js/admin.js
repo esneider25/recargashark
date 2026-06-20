@@ -2806,7 +2806,7 @@ function renderCustomersTable(usersList) {
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: right; color: #10b981; font-weight: bold;">${wallet.toFixed(2)}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
           <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openRoleModal('${user.uid}', '${user.role || 'cliente'}', ${user.discountPercentage || 0})">
-            ${(user.role === 'revendedor') ? '💼 Revend (+' + (user.discountPercentage || 0) + '%)' : '👤 Cliente'}
+            ${(user.role === 'revendedor') ? '💼 Revend (+' + (user.discountPercentage || 0) + '%)' : (user.role === 'influencer' ? '✨ Influencer' : '👤 Cliente')}
           </button>
         </td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
@@ -3025,7 +3025,8 @@ window.openRoleModal = function(uid, currentRole, currentDiscount) {
         <div class="form-group" style="margin-top: 15px;">
           <label>Rol</label>
           <select id="role-select" class="form-input" onchange="document.getElementById('discount-group').style.display = this.value === 'revendedor' ? 'block' : 'none'">
-            <option value="cliente" ${currentRole !== 'revendedor' ? 'selected' : ''}>Cliente Normal</option>
+            <option value="cliente" ${(currentRole !== 'revendedor' && currentRole !== 'influencer') ? 'selected' : ''}>Cliente Normal</option>
+            <option value="influencer" ${currentRole === 'influencer' ? 'selected' : ''}>Influencer Shark</option>
             <option value="revendedor" ${currentRole === 'revendedor' ? 'selected' : ''}>Revendedor</option>
           </select>
         </div>
