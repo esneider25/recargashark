@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Migración de Catálogo a Firebase</title>
+  <style>
+    body { font-family: monospace; background: #060d1a; color: #00e5c3; padding: 40px; }
+    #log { background: #0f1f38; padding: 20px; border-radius: 8px; white-space: pre-wrap; }
+    button { padding: 10px 20px; background: #10b981; color: white; border: none; cursor: pointer; border-radius: 8px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Migración de Datos 🦈</h1>
+  <p>Haz clic en el botón para subir los productos y categorías locales (data.js) a Firebase.</p>
+  <button id="btn-migrate" onclick="startMigration()">Iniciar Migración</button>
+  <div id="log" style="margin-top: 20px;">Esperando...</div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  
+  <!-- Cargar Firebase Init -->
+  <script src="js/firebase-init.js"></script>
+  <!-- Cargar data.js original -->
+  <script src="js/data.js"></script>
+
+  <script>
+    const logEl = document.getElementById('log');
+    function log(msg) {
+      logEl.innerHTML += msg + '\n';
+      console.log(msg);
+    }
+
+    async function startMigration() {
+      const btn = document.getElementById('btn-migrate');
+      btn.disabled = true;
+      btn.innerText = 'Migrando...';
+      
+      try {
+        log('Verificando usuario actual...');
+        const user = firebase.auth().currentUser;
+        if (!user || user.email !== 'adminshark@gmail.com') {
+          log('⚠️ DEBES INICIAR SESIÓN COMO ADMIN EN LA PÁGINA PRIMERO ANTES DE ABRIR ESTE ARCHIVO.');
+          log('Abre index.html, inicia sesión con tu cuenta de admin, y luego recarga esta pestaña.');
+          return;
+        }
+
+        log('Autenticado como admin. Subiendo datos...');
+
+        log('1. Subiendo Productos...');
+        await firebase.database().ref('catalog/products').set(PRODUCTS);
+        
+        log('2. Subiendo Categorías...');
+        await firebase.database().ref('catalog/categories').set(CATEGORIES);
+        
+        log('3. Subiendo Métodos de Pago...');
+        await firebase.database().ref('catalog/payment_methods').set(PAYMENT_METHODS);
+
+        log('4. Subiendo Tasa de Cambio...');
+        await firebase.database().ref('catalog/exchange_rate').set(EXCHANGE_RATE);
+
+        log('5. Subiendo Configuraciones del Sitio (Redes)...');
+        await firebase.database().ref('catalog/site_settings').set(SITE_SETTINGS);
+
+        log('6. Subiendo APIs...');
+        await firebase.database().ref('catalog/api_configs').set(API_CONFIGS);
+
+        log('7. Subiendo Descuentos...');
+        // Assuming DISCOUNTS array exists in data.js
+        if (typeof DISCOUNTS !== 'undefined') {
+          await firebase.database().ref('catalog/discounts').set(DISCOUNTS);
+        }
+
+        log('\n✅ ¡MIGRACIÓN COMPLETADA EXITOSAMENTE! 🎉');
+        log('Ya puedes borrar este archivo migrate.html.');
+      } catch (err) {
+        log('❌ Error: ' + err.message);
+      }
+      btn.innerText = 'Finalizado';
+    }
+  </script>
+</body>
+</html>

@@ -2,6 +2,7 @@
 // RecargaShark Admin Panel Logic (Enhanced)
 // ============================================================
 
+// ── State ──
 const adminState = {
   currentTab: 'dashboard',
   editingProductId: null,

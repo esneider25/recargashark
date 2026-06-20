@@ -3,7 +3,7 @@
 // ============================================================
 
 // ── Categories ──
-const CATEGORIES = [
+let CATEGORIES = [
   { id: 'juegos', name: 'Juegos', icon: '🎮', color: '#7c4dff', gradient: 'linear-gradient(135deg, #7c4dff, #536dfe)' },
   { id: 'gift-card', name: 'Gift Cards', icon: '🎁', color: '#ff9800', gradient: 'linear-gradient(135deg, #ff9800, #ff5722)' },
   { id: 'streaming', name: 'Streaming', icon: '📺', color: '#e040fb', gradient: 'linear-gradient(135deg, #e040fb, #d500f9)' },
@@ -11,13 +11,13 @@ const CATEGORIES = [
 ];
 
 // ── Exchange Rate ──
-const EXCHANGE_RATE = {
+let EXCHANGE_RATE = {
   usdToBs: 58.50,
   lastUpdated: new Date().toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' })
 };
 
 // ── Site Settings ──
-const SITE_SETTINGS = {
+let SITE_SETTINGS = {
   whatsapp: '+584120000000',
   instagram: 'https://instagram.com/recargashark',
   telegram: 'https://t.me/recargashark',
@@ -28,7 +28,7 @@ const SITE_SETTINGS = {
 let MESSAGES = JSON.parse(localStorage.getItem('recargashark_messages') || '[]');
 
 // ── Payment Methods ──
-const PAYMENT_METHODS = [
+let PAYMENT_METHODS = [
   {
     id: 'pago-movil',
     name: 'Pago Móvil',
@@ -65,7 +65,7 @@ const PAYMENT_METHODS = [
 ];
 
 // ── Telegram Bot Configuration ──
-const TELEGRAM_CONFIG = {
+let TELEGRAM_CONFIG = {
   botToken: '8515103558:AAFMRrUiYRna3PbEbZogrIA-i7vIls0clbY',
   chatId: '6012452103',
   enabled: true,
@@ -74,7 +74,7 @@ const TELEGRAM_CONFIG = {
 };
 
 // ── Anti-Spam Configuration ──
-const SPAM_CONFIG = {
+let SPAM_CONFIG = {
   maxOrdersPerHour: 5,
   maxOrdersPerDay: 15,
   cooldownMinutes: 30,
@@ -82,13 +82,13 @@ const SPAM_CONFIG = {
 };
 
 // ── Spam Tracker ──
-const SPAM_TRACKER = {
+let SPAM_TRACKER = {
   attempts: [],
   blocked: []
 };
 
 // ── API Configurations (up to 4 slots) ──
-const API_CONFIGS = [
+let API_CONFIGS = [
   {
     id: 'api-1',
     name: 'TiendaGiftVen',
@@ -128,10 +128,10 @@ const API_CONFIGS = [
 ];
 
 // ── Discount Codes ──
-const DISCOUNT_CODES = [];
+let DISCOUNT_CODES = [];
 
 // ── Products Catalog ──
-const PRODUCTS = [
+let PRODUCTS = [
   {
     id: 'free-fire',
     name: 'Free Fire',
@@ -601,9 +601,19 @@ function getSettings() {
   return SITE_SETTINGS;
 }
 
+window.saveToDb = function(path, data) {
+  if (typeof firebase === 'undefined') return;
+  firebase.database().ref('catalog/' + path).set(data).catch(err => {
+    console.error('Error saving to DB:', err);
+    if (typeof showAdminToast === 'function') {
+      showAdminToast('Error al guardar en la base de datos', 'error');
+    }
+  });
+};
+
 function saveSettings(newSettings) {
   Object.assign(SITE_SETTINGS, newSettings);
-  saveToDb('settings', SITE_SETTINGS);
+  saveToDb('site_settings', SITE_SETTINGS);
 }
 
 // ── Messages CRUD ──
@@ -1083,3 +1093,31 @@ window.addTransaction = function(userId, type, amount, description) {
     date: Date.now()
   });
 };
+
+// ── Firebase Catalog Loader ──
+window.DATA_LOADED = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof firebase !== 'undefined') {
+    firebase.database().ref('catalog').on('value', snap => {
+      const data = snap.val();
+      if (data) {
+        if (data.products) PRODUCTS = data.products;
+        if (data.categories) CATEGORIES = data.categories;
+        if (data.payment_methods) PAYMENT_METHODS = data.payment_methods;
+        if (data.exchange_rate) EXCHANGE_RATE = data.exchange_rate;
+        if (data.site_settings) SITE_SETTINGS = data.site_settings;
+        if (data.api_configs) API_CONFIGS = data.api_configs;
+        if (data.discounts) DISCOUNT_CODES = data.discounts;
+        if (data.telegram_config) TELEGRAM_CONFIG = data.telegram_config;
+      }
+      window.DATA_LOADED = true;
+      if (typeof renderApp === 'function') renderApp();
+      if (typeof initAdminApp === 'function') initAdminApp();
+      if (typeof updateDashboardUI === 'function') updateDashboardUI();
+    });
+  } else {
+    // Falback if firebase is completely missing
+    window.DATA_LOADED = true;
+  }
+});

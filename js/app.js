@@ -1681,21 +1681,107 @@ function initPublicAuth() {
   });
 }
 
-function showAuthModal() {
-  const modalContainer = document.createElement('div');
+function showAuthModal(mode = 'login') {
+  const existing = document.getElementById('auth-modal-container');
+  const modalContainer = existing || document.createElement('div');
   modalContainer.id = 'auth-modal-container';
+  
+  const isLogin = mode === 'login';
+  
   modalContainer.innerHTML = `
     <div class="modal-overlay active" onclick="if(event.target===this) this.parentElement.remove()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 99999; display: flex; align-items: center; justify-content: center;">
       <div class="modal" style="background: var(--bg-surface); padding: 40px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); text-align: center; max-width: 400px; width: 90%;">
-        <h2 style="margin-bottom: 20px; font-size: 1.8rem; color: white;">Únete a RecargaShark</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 0.95rem; line-height: 1.5;">Inicia sesión para guardar tus IDs, acumular puntos y comprar más rápido.</p>
+        <h2 style="margin-bottom: 20px; font-size: 1.8rem; color: white;">${isLogin ? 'Iniciar Sesión' : 'Regístrate'}</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 0.95rem; line-height: 1.5;">
+          ${isLogin ? 'Ingresa tus datos o usa Google para continuar.' : 'Crea tu cuenta para acceder a todos los beneficios.'}
+        </p>
+        
+        <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;">
+          ${!isLogin ? `<input type="text" id="auth-name" placeholder="Nombre completo" class="admin-form-input" style="width: 100%; padding: 14px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">` : ''}
+          <input type="email" id="auth-email" placeholder="Correo electrónico" class="admin-form-input" style="width: 100%; padding: 14px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+          <input type="password" id="auth-pass" placeholder="Contraseña" class="admin-form-input" style="width: 100%; padding: 14px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white;">
+          ${isLogin ? `<div style="text-align: right; font-size: 0.85rem;"><a href="#" onclick="resetPassword(); return false;" style="color: var(--accent);">¿Olvidaste tu contraseña?</a></div>` : ''}
+          <button onclick="${isLogin ? 'authWithEmail()' : 'registerWithEmail()'}" class="btn-primary" style="width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-top: 5px;">
+            ${isLogin ? 'Ingresar' : 'Crear Cuenta'}
+          </button>
+        </div>
+
+        <div style="display: flex; align-items: center; margin: 20px 0; color: var(--text-secondary); font-size: 0.9rem;">
+          <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+          <span style="padding: 0 10px;">o</span>
+          <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+        </div>
+
         <button onclick="authWithGoogle()" class="btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: white; color: black; border: none; border-radius: 12px; padding: 14px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: transform 0.2s;">
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="24"> Continuar con Google
         </button>
-        <button onclick="document.getElementById('auth-modal-container').remove()" class="btn-secondary" style="width: 100%; margin-top: 15px; background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 14px; font-weight: 500; font-size: 1rem; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">Cancelar</button>
+        
+        <div style="margin-top: 25px; font-size: 0.9rem; color: var(--text-secondary);">
+          ${isLogin ? '¿No tienes cuenta? <a href="#" onclick="showAuthModal(\'register\'); return false;" style="color: var(--accent);">Regístrate aquí</a>' : '¿Ya tienes cuenta? <a href="#" onclick="showAuthModal(\'login\'); return false;" style="color: var(--accent);">Inicia sesión</a>'}
+        </div>
       </div>
     </div>`;
-  document.body.appendChild(modalContainer);
+  
+  if (!existing) {
+    document.body.appendChild(modalContainer);
+  }
+}
+
+function authWithEmail() {
+  const email = document.getElementById('auth-email').value.trim();
+  const pass = document.getElementById('auth-pass').value.trim();
+  if(!email || !pass) return showToast('⚠️ Ingresa correo y contraseña');
+  
+  firebase.auth().signInWithEmailAndPassword(email, pass).then(result => {
+    const modal = document.getElementById('auth-modal-container');
+    if(modal) modal.remove();
+  }).catch(err => {
+    showToast('❌ Correo o contraseña incorrectos');
+  });
+}
+
+function registerWithEmail() {
+  const name = document.getElementById('auth-name').value.trim();
+  const email = document.getElementById('auth-email').value.trim();
+  const pass = document.getElementById('auth-pass').value.trim();
+  if(!name || !email || !pass) return showToast('⚠️ Llena todos los campos');
+  
+  firebase.auth().createUserWithEmailAndPassword(email, pass).then(result => {
+    const user = result.user;
+    user.updateProfile({ displayName: name });
+    
+    firebase.database().ref('users/' + user.uid).set({
+      email: email,
+      name: name,
+      wallet: 0,
+      points: 0,
+      totalSpent: 0,
+      createdAt: Date.now()
+    });
+    
+    const modal = document.getElementById('auth-modal-container');
+    if(modal) modal.remove();
+    showToast('🎉 Cuenta creada exitosamente');
+  }).catch(err => {
+    if(err.code === 'auth/email-already-in-use') {
+      showToast('❌ Este correo ya está registrado');
+    } else if(err.code === 'auth/weak-password') {
+      showToast('❌ La contraseña debe tener al menos 6 caracteres');
+    } else {
+      showToast('❌ Error: ' + err.message);
+    }
+  });
+}
+
+function resetPassword() {
+  const email = document.getElementById('auth-email').value.trim();
+  if(!email) return showToast('⚠️ Ingresa tu correo arriba primero');
+  
+  firebase.auth().sendPasswordResetEmail(email).then(() => {
+    showToast('📩 Te hemos enviado un enlace para restablecer tu contraseña');
+  }).catch(err => {
+    showToast('❌ Correo no encontrado o inválido');
+  });
 }
 
 function authWithGoogle() {
