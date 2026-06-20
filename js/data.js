@@ -307,24 +307,15 @@ function validateDiscount(code) {
   return DISCOUNT_CODES.find(d => d.code === target && d.active);
 }
 
+
 // ── Settings CRUD ──
 function getSettings() {
   return SITE_SETTINGS;
 }
 
-window.saveToDb = function(path, data) {
-  if (typeof firebase === 'undefined') return;
-  firebase.database().ref('catalog/' + path).set(data).catch(err => {
-    console.error('Error saving to DB:', err);
-    if (typeof showAdminToast === 'function') {
-      showAdminToast('Error al guardar en la base de datos', 'error');
-    }
-  });
-};
-
 function saveSettings(newSettings) {
   Object.assign(SITE_SETTINGS, newSettings);
-  saveToDb('site_settings', SITE_SETTINGS);
+  saveToDb('settings', SITE_SETTINGS);
 }
 
 // ── Messages CRUD ──
