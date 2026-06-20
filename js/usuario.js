@@ -530,7 +530,46 @@ function renderDashboardContent() {
       </div>
       
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px;">
-        
+        ${currentRole === 'revendedor' ? `
+        <!-- Pedidos Totales Card -->
+        <div class="glass-card" style="border-color: rgba(245, 158, 11, 0.2);">
+          <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: #f59e0b; filter: blur(60px); opacity: 0.15;"></div>
+          <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 15px;">
+            <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #d97706); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: #fff; box-shadow: 0 4px 15px rgba(245,158,11,0.3);">
+              <i class="ph-fill ph-package"></i>
+            </div>
+            <div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem;">Pedidos Totales</div>
+              <div style="font-size: 2.2rem; font-weight: 800; color: #f59e0b;">${(dashboardOrders.active.length + dashboardOrders.completed.length) || (userProfile?.orders ? Object.keys(userProfile.orders).length : 0)}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Wallet Card -->
+        <div class="glass-card" style="border-color: rgba(16, 185, 129, 0.2);">
+          <div style="position: absolute; bottom: -50px; left: -50px; width: 150px; height: 150px; background: #10b981; filter: blur(60px); opacity: 0.15;"></div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;"><i class="ph ph-wallet"></i> Saldo Monedero</div>
+              <div style="font-size: 2.5rem; font-weight: 800; color: #10b981; text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);">\$${wallet.toFixed(2)}</div>
+            </div>
+            <button onclick="startWalletRecharge()" class="btn-primary" style="padding: 10px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 4px 15px rgba(16,185,129,0.3);" title="Recargar">
+              <i class="ph ph-plus" style="font-size: 1.2rem;"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Saldo Gastado Card -->
+        <div class="glass-card" style="border-color: rgba(139, 92, 246, 0.2);">
+          <div style="position: absolute; bottom: -50px; right: -50px; width: 150px; height: 150px; background: #8b5cf6; filter: blur(60px); opacity: 0.15;"></div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;"><i class="ph ph-chart-line-up"></i> Total Gastado</div>
+              <div style="font-size: 2.5rem; font-weight: 800; color: #8b5cf6; text-shadow: 0 0 20px rgba(139, 92, 246, 0.4);">\$${spent.toFixed(2)}</div>
+            </div>
+          </div>
+        </div>
+        ` : `
         <!-- VIP Card -->
         <div class="glass-card">
           <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: ${vip.gradient}; filter: blur(60px); opacity: 0.2;"></div>
@@ -573,6 +612,7 @@ function renderDashboardContent() {
             </button>
           </div>
         </div>
+        `}
       </div>
       
       <!-- Referral Banner Placeholder -->
