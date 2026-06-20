@@ -583,6 +583,9 @@ function renderDashboardContent() {
             </div>
           </div>
           ${progressHtml}
+          <button onclick="if(typeof showVipBenefits === 'function') showVipBenefits()" style="margin-top: 15px; width: 100%; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: var(--text-secondary); cursor: pointer; transition: 0.3s; font-size: 0.85rem; display: flex; justify-content: center; align-items: center; gap: 5px;">
+            <i class="ph ph-info"></i> Ver Beneficios VIP
+          </button>
         </div>
 
         <!-- Wallet Card -->
@@ -864,6 +867,65 @@ function renderDashboardTransactions() {
     </div>
     `;
   }).join('');
+}
+
+function showVipBenefits() {
+  const modalContainer = document.createElement('div');
+  modalContainer.id = 'vip-benefits-modal';
+  modalContainer.innerHTML = `
+    <div class="modal-overlay active" style="z-index: 10000; display: flex; align-items: center; justify-content: center;" onclick="this.parentElement.remove()">
+      <div class="modal" style="max-width: 500px; padding: 0; overflow: hidden; animation: slideInUp 0.3s ease; position: relative; width: 90%; background: var(--bg-surface);" onclick="event.stopPropagation()">
+        <div style="background: linear-gradient(135deg, var(--bg-surface), #1a2a40); padding: 30px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;">
+          <div style="width: 70px; height: 70px; background: rgba(0,229,195,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 2rem; color: var(--accent); margin: 0 auto 15px auto;">
+            <i class="ph-fill ph-star"></i>
+          </div>
+          <h2 style="margin: 0; font-size: 1.5rem;">Beneficios Exclusivos</h2>
+          <p style="margin: 10px 0 0 0; color: var(--text-secondary); font-size: 0.9rem;">Mientras más compras, mejores recompensas obtienes.</p>
+        </div>
+        
+        <div style="padding: 30px; max-height: 60vh; overflow-y: auto;">
+          <h3 style="margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px; color: #3b82f6;"><i class="ph-fill ph-coin"></i> Shark Points por Compra</h3>
+          <ul style="list-style: none; padding: 0; margin: 0 0 25px 0; display: grid; gap: 10px;">
+            <li style="display: flex; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; font-size: 0.9rem;">
+              <span>Recargas menores a $6</span> <strong style="color: #3b82f6;">8 Puntos</strong>
+            </li>
+            <li style="display: flex; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; font-size: 0.9rem;">
+              <span>Recargas entre $6 y $12</span> <strong style="color: #3b82f6;">10 Puntos</strong>
+            </li>
+            <li style="display: flex; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; font-size: 0.9rem;">
+              <span>Recargas mayores a $12</span> <strong style="color: #3b82f6;">15 Puntos</strong>
+            </li>
+          </ul>
+
+          <h3 style="margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px; color: #10b981;"><i class="ph-fill ph-wallet"></i> Cashback VIP (Reembolso)</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px; background: rgba(16,185,129,0.1); padding: 10px; border-radius: 8px; border-left: 3px solid #10b981;">Obtén un porcentaje de tu compra de vuelta a tu billetera automáticamente. <br><em>Nota: No aplica si usas un código de descuento.</em></p>
+          
+          <ul style="list-style: none; padding: 0; margin: 0 0 25px 0; display: grid; gap: 8px;">
+            <li style="display: flex; justify-content: space-between; padding: 10px 15px; border-radius: 8px; border-left: 4px solid #cd7f32; background: linear-gradient(90deg, rgba(205,127,50,0.1), transparent);">
+              <span style="font-weight: bold; color: #cd7f32;">Bronce</span> <strong>0%</strong>
+            </li>
+            <li style="display: flex; justify-content: space-between; padding: 10px 15px; border-radius: 8px; border-left: 4px solid #c0c0c0; background: linear-gradient(90deg, rgba(192,192,192,0.1), transparent);">
+              <span style="font-weight: bold; color: #c0c0c0;">Plata</span> <strong>1%</strong>
+            </li>
+            <li style="display: flex; justify-content: space-between; padding: 10px 15px; border-radius: 8px; border-left: 4px solid #ffd700; background: linear-gradient(90deg, rgba(255,215,0,0.1), transparent);">
+              <span style="font-weight: bold; color: #ffd700;">Oro</span> <strong>2%</strong>
+            </li>
+            <li style="display: flex; justify-content: space-between; padding: 10px 15px; border-radius: 8px; border-left: 4px solid #e5e4e2; background: linear-gradient(90deg, rgba(229,228,226,0.1), transparent);">
+              <span style="font-weight: bold; color: #e5e4e2;">Platino</span> <strong>3%</strong>
+            </li>
+            <li style="display: flex; justify-content: space-between; padding: 10px 15px; border-radius: 8px; border-left: 4px solid #b9f2ff; background: linear-gradient(90deg, rgba(185,242,255,0.1), transparent);">
+              <span style="font-weight: bold; color: #b9f2ff;">Diamante</span> <strong>4%</strong>
+            </li>
+          </ul>
+
+          <button onclick="this.closest('#vip-benefits-modal').remove()" class="btn-primary" style="width: 100%; padding: 14px; border-radius: 12px; font-size: 1rem; margin-top: 10px;">
+            ¡Entendido!
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modalContainer);
 }
 
 
