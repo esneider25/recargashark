@@ -123,6 +123,47 @@ function getCategoryById(categoryId) {
 // ── Data Arrays for Firebase ──
 let ORDERS = [];
 let QUICK_REPLIES = [];
+let BANNERS = [
+  {
+    id: 'banner-1',
+    badge: 'NUEVO SERVICIO',
+    badgeColor: '#00e5c3',
+    title: 'Recargas Mobile Legends',
+    desc: 'Ya puedes recargar diamantes con tu Player ID y Zone ID. ¡Entrega rápida y segura!',
+    btnText: 'Ver Paquetes 🚀',
+    btnLink: 'product:mobile-legends',
+    btnColor: 'var(--accent)',
+    btnTextColor: 'var(--bg-deep)',
+    bgGradient: 'linear-gradient(135deg, #111827, #1f2937)',
+    icon: '💎'
+  },
+  {
+    id: 'banner-2',
+    badge: 'MÉTODO DE PAGO',
+    badgeColor: '#f3ba2f',
+    title: 'Aceptamos Binance Pay',
+    desc: 'Paga de forma rápida y sin comisiones extras usando USDT a través de Binance Pay.',
+    btnText: 'Saber más 💳',
+    btnLink: 'how-it-works',
+    btnColor: '#f3ba2f',
+    btnTextColor: '#000',
+    bgGradient: 'linear-gradient(135deg, #1f1127, #371f37)',
+    icon: '🔶'
+  },
+  {
+    id: 'banner-3',
+    badge: 'RÁPIDO Y SEGURO',
+    badgeColor: '#00e5c3',
+    title: 'Atención 24/7',
+    desc: 'Nuestro sistema procesa tus pedidos y estamos aquí para ayudarte en cualquier momento.',
+    btnText: 'Comprar ahora 🔥',
+    btnLink: 'catalog',
+    btnColor: 'var(--accent)',
+    btnTextColor: 'var(--bg-deep)',
+    bgGradient: 'linear-gradient(135deg, #112724, #1f3731)',
+    icon: '⚡'
+  }
+];
 
 window.DATA_LOADED = false;
 
@@ -781,6 +822,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.site_settings) SITE_SETTINGS = data.site_settings;
         if (data.api_configs) API_CONFIGS = data.api_configs;
         if (data.discounts) DISCOUNT_CODES = data.discounts;
+        if (data.banners) BANNERS = data.banners;
         if (data.telegram_config) TELEGRAM_CONFIG = data.telegram_config;
       }
       window.DATA_LOADED = true;

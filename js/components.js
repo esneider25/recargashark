@@ -83,44 +83,40 @@ function renderHero() {
 }
 
 function renderPromoCarousel() {
+  if (typeof BANNERS === 'undefined' || !BANNERS || BANNERS.length === 0) return '';
+
+  const cards = BANNERS.map(b => {
+    const bgStyle = b.imageUrl 
+      ? `background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 100%), url('${b.imageUrl}') center/cover;`
+      : `background: ${b.bgGradient || 'linear-gradient(135deg, #111827, #1f2937)'};`;
+      
+    const btnAction = b.btnLink && b.btnLink.startsWith('product:') 
+      ? `navigateTo('product', '${b.btnLink.split(':')[1]}')` 
+      : `scrollToSection('${b.btnLink || 'catalog'}')`;
+
+    return `
+      <div class="promo-card" style="min-width: 320px; max-width: 400px; flex: 0 0 auto; ${bgStyle} border-radius: 20px; padding: 24px; scroll-snap-align: center; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.05);">
+        ${!b.imageUrl ? `<div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; opacity: 0.05;">${b.icon || '✨'}</div>` : ''}
+        ${b.badge ? `<div style="background: ${b.badgeColor ? b.badgeColor+'33' : 'rgba(0, 229, 195, 0.2)'}; color: ${b.badgeColor || '#00e5c3'}; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; margin-bottom: 12px; position: relative; z-index: 2;">${b.badge}</div>` : ''}
+        <h3 style="color: white; font-size: 1.4rem; margin-bottom: 8px; position: relative; z-index: 2; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${b.title}</h3>
+        <p style="color: rgba(255,255,255,0.85); font-size: 0.95rem; margin-bottom: 20px; position: relative; z-index: 2; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${b.desc}</p>
+        <button onclick="${btnAction}" style="background: ${b.btnColor || 'var(--accent)'}; color: ${b.btnTextColor || 'var(--bg-deep)'}; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: transform 0.2s; position: relative; z-index: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">${b.btnText || 'Ver Más'}</button>
+      </div>
+    `;
+  }).join('');
+
   return `
     <section class="promo-section" style="padding: 20px 0 40px 0; overflow: hidden; position: relative;">
       <div class="container">
-        <div style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; scroll-snap-type: x mandatory; scrollbar-width: none;" class="promo-carousel">
-          
-          <div class="promo-card" style="min-width: 320px; max-width: 400px; flex: 0 0 auto; background: linear-gradient(135deg, #111827, #1f2937); border-radius: 20px; padding: 24px; scroll-snap-align: center; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.05);">
-            <div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; opacity: 0.05;">💎</div>
-            <div style="background: rgba(0, 229, 195, 0.2); color: #00e5c3; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; margin-bottom: 12px;">NUEVO SERVICIO</div>
-            <h3 style="color: white; font-size: 1.4rem; margin-bottom: 8px; position: relative; z-index: 2;">Recargas Mobile Legends</h3>
-            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px; position: relative; z-index: 2;">Ya puedes recargar diamantes con tu Player ID y Zone ID. ¡Entrega rápida y segura!</p>
-            <button onclick="scrollToSection('catalog')" style="background: var(--accent); color: var(--bg-deep); border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: transform 0.2s; position: relative; z-index: 2;">Ver Paquetes 🚀</button>
-          </div>
-
-          <div class="promo-card" style="min-width: 320px; max-width: 400px; flex: 0 0 auto; background: linear-gradient(135deg, #1f1127, #371f37); border-radius: 20px; padding: 24px; scroll-snap-align: center; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.05);">
-            <div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; opacity: 0.05;">🔶</div>
-            <div style="background: rgba(243, 186, 47, 0.2); color: #f3ba2f; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; margin-bottom: 12px;">MÉTODO DE PAGO</div>
-            <h3 style="color: white; font-size: 1.4rem; margin-bottom: 8px; position: relative; z-index: 2;">Aceptamos Binance Pay</h3>
-            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px; position: relative; z-index: 2;">Paga de forma rápida y sin comisiones extras usando USDT a través de Binance Pay.</p>
-            <button onclick="scrollToSection('how-it-works')" style="background: #f3ba2f; color: #000; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: transform 0.2s; position: relative; z-index: 2;">Saber más 💳</button>
-          </div>
-
-          <div class="promo-card" style="min-width: 320px; max-width: 400px; flex: 0 0 auto; background: linear-gradient(135deg, #112724, #1f3731); border-radius: 20px; padding: 24px; scroll-snap-align: center; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.05);">
-            <div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; opacity: 0.05;">⚡</div>
-            <div style="background: rgba(0, 229, 195, 0.2); color: #00e5c3; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; margin-bottom: 12px;">RÁPIDO Y SEGURO</div>
-            <h3 style="color: white; font-size: 1.4rem; margin-bottom: 8px; position: relative; z-index: 2;">Atención 24/7</h3>
-            <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px; position: relative; z-index: 2;">Nuestro sistema procesa tus pedidos y estamos aquí para ayudarte en cualquier momento.</p>
-            <button onclick="scrollToSection('catalog')" style="background: var(--accent); color: var(--bg-deep); border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: transform 0.2s; position: relative; z-index: 2;">Comprar ahora 🔥</button>
-          </div>
-
+        <div style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; scroll-snap-type: x mandatory; scrollbar-width: none; scroll-behavior: smooth;" class="promo-carousel" id="promo-carousel">
+          ${cards}
         </div>
       </div>
       <style>
         .promo-carousel::-webkit-scrollbar { display: none; }
         .promo-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .promo-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.25); }
-        .light-theme .promo-card { background: white !important; border: 1px solid var(--border) !important; }
-        .light-theme .promo-card h3 { color: var(--text-primary) !important; }
-        .light-theme .promo-card p { color: var(--text-secondary) !important; }
+        .light-theme .promo-card { border: 1px solid var(--border) !important; }
       </style>
     </section>
   `;

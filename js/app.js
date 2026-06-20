@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderApp();
   initScrollEffects();
   initCounters();
+  initCarousel();
 });
 
 function toggleTheme() {
@@ -2076,4 +2077,46 @@ async function deleteSavedId(index) {
   } catch(e) {
     showToast('❌ Error al eliminar el ID');
   }
+}
+
+// ── Carousel Auto-Slide ──
+let carouselInterval = null;
+function initCarousel() {
+  const carousel = document.getElementById('promo-carousel');
+  if (!carousel) return;
+  
+  if (carouselInterval) clearInterval(carouselInterval);
+  
+  carouselInterval = setInterval(() => {
+    // If the user has hovered over the carousel, don't scroll
+    if (carousel.matches(':hover')) return;
+
+    const isAtEnd = carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 10;
+    if (isAtEnd) {
+      carousel.scrollTo({ left: 0, behavior: 'smooth' });
+    } else {
+      const card = carousel.querySelector('.promo-card');
+      const cardWidth = card ? card.clientWidth + 20 : 340;
+      carousel.scrollBy({ left: cardWidth, behavior: 'smooth' });
+    }
+  }, 10000);
+
+  // Reset interval on user interaction
+  const resetInterval = () => {
+    clearInterval(carouselInterval);
+    carouselInterval = setInterval(() => {
+      if (carousel.matches(':hover')) return;
+      const isAtEnd = carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 10;
+      if (isAtEnd) {
+        carousel.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        const card = carousel.querySelector('.promo-card');
+        const cardWidth = card ? card.clientWidth + 20 : 340;
+        carousel.scrollBy({ left: cardWidth, behavior: 'smooth' });
+      }
+    }, 10000);
+  };
+  
+  carousel.addEventListener('pointerdown', resetInterval);
+  carousel.addEventListener('touchstart', resetInterval, {passive: true});
 }

@@ -100,6 +100,9 @@ function initAdminApp() {
           <li class="admin-nav-item" data-tab="customers" onclick="switchTab('customers')">
             <span class="admin-nav-icon">👥</span> Clientes
           </li>
+          <li class="admin-nav-item" data-tab="banners" onclick="switchTab('banners')">
+            <span class="admin-nav-icon">🖼️</span> Banners
+          </li>
           <li class="admin-nav-item" data-tab="categories" onclick="switchTab('categories')">
             <span class="admin-nav-icon">📁</span> Categorías
           </li>
@@ -180,6 +183,7 @@ function renderActiveTab() {
     case 'orders':     renderOrders(main); break;
     case 'products':   renderProducts(main); break;
     case 'customers':  renderCustomers(main); break;
+    case 'banners':    renderBanners(main); break;
     case 'categories': renderCategories(main); break;
     case 'payments':   renderPayments(main); break;
     case 'exchange':   renderExchange(main); break;
@@ -3055,4 +3059,201 @@ window.toggleBlockUser = function(uid, isBlocked) {
     });
   }
 };
+
+// ── Banners Management ──
+
+function renderBanners(container) {
+  let html = `
+    <div class="admin-header-flex">
+      <h2>🖼️ Gestión de Banners</h2>
+      <button class="btn-primary" onclick="adminEditBanner(null)">+ Nuevo Banner</button>
+    </div>
+    <p style="color: var(--text-secondary); margin-bottom: 20px;">
+      Configura los banners deslizantes de la página principal. Opcionalmente sube una imagen para el fondo.
+    </p>
+    <div class="admin-grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+  `;
+
+  if (!BANNERS || BANNERS.length === 0) {
+    html += `<p style="color: var(--text-muted); grid-column: 1 / -1;">No hay banners configurados.</p>`;
+  } else {
+    BANNERS.forEach(banner => {
+      const bg = banner.imageUrl 
+        ? `background: url('${banner.imageUrl}') center/cover;` 
+        : `background: ${banner.bgGradient};`;
+
+      html += `
+        <div class="admin-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+          <div style="height: 140px; ${bg} position: relative; border-bottom: 1px solid var(--border-color);">
+            <div style="position: absolute; bottom: 0; left: 0; width: 100%; padding: 10px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);">
+              <h3 style="color: white; font-size: 1.1rem; margin: 0; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">${banner.title || 'Sin Título'}</h3>
+            </div>
+            ${banner.badge ? `<div style="position: absolute; top: 10px; right: 10px; background: ${banner.badgeColor}; color: #000; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px;">${banner.badge}</div>` : ''}
+          </div>
+          <div style="padding: 15px; flex: 1;">
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.4;">${banner.desc ? (banner.desc.length > 60 ? banner.desc.substring(0, 60) + '...' : banner.desc) : 'Sin descripción'}</p>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn-secondary" style="flex: 1; padding: 6px;" onclick="adminEditBanner('${banner.id}')">Editar</button>
+              <button class="btn-danger" style="flex: 1; padding: 6px;" onclick="adminDeleteBanner('${banner.id}')">Eliminar</button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+function adminEditBanner(id) {
+  let b = { id: 'banner-' + Date.now(), title: '', desc: '', badge: '', badgeColor: '#00e5c3', imageUrl: '', bgGradient: 'linear-gradient(135deg, #111827, #1f2937)', btnText: 'Ver Más', btnLink: 'catalog', btnColor: 'var(--accent)', btnTextColor: 'var(--bg-deep)' };
+  let isEdit = false;
+  
+  if (id) {
+    const existing = BANNERS.find(x => x.id === id);
+    if (existing) {
+      b = { ...existing };
+      isEdit = true;
+    }
+  }
+
+  const modalHtml = `
+    <div class="admin-modal-content" style="max-width: 600px;">
+      <h3>${isEdit ? 'Editar Banner' : 'Nuevo Banner'}</h3>
+      
+      <div class="form-group" style="margin-top: 15px;">
+        <label>🖼️ Imagen de Fondo (Opcional)</label>
+        <input type="file" id="banner-file" accept="image/*" class="admin-input" style="padding: 10px;" onchange="handleBannerImageUpload(this)">
+        <input type="hidden" id="banner-imageUrl" value="${b.imageUrl || ''}">
+        <div id="banner-image-preview" style="margin-top: 10px; height: 120px; border-radius: 8px; border: 1px dashed var(--border-color); background: ${b.imageUrl ? `url('${b.imageUrl}') center/cover` : 'rgba(0,0,0,0.2)'}; display: flex; align-items: center; justify-content: center;">
+          ${!b.imageUrl ? '<span style="color: var(--text-muted); font-size: 0.85rem;">Sin imagen</span>' : ''}
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div class="form-group">
+          <label>Título</label>
+          <input type="text" id="banner-title" class="admin-input" value="${b.title}">
+        </div>
+        <div class="form-group">
+          <label>Texto del Botón</label>
+          <input type="text" id="banner-btnText" class="admin-input" value="${b.btnText}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Descripción</label>
+        <textarea id="banner-desc" class="admin-input" style="height: 60px;">${b.desc}</textarea>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div class="form-group">
+          <label>Etiqueta (Badge)</label>
+          <input type="text" id="banner-badge" class="admin-input" value="${b.badge || ''}" placeholder="Ej: NUEVO SERVICIO">
+        </div>
+        <div class="form-group">
+          <label>Color Etiqueta</label>
+          <input type="color" id="banner-badgeColor" class="admin-input" value="${b.badgeColor || '#00e5c3'}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Enlace del Botón</label>
+        <select id="banner-btnLink" class="admin-input">
+          <option value="catalog" ${b.btnLink === 'catalog' ? 'selected' : ''}>Catálogo</option>
+          <option value="how-it-works" ${b.btnLink === 'how-it-works' ? 'selected' : ''}>¿Cómo Funciona?</option>
+          <optgroup label="Productos">
+            ${PRODUCTS.map(p => `<option value="product:${p.id}" ${b.btnLink === `product:${p.id}` ? 'selected' : ''}>${p.name}</option>`).join('')}
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Fondo de Respaldo (Degradado CSS)</label>
+        <input type="text" id="banner-bgGradient" class="admin-input" value="${b.bgGradient}" placeholder="Ej: linear-gradient(135deg, #111827, #1f2937)">
+        <small style="color: var(--text-muted); font-size: 0.8rem;">Se usa si no subes una imagen.</small>
+      </div>
+
+      <div class="admin-modal-actions">
+        <button class="btn-secondary" onclick="closeAdminModal()">Cancelar</button>
+        <button class="btn-primary" onclick="adminSaveBanner('${b.id}')">Guardar Banner</button>
+      </div>
+    </div>
+  `;
+  showAdminModal(modalHtml);
+}
+
+function handleBannerImageUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      // Resize to max 800px width/height for base64 storage
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      const MAX = 800;
+      
+      if (width > height) {
+        if (width > MAX) { height *= MAX / width; width = MAX; }
+      } else {
+        if (height > MAX) { width *= MAX / height; height = MAX; }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      document.getElementById('banner-imageUrl').value = dataUrl;
+      const preview = document.getElementById('banner-image-preview');
+      preview.style.background = `url('${dataUrl}') center/cover`;
+      preview.innerHTML = '';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function adminSaveBanner(id) {
+  const title = document.getElementById('banner-title').value.trim();
+  if (!title) return alert('El título es obligatorio');
+
+  const b = {
+    id: id,
+    title: title,
+    desc: document.getElementById('banner-desc').value.trim(),
+    badge: document.getElementById('banner-badge').value.trim(),
+    badgeColor: document.getElementById('banner-badgeColor').value,
+    imageUrl: document.getElementById('banner-imageUrl').value,
+    bgGradient: document.getElementById('banner-bgGradient').value || 'linear-gradient(135deg, #111827, #1f2937)',
+    btnText: document.getElementById('banner-btnText').value.trim(),
+    btnLink: document.getElementById('banner-btnLink').value,
+    btnColor: 'var(--accent)',
+    btnTextColor: 'var(--bg-deep)'
+  };
+
+  const idx = BANNERS.findIndex(x => x.id === id);
+  if (idx >= 0) BANNERS[idx] = b;
+  else BANNERS.push(b);
+
+  saveToDb('banners', BANNERS);
+  closeAdminModal();
+  renderActiveTab();
+}
+
+function adminDeleteBanner(id) {
+  if (!confirm('¿Eliminar este banner?')) return;
+  const idx = BANNERS.findIndex(x => x.id === id);
+  if (idx >= 0) {
+    BANNERS.splice(idx, 1);
+    saveToDb('banners', BANNERS);
+    renderActiveTab();
+  }
+}
 
