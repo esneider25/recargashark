@@ -452,25 +452,39 @@ function startWalletRecharge() {
   window.location.href = '/?recharge=true';
 }
 
+function usuarioToast(msg, type = 'info') {
+  const t = document.createElement('div');
+  t.style.position = 'fixed';
+  t.style.bottom = '20px';
+  t.style.left = '50%';
+  t.style.transform = 'translateX(-50%) translateY(100px)';
+  t.style.background = type === 'success' ? '#10b981' : (type === 'error' ? '#ef4444' : '#3b82f6');
+  t.style.color = '#fff';
+  t.style.padding = '12px 24px';
+  t.style.borderRadius = '30px';
+  t.style.zIndex = '99999';
+  t.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
+  t.style.fontWeight = 'bold';
+  t.style.transition = 'all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+  t.innerText = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.style.transform = 'translateX(-50%) translateY(0)', 10);
+  setTimeout(() => {
+    t.style.transform = 'translateX(-50%) translateY(100px)';
+    setTimeout(() => t.remove(), 300);
+  }, 3000);
+}
+
 function redeemPoints() {
   if (!currentUser || !userProfile) return;
   const currentPoints = userProfile.points || 0;
-  if (currentPoints < 100) {
-    if (typeof showToast === 'function') {
-      showToast('⚠️ Necesitas al menos 100 Shark Points para canjear.');
-    } else {
-      alert('Necesitas al menos 100 Shark Points para canjear.');
-    }
-    return;
-  }
-  
   const maxDollars = Math.floor(currentPoints / 100);
   
   const modalContainer = document.createElement('div');
   modalContainer.id = 'redeem-points-modal';
   modalContainer.innerHTML = `
-    <div class="modal-overlay active" style="z-index: 10000; display: flex; align-items: center; justify-content: center;">
-      <div class="modal" style="max-width: 400px; padding: 0; overflow: hidden; animation: slideInUp 0.3s ease; position: relative; width: 90%; background: var(--bg-surface);">
+    <div class="modal-overlay active" style="z-index: 10000; display: flex; align-items: center; justify-content: center;" onclick="this.parentElement.remove()">
+      <div class="modal" style="max-width: 400px; padding: 0; overflow: hidden; animation: slideInUp 0.3s ease; position: relative; width: 90%; background: var(--bg-surface);" onclick="event.stopPropagation()">
         <div style="background: linear-gradient(135deg, var(--bg-surface), #1a2a40); padding: 30px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;">
           <div style="width: 70px; height: 70px; background: rgba(59,130,246,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; color: #3b82f6; margin: 0 auto 15px auto; box-shadow: 0 0 20px rgba(59,130,246,0.2);">
             <i class="ph-fill ph-star"></i>
@@ -480,6 +494,7 @@ function redeemPoints() {
         </div>
         
         <div style="padding: 30px;">
+          ${maxDollars > 0 ? `
           <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 25px;">
             <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 10px;">¿Cuántos dólares deseas canjear?</div>
             <div style="display: flex; justify-content: center; align-items: center; gap: 15px;">
@@ -502,6 +517,15 @@ function redeemPoints() {
               Canjear Ahora
             </button>
           </div>
+          ` : `
+          <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 25px; color: #ef4444;">
+            <i class="ph ph-warning" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+            Necesitas al menos <strong>100 Shark Points</strong> para realizar un canje. (100 PTS = $1)
+          </div>
+          <button onclick="this.closest('#redeem-points-modal').remove()" class="btn-secondary" style="width: 100%; padding: 14px; border-radius: 12px;">
+            Entendido
+          </button>
+          `}
         </div>
       </div>
     </div>
@@ -516,7 +540,7 @@ window.changeRedeemAmount = function(delta) {
   let newValue = window.currentRedeemDollars + delta;
   if (newValue < 1) newValue = 1;
   if (newValue > window.maxRedeemDollars) {
-    if (typeof showToast === 'function') showToast('⚠️ No tienes suficientes puntos');
+    usuarioToast('⚠️ No tienes suficientes puntos', 'error');
     newValue = window.maxRedeemDollars;
   }
   
@@ -549,13 +573,9 @@ window.confirmRedeemPoints = function() {
       date: Date.now()
     });
     
-    if (typeof showToast === 'function') {
-      showToast(`🎉 ¡Canje exitoso! Se agregaron $${dollars} a tu billetera.`);
-    } else {
-      alert(`¡Canje exitoso! Se agregaron $${dollars} a tu billetera.`);
-    }
+    usuarioToast(`🎉 ¡Canje exitoso! Se agregaron $${dollars} a tu billetera.`, 'success');
   }).catch(err => {
-    if (typeof showToast === 'function') showToast('❌ Hubo un error al canjear.');
+    usuarioToast('❌ Hubo un error al canjear.', 'error');
   });
 };
 
