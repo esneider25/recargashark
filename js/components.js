@@ -18,7 +18,7 @@ function renderNavbar() {
           <li><a onclick="navigateTo('lookup')" data-section="lookup">🔍 Mis Pedidos</a></li>
           <li id="auth-nav-item">
             ${(typeof currentUser !== 'undefined' && currentUser) 
-              ? `<a onclick="navigateTo('dashboard')" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Mi Perfil ($${(typeof userProfile !== 'undefined' && userProfile && userProfile.wallet) ? userProfile.wallet : 0})</a>`
+              ? `<a onclick="navigateTo('dashboard')" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Mi Perfil ($${Number((typeof userProfile !== 'undefined' && userProfile && userProfile.wallet) ? userProfile.wallet : 0).toFixed(2)})</a>`
               : `<a onclick="showAuthModal()" class="nav-cta" style="background: linear-gradient(135deg, #4f46e5, #3b82f6); cursor:pointer;">Iniciar Sesión</a>`
             }
           </li>
