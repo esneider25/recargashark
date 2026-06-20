@@ -95,6 +95,7 @@ function renderApp() {
     requestAnimationFrame(() => {
       initCounters();
       initScrollObserver();
+      initCarousel();
     });
   } else if (appState.currentView === 'product') {
     app.innerHTML = `

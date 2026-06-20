@@ -1414,6 +1414,15 @@ function previewProductImage(url) {
   }
 }
 
+function showAdminModal(html) {
+  const overlay = document.getElementById('admin-modal-overlay');
+  const content = document.getElementById('admin-modal-content');
+  if (overlay && content) {
+    content.innerHTML = html;
+    overlay.classList.add('active');
+  }
+}
+
 function closeAdminModal() {
   const overlay = document.getElementById('admin-modal-overlay');
   if (overlay) overlay.classList.remove('active');
