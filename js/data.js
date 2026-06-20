@@ -445,6 +445,7 @@ function createOrder(data) {
     accountEmail: data.accountEmail || '',
     accountPassword: data.accountPassword || '',
     ocrNumbers: data.ocrNumbers || [],
+    imageHash: data.imageHash || null,
     discountCode: data.discountCode || null,
     discountValue: data.discountValue || 0,
     discountType: data.discountType || null,

@@ -579,6 +579,7 @@ async function submitOrder() {
     accountEmail: accountEmail,
     accountPassword: accountPassword,
     ocrNumbers: appState.selectedScreenshotOcr || [],
+    imageHash: appState.selectedScreenshotHash || null,
     discountCode: discountCode,
     discountValue: discountValue,
     discountType: discountType,
@@ -1295,8 +1296,21 @@ function previewScreenshot(input) {
     
     appState.selectedScreenshot = file;
     
-    // OCR Check for duplicates
-    if (window.Tesseract) {
+    // ── IMAGE HASH CHECK (Exact duplicate file detection) ──
+    let imgHashNum = 0;
+    const step = Math.max(1, Math.floor(dataUrl.length / 100000));
+    for (let i = 0; i < dataUrl.length; i += step) {
+      imgHashNum = ((imgHashNum << 5) - imgHashNum) + dataUrl.charCodeAt(i);
+      imgHashNum |= 0;
+    }
+    const imageHash = 'img-' + Math.abs(imgHashNum).toString(36) + '-' + file.size;
+    appState.selectedScreenshotHash = imageHash;
+
+    const orders = getOrders();
+    let duplicateFound = orders.some(o => o.status !== 'rejected' && o.imageHash === imageHash);
+    
+    // OCR Check for duplicates (Catches cropped/compressed images)
+    if (!duplicateFound && window.Tesseract) {
       try {
         const { data: { text } } = await Tesseract.recognize(dataUrl, 'spa');
         
@@ -1312,9 +1326,7 @@ function previewScreenshot(input) {
         if (numbers.length === 0) {
           numbers = text.match(/\b\d{6,}\b/g) || []; // Aumentamos a 6 para reducir falsos positivos
         }
-        const orders = getOrders();
-        let duplicateFound = false;
-
+        
         if (numbers.length > 0) {
           for (const num of numbers) {
             // Check if any previous order (not rejected) has this exact number string in its OCR data
@@ -1323,28 +1335,6 @@ function previewScreenshot(input) {
               break;
             }
           }
-        }
-
-        if (duplicateFound) {
-          showToast('🚨 PAGO DUPLICADO: Esta captura ya fue procesada anteriormente.');
-          
-          const fp = getDeviceFingerprint();
-          blockUserForFraud(fp);
-          sendTelegramMessage(`🚨 <b>ALERTA DE FRAUDE:</b>\nUn cliente intentó re-utilizar un comprobante de pago ya procesado.\nFingerprint: <code>${fp}</code>\nEl usuario ha sido bloqueado preventivamente.`);
-          
-          appState.selectedScreenshot = null;
-          appState.selectedScreenshotOcr = null;
-          input.value = '';
-          
-          if (previewContainer) {
-            previewContainer.innerHTML = `
-              <div class="screenshot-placeholder" style="border-color: var(--coral);">
-                <span style="font-size: 2rem;">🚨</span>
-                <span class="screenshot-hint" style="color: var(--coral);">Captura duplicada rechazada</span>
-              </div>
-            `;
-          }
-          return; // Stop execution
         }
         
         // Save OCR numbers to state to attach to order later
@@ -1355,6 +1345,29 @@ function previewScreenshot(input) {
       }
     }
     
+    if (duplicateFound) {
+      showToast('🚨 PAGO DUPLICADO: Esta captura ya fue procesada anteriormente.');
+      
+      const fp = getDeviceFingerprint();
+      blockUserForFraud(fp);
+      sendTelegramMessage(`🚨 <b>ALERTA DE FRAUDE:</b>\nUn cliente intentó re-utilizar un comprobante de pago ya procesado.\nFingerprint: <code>${fp}</code>\nEl usuario ha sido bloqueado preventivamente.`);
+      
+      appState.selectedScreenshot = null;
+      appState.selectedScreenshotOcr = null;
+      appState.selectedScreenshotHash = null;
+      input.value = '';
+      
+      if (previewContainer) {
+        previewContainer.innerHTML = `
+          <div class="screenshot-placeholder" style="border-color: var(--coral);">
+            <span style="font-size: 2rem;">🚨</span>
+            <span class="screenshot-hint" style="color: var(--coral);">Captura duplicada rechazada</span>
+          </div>
+        `;
+      }
+      return; // Stop execution
+    }
+
     if (previewContainer) {
       previewContainer.innerHTML = `
         <div class="screenshot-preview-wrapper" style="position: relative; border-radius: var(--radius); overflow: hidden;">
