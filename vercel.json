@@ -11,7 +11,7 @@
       ]
     }
   ],
-  "rewrites": [
+  "redirects": [
     {
       "source": "/",
       "has": [
@@ -20,7 +20,8 @@
           "value": "admin.recargashark.com"
         }
       ],
-      "destination": "/admin.html"
+      "destination": "/admin",
+      "permanent": true
     }
   ]
 }
