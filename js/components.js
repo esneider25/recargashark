@@ -86,37 +86,87 @@ function renderPromoCarousel() {
   if (typeof BANNERS === 'undefined' || !BANNERS || BANNERS.length === 0) return '';
 
   const cards = BANNERS.map(b => {
-    const bgStyle = b.imageUrl 
-      ? `background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 100%), url('${b.imageUrl}') center/cover;`
+    const hasImg = !!b.imageUrl;
+    const bgStyle = hasImg 
+      ? `background: url('${b.imageUrl}') center/cover no-repeat;`
       : `background: ${b.bgGradient || 'linear-gradient(135deg, #111827, #1f2937)'};`;
       
     const btnAction = b.btnLink && b.btnLink.startsWith('product:') 
       ? `navigateTo('product', '${b.btnLink.split(':')[1]}')` 
       : `scrollToSection('${b.btnLink || 'catalog'}')`;
 
+    const overlay = hasImg ? `<div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); height: 60%; pointer-events: none; z-index: 1;"></div>` : '';
+
     return `
-      <div class="promo-card" style="min-width: 320px; max-width: 400px; flex: 0 0 auto; ${bgStyle} border-radius: 20px; padding: 24px; scroll-snap-align: center; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.05);">
-        ${!b.imageUrl ? `<div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; opacity: 0.05;">${b.icon || '✨'}</div>` : ''}
-        ${b.badge ? `<div style="background: ${b.badgeColor ? b.badgeColor+'33' : 'rgba(0, 229, 195, 0.2)'}; color: ${b.badgeColor || '#00e5c3'}; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; margin-bottom: 12px; position: relative; z-index: 2;">${b.badge}</div>` : ''}
-        <h3 style="color: white; font-size: 1.4rem; margin-bottom: 8px; position: relative; z-index: 2; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${b.title}</h3>
-        <p style="color: rgba(255,255,255,0.85); font-size: 0.95rem; margin-bottom: 20px; position: relative; z-index: 2; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">${b.desc}</p>
-        <button onclick="${btnAction}" style="background: ${b.btnColor || 'var(--accent)'}; color: ${b.btnTextColor || 'var(--bg-deep)'}; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: transform 0.2s; position: relative; z-index: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">${b.btnText || 'Ver Más'}</button>
+      <div class="promo-card" style="${bgStyle} cursor: pointer;" onclick="${btnAction}">
+        ${overlay}
+        ${!hasImg ? `<div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; opacity: 0.05; z-index: 0;">${b.icon || '✨'}</div>` : ''}
+        <div style="position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: flex-end;">
+          <div>
+            ${b.badge ? `<div style="background: ${b.badgeColor ? b.badgeColor+'e6' : 'rgba(0, 229, 195, 0.9)'}; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">${b.badge}</div>` : ''}
+            ${(!hasImg || b.title) ? `<h3 style="color: white; font-size: clamp(1.2rem, 3vw, 1.8rem); margin-bottom: 8px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">${b.title}</h3>` : ''}
+            ${(!hasImg || b.desc) ? `<p style="color: rgba(255,255,255,0.9); font-size: clamp(0.85rem, 2vw, 1rem); margin-bottom: 15px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); max-width: 80%; line-height: 1.4;">${b.desc}</p>` : ''}
+            ${!hasImg ? `<button style="background: ${b.btnColor || 'var(--accent)'}; color: ${b.btnTextColor || 'var(--bg-deep)'}; border: none; padding: 10px 24px; border-radius: 30px; font-weight: bold; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">${b.btnText || 'Ver Más'}</button>` : ''}
+          </div>
+        </div>
       </div>
     `;
   }).join('');
 
   return `
-    <section class="promo-section" style="padding: 20px 0 40px 0; overflow: hidden; position: relative;">
-      <div class="container">
-        <div style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 20px; scroll-snap-type: x mandatory; scrollbar-width: none; scroll-behavior: smooth;" class="promo-carousel" id="promo-carousel">
-          ${cards}
-        </div>
+    <section class="promo-section" style="padding: 30px 0 50px 0; overflow: hidden; position: relative; width: 100%;">
+      <div class="promo-carousel" id="promo-carousel">
+        ${cards}
       </div>
       <style>
+        .promo-carousel {
+          display: flex;
+          gap: 15px;
+          overflow-x: auto;
+          padding-bottom: 20px;
+          scroll-snap-type: x mandatory;
+          scrollbar-width: none;
+          scroll-behavior: smooth;
+          --card-width: 88vw;
+          padding: 0 calc(50vw - (var(--card-width) / 2));
+        }
+        @media (min-width: 768px) {
+          .promo-carousel {
+            --card-width: 75vw;
+            gap: 24px;
+          }
+        }
+        @media (min-width: 1200px) {
+          .promo-carousel {
+            --card-width: 900px;
+          }
+        }
         .promo-carousel::-webkit-scrollbar { display: none; }
-        .promo-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .promo-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.25); }
-        .light-theme .promo-card { border: 1px solid var(--border) !important; }
+        
+        .promo-card {
+          flex: 0 0 var(--card-width);
+          width: var(--card-width);
+          height: 200px;
+          border-radius: 16px;
+          scroll-snap-align: center;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+          border: 1px solid rgba(255,255,255,0.08);
+          transition: transform 0.3s ease, filter 0.3s ease;
+          padding: 24px;
+        }
+        @media (min-width: 768px) {
+          .promo-card { height: 300px; border-radius: 24px; padding: 40px; }
+        }
+        @media (min-width: 1200px) {
+          .promo-card { height: 360px; }
+        }
+        
+        .promo-card:hover { 
+          transform: translateY(-5px) scale(1.01); 
+        }
+        .light-theme .promo-card { border: 1px solid rgba(0,0,0,0.1) !important; }
       </style>
     </section>
   `;
