@@ -1,22 +1,67 @@
 {
   "rules": {
-    "products": { ".read": true },
-    "categories": { ".read": true },
-    "exchange_rate": { ".read": true },
-    "payment_methods": { ".read": true },
-    "settings": { ".read": true },
-    "messages": { ".read": true, ".write": true },
-    "orders": { 
-      ".read": true,
-      ".write": true 
+    "products": { 
+      ".read": "true",
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     },
-    "telegram_config": { ".read": true },
-    "discounts": { ".read": true },
-    "spam_tracker": { ".read": true, ".write": true },
-    "order_counter": { ".read": true },
-    "api_configs": { ".read": "auth != null" },
-
-    ".read": "auth != null",
-    ".write": "auth != null"
+    "categories": { 
+      ".read": "true",
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
+    },
+    "exchange_rate": { 
+      ".read": "true",
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
+    },
+    "payment_methods": { 
+      ".read": "true",
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
+    },
+    "settings": { 
+      ".read": "true",
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
+    },
+    "messages": { 
+      ".read": "true", 
+      ".write": "true" 
+    },
+    "orders": { 
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "telegram_config": { 
+      ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
+    },
+    "discounts": { 
+      ".read": "true",
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
+    },
+    "spam_tracker": { 
+      ".read": "true", 
+      ".write": "true" 
+    },
+    "order_counter": { 
+      ".read": "true", 
+      ".write": "auth != null" 
+    },
+    "api_configs": { 
+      ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
+    },
+    "users": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null",
+        "role": {
+          ".validate": "!data.exists() || data.val() == newData.val() || auth.token.email === 'adminshark@gmail.com' || (data.val() === 'influencer' && newData.val() === 'partner')"
+        },
+        "discountPercentage": {
+          ".validate": "!data.exists() || data.val() == newData.val() || auth.token.email === 'adminshark@gmail.com'"
+        },
+        "isBlocked": {
+          ".validate": "!data.exists() || data.val() == newData.val() || auth.token.email === 'adminshark@gmail.com'"
+        }
+      }
+    }
   }
 }
