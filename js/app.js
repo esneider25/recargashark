@@ -740,6 +740,17 @@ async function processWalletOrderAuto(order, isReseller = false) {
               if (typeof updateOrderStatus === 'function') {
                 updateOrderStatus(order.id, 'completed', note);
               }
+              if (typeof sendTelegramMessage === 'function') {
+                sendTelegramMessage(`✅ <b>PEDIDO AUTO-COMPLETADO — #${order.id}</b>\n\nEl pedido fue procesado exitosamente luego de unos segundos.\nNota: ${note}`);
+              }
+            } else if (!pollData.ok || pollData.status === 'rejected' || pollData.estado === 'rechazado') {
+              clearInterval(pollInterval);
+              if (typeof updateOrderStatus === 'function') {
+                updateOrderStatus(order.id, 'invalid-id', `Verifica que el ID o la cuenta sean correctos. La API rechazó la recarga.`);
+              }
+              if (typeof sendTelegramMessage === 'function') {
+                sendTelegramMessage(`⚠️ <b>DATOS INVÁLIDOS — #${order.id}</b>\n\nLa API rechazó el pedido luego de procesar. El cliente debe corregir los datos.`);
+              }
             } else if (attempts >= maxAttempts) {
               clearInterval(pollInterval);
               if (typeof updateOrderStatus === 'function') {
