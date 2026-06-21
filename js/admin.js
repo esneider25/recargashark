@@ -2542,6 +2542,16 @@ function renderSettings(container) {
           <textarea id="setting-announcement-msg" class="admin-form-textarea" rows="3">${config.announcementMessage || ''}</textarea>
         </div>
       </div>
+
+      <div class="admin-card" style="grid-column: 1 / -1;">
+        <div class="admin-card-header">
+          <h3 class="admin-card-title">📜 Términos y Condiciones</h3>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Texto de Términos (Se mostrará a nuevos usuarios) <span style="font-weight: 400; color:var(--text-muted);">(Permite HTML)</span></label>
+          <textarea id="setting-terms" class="admin-form-textarea" rows="6">${config.termsAndConditions || ''}</textarea>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -2555,8 +2565,9 @@ function adminSaveSettings() {
   const maintenance = document.getElementById('setting-maintenance').checked;
   const announcementEnabled = document.getElementById('setting-announcement-enabled').checked;
   const announcementMessage = document.getElementById('setting-announcement-msg').value;
+  const termsAndConditions = document.getElementById('setting-terms').value;
 
-  saveSettings({ whatsapp, whatsappChannel, instagram, telegram, schedule, maintenance, announcementEnabled, announcementMessage });
+  saveSettings({ whatsapp, whatsappChannel, instagram, telegram, schedule, maintenance, announcementEnabled, announcementMessage, termsAndConditions });
   showAdminToast('✅ Configuración guardada', 'success');
 }
 

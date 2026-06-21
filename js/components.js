@@ -1027,6 +1027,43 @@ function renderFooter() {
   `;
 }
 
+// ── Terms & Conditions Modal ──
+function renderTermsModal() {
+  const termsText = typeof getSettings === 'function' && getSettings().termsAndConditions ? getSettings().termsAndConditions : '<h4>Términos y Condiciones</h4><p>Al utilizar nuestros servicios aceptas las reglas de la tienda.</p>';
+  return `
+    <div id="terms-modal-container">
+      <div class="modal-overlay active" style="z-index: 10000; backdrop-filter: blur(8px); background: rgba(6, 13, 26, 0.85);">
+        <div class="modal" style="max-width: 600px; max-height: 85vh; display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+          <div style="padding: 24px; border-bottom: 1px solid var(--border); background: var(--bg-surface);">
+            <h2 style="margin: 0; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.8rem;">📜</span> Términos y Condiciones
+            </h2>
+          </div>
+          <div style="padding: 24px; overflow-y: auto; color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem; background: var(--bg-deep);">
+            ${termsText}
+          </div>
+          <div style="padding: 20px 24px; border-top: 1px solid var(--border); background: var(--bg-surface); text-align: center;">
+            <p style="margin-bottom: 16px; font-size: 0.9rem; color: var(--text-muted);">Debes aceptar los términos para poder continuar y realizar compras.</p>
+            <button class="btn-primary" onclick="acceptTerms()" style="width: 100%; padding: 14px; font-size: 1.1rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 229, 195, 0.2);">
+              Acepto los Términos y Condiciones ✅
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+window.acceptTerms = function() {
+  localStorage.setItem('recargashark_terms_accepted', 'true');
+  const container = document.getElementById('terms-modal-container');
+  if (container) {
+    const overlay = container.querySelector('.modal-overlay');
+    if (overlay) overlay.classList.remove('active');
+    setTimeout(() => container.remove(), 300);
+  }
+};
+
 // ── Support Chat Widget ──
 function renderSupportWidget() {
   const settings = getSettings();

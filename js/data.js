@@ -18,7 +18,8 @@ let SITE_SETTINGS = {
   telegram: 'https://t.me/recargashark',
   schedule: 'Lunes a Domingo 8:00 AM – 11:00 PM',
   announcementEnabled: false,
-  announcementMessage: '¡Bienvenido a RecargaShark! Estamos procesando pedidos con normalidad.'
+  announcementMessage: '¡Bienvenido a RecargaShark! Estamos procesando pedidos con normalidad.',
+  termsAndConditions: '<h4>1. Aceptación del Servicio</h4><p>Al utilizar nuestros servicios, aceptas que todas las recargas son procesadas tras la verificación del pago.</p><h4>2. Reembolsos</h4><p>No nos hacemos responsables por IDs incorrectos proporcionados por el usuario. Verifica bien tus datos antes de pagar.</p><h4>3. Tiempos de Entrega</h4><p>El tiempo de procesamiento varía entre 5 a 15 minutos en horario laboral.</p>'
 };
 
 // ── Messaging System ──
