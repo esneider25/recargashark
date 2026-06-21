@@ -2752,17 +2752,18 @@ function renderCustomers(container) {
       <div style="display: flex; gap: 10px; margin-bottom: 20px;">
         <input type="text" id="admin-customers-search" class="admin-form-input" style="flex: 1; margin-bottom: 0;" placeholder="Buscar por Email, Nombre o WhatsApp..." onkeyup="filterCustomersSearch(this.value)">
       </div>
-      <div style="overflow-x: auto;">
-        <table class="admin-table" style="width: 100%; border-collapse: collapse;">
+      <div style="overflow-x: auto; padding-bottom: 15px;">
+        <table class="admin-table" style="width: 100%; border-collapse: collapse; min-width: 1000px;">
           <thead>
-              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Email</th>
-              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Nombre</th>
-              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">WhatsApp</th>
-              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Fecha Registro</th>
-              <th style="text-align: right; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Monedero</th>
-              <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Rol / Descuento</th>
-              <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Estado</th>
-              <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Acciones</th>
+            <tr>
+              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Email</th>
+              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Nombre</th>
+              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">WhatsApp</th>
+              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Fecha Registro</th>
+              <th style="text-align: right; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Monedero</th>
+              <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Rol / Descuento</th>
+              <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Estado</th>
+              <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Acciones</th>
             </tr>
           </thead>
           <tbody id="customers-table-body">
@@ -2803,24 +2804,26 @@ function renderCustomersTable(usersList) {
     const wallet = user.wallet || 0;
     return `
       <tr class="customer-row">
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.email || 'N/A'}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.name || '-'}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.whatsapp || 'N/A'}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${dateStr}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: right; color: #10b981; font-weight: bold;">${wallet.toFixed(2)}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${user.email || 'N/A'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${user.name || '-'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${user.whatsapp || 'N/A'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${dateStr}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: right; color: #10b981; font-weight: bold; white-space: nowrap;">${wallet.toFixed(2)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; white-space: nowrap;">
           <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openRoleModal('${user.uid}', '${user.role || 'cliente'}', ${user.discountPercentage || 0}, ${user.referralLimit || 30})">
             ${(user.role === 'revendedor') ? '💼 Revend (+' + (user.discountPercentage || 0) + '%)' : (user.role === 'influencer' ? '✨ Influencer' : '👤 Cliente')}
           </button>
         </td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center;">
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; white-space: nowrap;">
           <button class="btn ${user.isBlocked ? 'btn-danger' : 'btn-secondary'}" style="padding: 6px 12px; font-size: 0.8rem;" onclick="toggleBlockUser('${user.uid}', ${!!user.isBlocked})">
             ${user.isBlocked ? '🚫 Bloqueado' : '✅ Activo'}
           </button>
         </td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; display: flex; flex-direction: column; gap: 5px;">
-          <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openCustomerInfoModal('${user.uid}')">ℹ️ Info</button>
-          <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openEditWalletModal('${user.uid}', '${user.email}', ${wallet})">Editar Saldo</button>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; white-space: nowrap;">
+          <div style="display: flex; gap: 5px; justify-content: center;">
+            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openCustomerInfoModal('${user.uid}')">ℹ️ Info</button>
+            <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openEditWalletModal('${user.uid}', '${user.email}', ${wallet})">Editar Saldo</button>
+          </div>
         </td>
       </tr>
     `;
