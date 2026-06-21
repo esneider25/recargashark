@@ -110,7 +110,9 @@ function renderPromoCarousel() {
             ${b.badge ? `<div style="background: ${b.badgeColor ? b.badgeColor+'e6' : 'rgba(0, 229, 195, 0.9)'}; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">${b.badge}</div>` : ''}
             ${(!hasImg || b.title) ? `<h3 style="color: white; font-size: clamp(1.2rem, 3vw, 1.8rem); margin-bottom: 8px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">${b.title}</h3>` : ''}
             ${(!hasImg || b.desc) ? `<p style="color: rgba(255,255,255,0.9); font-size: clamp(0.85rem, 2vw, 1rem); margin-bottom: 15px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); line-height: 1.4;">${b.desc}</p>` : ''}
-            ${!hasImg ? `<button style="background: ${b.btnColor || 'var(--accent)'}; color: ${b.btnTextColor || 'var(--bg-deep)'}; border: none; padding: 10px 24px; border-radius: 30px; font-weight: bold; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">${b.btnText || 'Ver Más'}</button>` : ''}
+            <div style="margin-top: 5px;">
+              <button style="background: ${b.btnColor || 'var(--accent)'}; color: ${b.btnTextColor || 'var(--bg-deep)'}; border: none; padding: 10px 24px; border-radius: 30px; font-weight: bold; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: inline-block;">${b.btnText || 'Ver Más'}</button>
+            </div>
           </div>
         </div>
       </div>
