@@ -218,6 +218,7 @@ body {
 /* ── Admin Main Content ── */
 .admin-main {
   flex: 1;
+  min-width: 0; /* Ensures flex child can shrink and trigger overflow scroll inside */
   margin-left: 260px;
   padding: 28px 32px;
 }

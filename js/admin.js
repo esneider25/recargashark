@@ -2753,7 +2753,7 @@ function renderCustomers(container) {
         <input type="text" id="admin-customers-search" class="admin-form-input" style="flex: 1; margin-bottom: 0;" placeholder="Buscar por Email, Nombre o WhatsApp..." onkeyup="filterCustomersSearch(this.value)">
       </div>
       <div style="overflow-x: auto; padding-bottom: 15px;">
-        <table class="admin-table" style="width: 100%; border-collapse: collapse;">
+        <table class="admin-table" style="width: 100%; border-collapse: collapse; min-width: 900px;">
           <thead>
             <tr>
               <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Email</th>
