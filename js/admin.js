@@ -118,6 +118,9 @@ function initAdminApp() {
           <li class="admin-nav-item" data-tab="discounts" onclick="switchTab('discounts')">
             <span class="admin-nav-icon">🏷️</span> Descuentos
           </li>
+          <li class="admin-nav-item" data-tab="withdrawals" onclick="switchTab('withdrawals')">
+            <span class="admin-nav-icon">💸</span> Retiros
+          </li>
           <li class="admin-nav-item" data-tab="telegram" onclick="switchTab('telegram')">
             <span class="admin-nav-icon">📲</span> Telegram
           </li>
@@ -192,6 +195,7 @@ function renderActiveTab() {
     case 'telegram':   renderTelegram(main); break;
     case 'messages':   renderMessages(main); break;
     case 'quick-replies': renderQuickReplies(main); break;
+    case 'withdrawals': renderWithdrawals(main); break;
     case 'settings':   renderSettings(main); break;
     default:           renderDashboard(main);
   }
@@ -2886,8 +2890,118 @@ function saveUserWallet(uid, email, oldWallet) {
   });
 }
 
+// ════════════════════════════════════════
+// WITHDRAWALS (RETIROS)
+// ════════════════════════════════════════
+function renderWithdrawals(container) {
+  firebase.database().ref('withdrawals').once('value').then(snap => {
+    let withdrawals = [];
+    if (snap.exists()) {
+      const data = snap.val();
+      for (const key in data) {
+        withdrawals.push(data[key]);
+      }
+    }
+    
+    withdrawals.sort((a, b) => b.createdAt - a.createdAt);
+    
+    const html = `
+      <div class="admin-header">
+        <h2 class="admin-title">Retiros de Ganancias</h2>
+      </div>
+      
+      <div class="glass-card" style="margin-top: 20px;">
+        <div style="overflow-x:auto;">
+          <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-color); background: rgba(255,255,255,0.02);">
+                <th style="text-align: left; padding: 12px; font-size: 0.85rem; color: var(--text-secondary);">Fecha</th>
+                <th style="text-align: left; padding: 12px; font-size: 0.85rem; color: var(--text-secondary);">Usuario</th>
+                <th style="text-align: right; padding: 12px; font-size: 0.85rem; color: var(--text-secondary);">Monto (PTS)</th>
+                <th style="text-align: right; padding: 12px; font-size: 0.85rem; color: var(--text-secondary);">Monto (USD)</th>
+                <th style="text-align: left; padding: 12px; font-size: 0.85rem; color: var(--text-secondary);">Método y Detalles</th>
+                <th style="text-align: center; padding: 12px; font-size: 0.85rem; color: var(--text-secondary);">Estado</th>
+                <th style="text-align: right; padding: 12px; font-size: 0.85rem; color: var(--text-secondary);">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${withdrawals.map(w => {
+                let detailsStr = '';
+                if (w.method === 'binance') {
+                  detailsStr = \`Binance Pay: <strong>\${w.details?.account}</strong>\`;
+                } else if (w.method === 'pagomovil') {
+                  detailsStr = \`Pago Móvil: <strong>\${w.details?.bank}</strong> | \${w.details?.phone} | \${w.details?.cedula}\`;
+                }
+                
+                let statusBadge = '';
+                if (w.status === 'pending') statusBadge = '<span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">⏳ Pendiente</span>';
+                else if (w.status === 'completed') statusBadge = '<span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">✅ Pagado</span>';
+                else if (w.status === 'rejected') statusBadge = '<span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">🚫 Rechazado</span>';
 
-window.viewUserTransactions = function(userId) {
+                return \`
+                  <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 12px; font-size: 0.85rem;">\${new Date(w.createdAt).toLocaleString()}</td>
+                    <td style="padding: 12px; font-size: 0.9rem;">
+                      <div>\${w.userName || '-'}</div>
+                      <div style="font-size: 0.75rem; color: var(--text-secondary);">\${w.userEmail}</div>
+                    </td>
+                    <td style="padding: 12px; font-size: 0.9rem; text-align: right; font-weight: bold; color: #3b82f6;">\${w.amountPoints} PTS</td>
+                    <td style="padding: 12px; font-size: 0.9rem; text-align: right; font-weight: bold; color: #10b981;">$\${w.amountUsd} USD</td>
+                    <td style="padding: 12px; font-size: 0.85rem;">\${detailsStr}</td>
+                    <td style="padding: 12px; text-align: center;">\${statusBadge}</td>
+                    <td style="padding: 12px; text-align: right;">
+                      \${w.status === 'pending' ? \`
+                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem; margin-bottom: 5px; background: #10b981; border-color: #10b981;" onclick="updateWithdrawalStatus('\${w.id}', 'completed', '\${w.userId}', \${w.amountPoints})">Aprobar</button>
+                        <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="updateWithdrawalStatus('\${w.id}', 'rejected', '\${w.userId}', \${w.amountPoints})">Rechazar</button>
+                      \` : ''}
+                    </td>
+                  </tr>
+                \`;
+              }).join('')}
+              
+              ${withdrawals.length === 0 ? `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-secondary);">No hay retiros registrados.</td></tr>` : ''}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    container.innerHTML = html;
+  }).catch(err => {
+    console.error(err);
+    container.innerHTML = `<div style="color:red; padding:20px;">Error cargando retiros: ${err.message}</div>`;
+  });
+}
+
+window.updateWithdrawalStatus = function(withdrawalId, newStatus, userId, pointsToRefund) {
+  if (!confirm(newStatus === 'completed' ? '¿Confirmas que ya enviaste el dinero a este usuario?' : '¿Seguro que deseas RECHAZAR este retiro? (Se le devolverán los puntos al usuario)')) return;
+  
+  firebase.database().ref('withdrawals/' + withdrawalId).update({
+    status: newStatus,
+    processedAt: Date.now()
+  }).then(() => {
+    if (newStatus === 'rejected') {
+      // Refund points to user
+      firebase.database().ref('users/' + userId + '/points').once('value').then(snap => {
+        const currentPts = snap.val() || 0;
+        firebase.database().ref('users/' + userId).update({
+          points: currentPts + pointsToRefund
+        });
+        
+        firebase.database().ref('users/' + userId + '/transactions').push({
+          id: Date.now().toString(),
+          type: 'deposit',
+          amount: 0,
+          description: `Devolución por retiro rechazado (+\${pointsToRefund} PTS)`,
+          date: Date.now()
+        });
+      });
+    }
+    showAdminToast('Estado actualizado', 'success');
+    renderWithdrawals(document.getElementById('admin-main-content'));
+  }).catch(err => {
+    alert("Error: " + err.message);
+  });
+};window.viewUserTransactions = function(userId) {
   const user = window.CUSTOMERS_DATA?.find(u => u.id === userId);
   if (!user) return;
   

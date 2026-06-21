@@ -535,10 +535,10 @@ function updateOrderStatus(orderId, newStatus, note) {
                   const referrerData = refSnap.val()[referrerUid];
                   
                   const referrerRole = referrerData.role || 'cliente';
-                  // Solo clientes e influencers pueden ganar por referidos
-                  if (referrerRole !== 'cliente' && referrerRole !== 'influencer') return;
+                  // Solo clientes, influencers y partners pueden ganar por referidos
+                  if (referrerRole !== 'cliente' && referrerRole !== 'influencer' && referrerRole !== 'partner') return;
                   
-                  const maxReferrals = referrerRole === 'influencer' ? (referrerData.referralLimit || 30) : 10;
+                  const maxReferrals = (referrerRole === 'influencer' || referrerRole === 'partner') ? (referrerData.referralLimit || 100) : 10;
                   
                   let refPoints = referrerData.points || 0;
                   let refCount = referrerData.referralsCount || 0;
@@ -557,14 +557,21 @@ function updateOrderStatus(orderId, newStatus, note) {
                     isFirst = true;
                     db.ref('users/' + order.userId).update({ hasMadeFirstPurchase: true });
                   } else {
-                    if (price >= 2) referrerReward = 2;
+                    let baseReward = referrerRole === 'partner' ? 3 : 2;
+                    if (price >= 2) referrerReward = baseReward;
                     else referrerReward = 1;
                   }
                   
                   if (referrerReward > 0) {
                     if (isFirst) refCount++;
                     
+                    let newRole = referrerRole;
+                    if (referrerRole === 'influencer' && refCount >= 100) {
+                      newRole = 'partner';
+                    }
+                    
                     db.ref('users/' + referrerUid).update({
+                      role: newRole,
                       points: refPoints + referrerReward,
                       referralsCount: refCount,
                       referralsEarnedPoints: refEarned + referrerReward

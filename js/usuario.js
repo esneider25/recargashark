@@ -622,6 +622,8 @@ function renderDashboardContent() {
   let roleBadge = '';
   if (currentRole === 'revendedor') {
     roleBadge = `<span style="font-size: 0.8rem; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; letter-spacing: 0.5px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); display: flex; align-items: center; gap: 4px;"><i class="ph-fill ph-star"></i> REVENDEDOR</span>`;
+  } else if (currentRole === 'partner') {
+    roleBadge = `<span style="font-size: 0.8rem; background: linear-gradient(135deg, #a855f7, #6366f1); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; letter-spacing: 0.5px; box-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(168, 85, 247, 0.4); border: 1px solid #d8b4fe; display: flex; align-items: center; gap: 4px;"><i class="ph-fill ph-crown"></i> SHARK PARTNER</span>`;
   } else if (currentRole === 'influencer') {
     roleBadge = `<span style="font-size: 0.8rem; background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; letter-spacing: 0.5px; box-shadow: 0 0 10px rgba(59, 130, 246, 0.6), 0 0 20px rgba(59, 130, 246, 0.4); border: 1px solid #93c5fd; display: flex; align-items: center; gap: 4px;"><i class="ph-fill ph-sparkle"></i> INFLUENCER SHARK</span>`;
   } else {
@@ -717,22 +719,29 @@ function renderDashboardContent() {
               <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px; display: flex; align-items: center; gap: 5px;"><i class="ph ph-star"></i> Shark Points</div>
               <div style="font-size: 2.5rem; font-weight: 800; color: #3b82f6; text-shadow: 0 0 20px rgba(59, 130, 246, 0.4);">${points}</div>
             </div>
-            <button onclick="if(typeof redeemPoints==='function')redeemPoints()" class="btn-secondary" style="padding: 10px 15px; border-radius: 12px; font-size: 0.85rem; border-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,0.1);" title="Canjear 100 PTS = $1">
-              Canjear
-            </button>
+            <div style="display: flex; gap: 8px;">
+              <button onclick="if(typeof redeemPoints==='function')redeemPoints()" class="btn-secondary" style="padding: 10px 15px; border-radius: 12px; font-size: 0.85rem; border-color: #3b82f6; color: #3b82f6; background: rgba(59,130,246,0.1);" title="Canjear 100 PTS = $1 para tienda">
+                Canjear
+              </button>
+              ${(currentRole === 'cliente' || currentRole === 'influencer' || currentRole === 'partner') ? `
+              <button onclick="requestCashout()" class="btn-primary" style="padding: 10px 15px; border-radius: 12px; font-size: 0.85rem; background: linear-gradient(135deg, #a855f7, #6366f1);" title="Retirar a Binance o Pago Móvil">
+                Retirar Dinero
+              </button>
+              ` : ''}
+            </div>
           </div>
         </div>
         `}
       </div>
       
-      ${(currentRole === 'cliente' || currentRole === 'influencer') ? `
+      ${(currentRole === 'cliente' || currentRole === 'influencer' || currentRole === 'partner') ? `
       <!-- Referral Banner -->
       <div class="glass-card" style="background: linear-gradient(90deg, rgba(15,31,56,0.8), rgba(0,229,195,0.1)); border-color: var(--accent); padding: 20px 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
         <div style="flex: 1; min-width: 250px;">
           <h3 style="margin: 0 0 5px 0; color: var(--accent); display: flex; align-items: center; gap: 8px;"><i class="ph-fill ph-users-three"></i> ¡Invita y Gana!</h3>
           <p style="margin: 0 0 10px 0; color: var(--text-secondary); font-size: 0.9rem;">Gana Shark Points cada vez que tus invitados realicen compras.</p>
           <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.85rem;">
-            <div style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;"><span style="color: var(--accent); font-weight: bold;">${userProfile.referralsCount || 0} / ${currentRole === 'influencer' ? (userProfile.referralLimit || 30) : 10}</span> Amigos</div>
+            <div style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;"><span style="color: var(--accent); font-weight: bold;">${userProfile.referralsCount || 0} / ${(currentRole === 'influencer' || currentRole === 'partner') ? (userProfile.referralLimit || 100) : 10}</span> Amigos</div>
             <div style="background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 8px;"><span style="color: #3b82f6; font-weight: bold;">${userProfile.referralsEarnedPoints || 0}</span> Puntos Ganados</div>
           </div>
         </div>
@@ -1047,4 +1056,138 @@ function showVipBenefits() {
 }
 
 
+window.requestCashout = function() {
+  if (!userProfile) return;
+  const currentPoints = userProfile.points || 0;
+  if (currentPoints < 100) {
+    usuarioToast('Necesitas al menos 100 Shark Points para retirar.', 'error');
+    return;
+  }
+  
+  const modalHTML = `
+    <div class="modal-overlay active" id="cashout-modal">
+      <div class="modal" style="background: var(--bg-surface); padding: 30px; border-radius: 16px; width: 90%; max-width: 450px;">
+        <h3 style="margin-top:0; color: var(--accent);"><i class="ph-fill ph-money"></i> Retirar Ganancias</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">Tienes <strong>${currentPoints}</strong> puntos disponibles.</p>
+        
+        <div class="form-group" style="margin-top: 15px;">
+          <label>Cantidad de puntos a retirar (Min. 100)</label>
+          <input type="number" id="cashout-amount" class="form-input" min="100" max="${currentPoints}" value="${currentPoints}">
+          <div style="font-size: 0.8rem; color: #10b981; margin-top: 5px;" id="cashout-usd-preview">Recibirás: $${(currentPoints * 0.01).toFixed(2)} USD</div>
+        </div>
 
+        <div class="form-group">
+          <label>Método de Pago</label>
+          <select id="cashout-method" class="form-input" onchange="
+            const method = this.value;
+            if(method === 'binance') {
+              document.getElementById('cashout-binance-fields').style.display = 'block';
+              document.getElementById('cashout-pagomovil-fields').style.display = 'none';
+            } else {
+              document.getElementById('cashout-binance-fields').style.display = 'none';
+              document.getElementById('cashout-pagomovil-fields').style.display = 'block';
+            }
+          ">
+            <option value="binance">Binance Pay</option>
+            <option value="pagomovil">Pago Móvil</option>
+          </select>
+        </div>
+        
+        <div id="cashout-binance-fields">
+          <div class="form-group">
+            <label>Correo / PayID / Binance ID</label>
+            <input type="text" id="cashout-binance-id" class="form-input" placeholder="ej. usuario@gmail.com o 12345678">
+          </div>
+        </div>
+        
+        <div id="cashout-pagomovil-fields" style="display:none;">
+          <div class="form-group">
+            <label>Banco</label>
+            <input type="text" id="cashout-pm-bank" class="form-input" placeholder="ej. Banesco, Mercantil...">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="text" id="cashout-pm-phone" class="form-input" placeholder="0414-XXXXXXX">
+          </div>
+          <div class="form-group">
+            <label>Cédula</label>
+            <input type="text" id="cashout-pm-cedula" class="form-input" placeholder="V-12345678">
+          </div>
+        </div>
+        
+        <div style="display:flex; gap:10px; margin-top: 25px;">
+          <button class="btn btn-secondary" onclick="document.getElementById('cashout-modal').remove()">Cancelar</button>
+          <button class="btn btn-primary" onclick="submitCashout()">Confirmar Retiro</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  
+  document.getElementById('cashout-amount').addEventListener('input', function() {
+    const val = parseInt(this.value) || 0;
+    document.getElementById('cashout-usd-preview').innerText = 'Recibirás: $' + (val * 0.01).toFixed(2) + ' USD';
+  });
+};
+
+window.submitCashout = function() {
+  const amount = parseInt(document.getElementById('cashout-amount').value) || 0;
+  const currentPoints = userProfile.points || 0;
+  
+  if (amount < 100) return usuarioToast('Mínimo de retiro: 100 puntos', 'error');
+  if (amount > currentPoints) return usuarioToast('No tienes suficientes puntos', 'error');
+  
+  const method = document.getElementById('cashout-method').value;
+  let details = {};
+  
+  if (method === 'binance') {
+    const binanceId = document.getElementById('cashout-binance-id').value.trim();
+    if (!binanceId) return usuarioToast('Ingresa tu ID de Binance', 'error');
+    details = { type: 'binance', account: binanceId };
+  } else {
+    const bank = document.getElementById('cashout-pm-bank').value.trim();
+    const phone = document.getElementById('cashout-pm-phone').value.trim();
+    const cedula = document.getElementById('cashout-pm-cedula').value.trim();
+    if (!bank || !phone || !cedula) return usuarioToast('Completa todos los datos del Pago Móvil', 'error');
+    details = { type: 'pagomovil', bank, phone, cedula };
+  }
+  
+  // Submit
+  const withdrawRef = firebase.database().ref('withdrawals').push();
+  const withdrawalData = {
+    id: withdrawRef.key,
+    userId: currentUser.uid,
+    userEmail: currentUser.email,
+    userName: userProfile.name || '',
+    amountPoints: amount,
+    amountUsd: parseFloat((amount * 0.01).toFixed(2)),
+    method: method,
+    details: details,
+    status: 'pending',
+    createdAt: Date.now()
+  };
+  
+  // Deduct points instantly
+  firebase.database().ref('users/' + currentUser.uid).update({
+    points: currentPoints - amount
+  }).then(() => {
+    // Save transaction record in user's history
+    firebase.database().ref('users/' + currentUser.uid + '/transactions').push({
+      id: Date.now().toString(),
+      type: 'withdrawal',
+      amount: 0,
+      description: `Retiro a ${method === 'binance' ? 'Binance' : 'Pago Móvil'} (-${amount} PTS)`,
+      date: Date.now()
+    });
+    
+    // Save withdrawal request
+    withdrawRef.set(withdrawalData).then(() => {
+      document.getElementById('cashout-modal').remove();
+      usuarioToast('¡Solicitud de retiro enviada! El equipo la procesará pronto.', 'success');
+      if (typeof renderDashboard === 'function') renderDashboard();
+    });
+  }).catch(err => {
+    usuarioToast('Error: ' + err.message, 'error');
+  });
+};
