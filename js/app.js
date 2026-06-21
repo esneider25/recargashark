@@ -196,17 +196,6 @@ function renderApp() {
   }
 }
 
-// ── Terms ──
-function acceptTerms() {
-  localStorage.setItem('recargashark_terms_accepted', 'true');
-  const modal = document.getElementById('terms-modal-overlay');
-  if (modal) {
-    modal.style.transition = 'opacity 0.3s ease';
-    modal.style.opacity = '0';
-    setTimeout(() => modal.remove(), 300);
-  }
-}
-
 // ── Navigation ──
 function navigateTo(view, param) {
   if (view === 'home') {
