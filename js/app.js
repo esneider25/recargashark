@@ -567,6 +567,11 @@ async function submitOrder() {
 
   const priceBs = parseFloat(usdToBs(finalUsd));
 
+  const isResellerAlert = typeof userProfile !== 'undefined' && userProfile && userProfile.role === 'revendedor';
+  if ((appState.selectedPaymentId === 'wallet' || isResellerAlert) && typeof window !== 'undefined') {
+    alert("⚠️ IMPORTANTE:\n\nTu orden está en proceso. Al presionar 'Aceptar' comenzará el envío automático.\n\nPor favor, NO CIERRES NI ACTUALICES el navegador hasta terminar para evitar que la conexión se corte.");
+  }
+
   if (appState.selectedPaymentId === 'wallet') {
     const currentWallet = (typeof userProfile !== 'undefined' && userProfile && userProfile.wallet) ? userProfile.wallet : 0;
     const newWallet = currentWallet - finalUsd;
@@ -633,10 +638,18 @@ async function submitOrder() {
       }
     }
   }
-
   // Show success animation then redirect to tracking using the last order created
   showOrderConfirmation(lastOrder);
 }
+
+let isProcessingOrder = false;
+window.addEventListener('beforeunload', function (e) {
+  if (isProcessingOrder) {
+    e.preventDefault();
+    e.returnValue = 'Estamos conectando con el proveedor. Si actualizas la página el proceso podría quedar a medias.';
+    return e.returnValue;
+  }
+});
 
 async function processWalletOrderAuto(order, isReseller = false) {
   const apiIdx = parseInt(order.apiProvider);
@@ -659,6 +672,8 @@ async function processWalletOrderAuto(order, isReseller = false) {
     firebase.database().ref('orders/' + order.id).update({ status: 'processing', adminNote: noteMsg });
   }
   
+  isProcessingOrder = true;
+
   try {
     const rectificationCount = (order.statusHistory || []).filter(h => h.note && h.note.includes('rectificó')).length;
     const finalMerchantRef = rectificationCount > 0 ? `${order.id}_R${rectificationCount}` : order.id;
@@ -686,6 +701,7 @@ async function processWalletOrderAuto(order, isReseller = false) {
     const proxyUrl = '/api/proxy';
     const response = await fetch(proxyUrl, {
       method: 'POST',
+      keepalive: true,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         endpoint: "comprar",
@@ -700,6 +716,7 @@ async function processWalletOrderAuto(order, isReseller = false) {
 
     if (typeof updateOrderStatus === 'function') {
       if (data.ok && data.estado === 'completado') {
+        isProcessingOrder = false;
         const methodSource = order.paymentMethodId === 'wallet' ? 'Pago con Saldo' : 'Usuario Revendedor';
         let note = 'Aprobado y entregado de forma inmediata (' + methodSource + ')';
         if (data.codigos && data.codigos.length > 0) note = 'Códigos entregados:\n' + data.codigos.join('\n');
@@ -721,6 +738,7 @@ async function processWalletOrderAuto(order, isReseller = false) {
           try {
             const resp = await fetch(proxyUrl, {
               method: 'POST',
+              keepalive: true,
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 endpoint: `recargas/status?merchant_ref=${finalMerchantRef}`,
@@ -734,6 +752,7 @@ async function processWalletOrderAuto(order, isReseller = false) {
             
             if (pollData.ok && (estadoStr === 'completado' || estadoStr === 'completed')) {
               clearInterval(pollInterval);
+              isProcessingOrder = false;
               let note = 'Aprobado y entregado automáticamente (luego de procesar)';
               if (pollData.codigo) note = 'Código entregado: ' + pollData.codigo;
               if (pollData.codigos && pollData.codigos.length > 0) note = 'Códigos entregados:\n' + pollData.codigos.join('\n');
@@ -745,16 +764,16 @@ async function processWalletOrderAuto(order, isReseller = false) {
                 sendTelegramMessage(`✅ <b>PEDIDO AUTO-COMPLETADO — #${order.id}</b>\n\nEl pedido fue procesado exitosamente luego de unos segundos.\nNota: ${note}`);
               }
             } else if (pollData.ok && (estadoStr === 'procesando' || estadoStr === 'processing')) {
-              // Sigue procesando, no hacer nada en este intento (continuará el loop)
               if (attempts >= maxAttempts) {
                 clearInterval(pollInterval);
+                isProcessingOrder = false;
                 if (typeof updateOrderStatus === 'function') {
                   updateOrderStatus(order.id, 'completed', 'Marcado como completado automáticamente tras 1 minuto de espera en procesando.');
                 }
               }
             } else {
-              // Cualquier otro estado (rechazado, cancelado, error, o sin 'ok')
               clearInterval(pollInterval);
+              isProcessingOrder = false;
               let errorMsg = pollData.error || pollData.msg || pollData.estado || 'Rechazado';
               if (typeof updateOrderStatus === 'function') {
                 updateOrderStatus(order.id, 'invalid-id', `Verifica que el ID o la cuenta sean correctos. El proveedor rechazó la recarga. (${errorMsg})`);
@@ -767,6 +786,7 @@ async function processWalletOrderAuto(order, isReseller = false) {
             console.error("Error polling", e);
             if (attempts >= maxAttempts) {
               clearInterval(pollInterval);
+              isProcessingOrder = false;
               if (typeof updateOrderStatus === 'function') {
                 updateOrderStatus(order.id, 'completed', 'Marcado como completado automáticamente tras 1 minuto de espera.');
               }
@@ -775,12 +795,14 @@ async function processWalletOrderAuto(order, isReseller = false) {
         }, 5000);
 
       } else {
+        isProcessingOrder = false;
         updateOrderStatus(order.id, 'invalid-id', `Verifica que el ID o la cuenta sean correctos.`);
         if (typeof sendTelegramMessage === 'function') {
           sendTelegramMessage(`⚠️ <b>DATOS INVÁLIDOS — #${order.id}</b>\n\nEl sistema rechazó el pedido automáticamente. El cliente debe corregir los datos.`);
         }
       }
     } else if (typeof firebase !== 'undefined') {
+      isProcessingOrder = false;
       // Fallback
       if (data.ok && data.estado === 'completado') {
         firebase.database().ref('orders/' + order.id).update({ status: 'completed' });
@@ -789,6 +811,7 @@ async function processWalletOrderAuto(order, isReseller = false) {
       }
     }
   } catch (error) {
+    isProcessingOrder = false;
     console.error('Error auto proveedor:', error);
     if (typeof firebase !== 'undefined') {
       firebase.database().ref('orders/' + order.id).update({ status: 'pending', adminNote: 'Fallo conexión automática. Requiere revisión manual' });
