@@ -1073,7 +1073,7 @@ function renderTermsModal() {
 }
 
 window.acceptTerms = function() {
-  localStorage.setItem('recargashark_terms_accepted', 'true');
+  sessionStorage.setItem('recargashark_terms_accepted', 'true');
   const container = document.getElementById('terms-modal-container');
   if (container) {
     const overlay = container.querySelector('.modal-overlay');

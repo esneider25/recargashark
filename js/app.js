@@ -107,7 +107,7 @@ function renderApp() {
     return;
   }
 
-  const termsAccepted = localStorage.getItem('recargashark_terms_accepted');
+  const termsAccepted = sessionStorage.getItem('recargashark_terms_accepted');
   const termsHtml = !termsAccepted ? (typeof renderTermsModal === 'function' ? renderTermsModal() : '') : '';
 
   if (appState.currentView === 'home') {
