@@ -2549,14 +2549,15 @@ function renderSettings(container) {
         </div>
         <div id="terms-editor-container"></div>
         <img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" onload="
-          window.currentTermsEditorData = Array.isArray(getSettings().termsAndConditions) 
-            ? getSettings().termsAndConditions 
-            : typeof getSettings().termsAndConditions === 'string'
-              ? [{ title: 'Términos', titleColor: '#00e5c3', desc: getSettings().termsAndConditions, descColor: '#e2e8f0' }]
-              : [
-                  { title: 'Aceptación del Servicio', titleColor: '#00e5c3', desc: 'Al utilizar nuestros servicios, aceptas que todas las recargas son procesadas tras la verificación del pago.', descColor: '#e2e8f0' },
-                  { title: 'Reembolsos', titleColor: '#00e5c3', desc: 'No nos hacemos responsables por IDs incorrectos...', descColor: '#e2e8f0' }
-                ];
+          const savedTerms = getSettings().termsAndConditions;
+          const isOldHtmlString = typeof savedTerms === 'string' && savedTerms.includes('<h4>');
+          
+          window.currentTermsEditorData = Array.isArray(savedTerms) 
+            ? savedTerms 
+            : typeof savedTerms === 'string' && !isOldHtmlString
+              ? [{ title: 'Términos', titleColor: '#00e5c3', desc: savedTerms, descColor: '#e2e8f0' }]
+              : SITE_SETTINGS.termsAndConditions; // Load from data.js
+          
           window.renderTermsEditor();
         ">
       </div>
