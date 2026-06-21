@@ -730,8 +730,9 @@ async function processWalletOrderAuto(order, isReseller = false) {
               })
             });
             const pollData = await resp.json();
+            const estadoStr = String(pollData.estado || pollData.status || '').toLowerCase();
             
-            if (pollData.ok && (pollData.status === 'completed' || pollData.estado === 'completado')) {
+            if (pollData.ok && (estadoStr === 'completado' || estadoStr === 'completed')) {
               clearInterval(pollInterval);
               let note = 'Aprobado y entregado por API (luego de procesar)';
               if (pollData.codigo) note = 'Código entregado: ' + pollData.codigo;
@@ -743,18 +744,23 @@ async function processWalletOrderAuto(order, isReseller = false) {
               if (typeof sendTelegramMessage === 'function') {
                 sendTelegramMessage(`✅ <b>PEDIDO AUTO-COMPLETADO — #${order.id}</b>\n\nEl pedido fue procesado exitosamente luego de unos segundos.\nNota: ${note}`);
               }
-            } else if (!pollData.ok || pollData.status === 'rejected' || pollData.estado === 'rechazado') {
+            } else if (pollData.ok && (estadoStr === 'procesando' || estadoStr === 'processing')) {
+              // Sigue procesando, no hacer nada en este intento (continuará el loop)
+              if (attempts >= maxAttempts) {
+                clearInterval(pollInterval);
+                if (typeof updateOrderStatus === 'function') {
+                  updateOrderStatus(order.id, 'completed', 'Marcado como completado automáticamente tras 1 minuto de espera en procesando.');
+                }
+              }
+            } else {
+              // Cualquier otro estado (rechazado, cancelado, error, o sin 'ok')
               clearInterval(pollInterval);
+              let errorMsg = pollData.error || pollData.msg || pollData.estado || 'Rechazado';
               if (typeof updateOrderStatus === 'function') {
-                updateOrderStatus(order.id, 'invalid-id', `Verifica que el ID o la cuenta sean correctos. La API rechazó la recarga.`);
+                updateOrderStatus(order.id, 'invalid-id', `Verifica que el ID o la cuenta sean correctos. La API rechazó la recarga. (${errorMsg})`);
               }
               if (typeof sendTelegramMessage === 'function') {
-                sendTelegramMessage(`⚠️ <b>DATOS INVÁLIDOS — #${order.id}</b>\n\nLa API rechazó el pedido luego de procesar. El cliente debe corregir los datos.`);
-              }
-            } else if (attempts >= maxAttempts) {
-              clearInterval(pollInterval);
-              if (typeof updateOrderStatus === 'function') {
-                updateOrderStatus(order.id, 'completed', 'Marcado como completado automáticamente tras 1 minuto de espera.');
+                sendTelegramMessage(`⚠️ <b>DATOS INVÁLIDOS — #${order.id}</b>\n\nLa API rechazó el pedido luego de procesar. El cliente debe corregir los datos. Mensaje de API: ${errorMsg}`);
               }
             }
           } catch (e) {
