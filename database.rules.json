@@ -45,7 +45,7 @@
       ".write": "auth != null" 
     },
     "api_configs": { 
-      ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
+      ".read": "auth != null",
       ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     },
     "users": {
