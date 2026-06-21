@@ -800,8 +800,8 @@ function buildOrderKeyboard(orderId) {
   const baseUrl = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : 'https://recargashark.com';
   return [
     [
-      { text: '✅ Aprobar', callback_data: `approve_${orderId}` },
-      { text: '❌ Rechazar', callback_data: `reject_${orderId}` }
+      { text: '✅ Aprobar', url: `${baseUrl}/admin.html?action=approve&order=${orderId}` },
+      { text: '❌ Rechazar', url: `${baseUrl}/admin.html?action=reject&order=${orderId}` }
     ],
     [
       { text: '🔍 Ver en Panel Admin', url: `${baseUrl}/admin.html` }
