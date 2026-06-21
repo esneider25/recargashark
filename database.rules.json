@@ -1,85 +1,38 @@
 {
   "rules": {
-    "users": {
+    ".read": "true",
+    ".write": "true"
+    },
+    "products": {
       ".read": "true",
-      "$uid": {
-        ".write": "auth != null && ($uid === auth.uid || auth.token.email === 'adminshark@gmail.com')",
-        
-        "wallet": {
-          ".validate": "!data.exists() || newData.val() <= data.val() || auth.token.email === 'adminshark@gmail.com'"
-        },
-        "points": {
-          ".validate": "!data.exists() || newData.val() <= data.val() || auth.token.email === 'adminshark@gmail.com'"
-        },
-        "role": {
-          ".validate": "!data.exists() || data.val() === newData.val() || auth.token.email === 'adminshark@gmail.com'"
-        },
-        "discountPercentage": {
-          ".validate": "!data.exists() || data.val() === newData.val() || auth.token.email === 'adminshark@gmail.com'"
-        }
-      }
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     },
-
-    "orders": {
-      ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
-      "$orderId": {
-        ".read": "auth != null && auth.token.email === 'adminshark@gmail.com' || (auth != null && data.child('userId').val() === auth.uid) || (!data.hasChild('userId') || data.child('userId').val() == null)",
-        ".write": "auth != null && auth.token.email === 'adminshark@gmail.com' || (!data.exists() && auth != null && newData.child('userId').val() === auth.uid)"
-      }
-    },
-    
-    "withdrawals": {
-      ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
-      "$withdrawalId": {
-        ".read": "auth != null && auth.token.email === 'adminshark@gmail.com' || (auth != null && data.child('userId').val() === auth.uid)",
-        ".write": "auth != null && auth.token.email === 'adminshark@gmail.com' || (!data.exists() && auth != null && newData.child('userId').val() === auth.uid)"
-      }
-    },
-    
-    "messages": { 
-      ".read": "true", 
-      ".write": "true" 
-    },
-    "spam_tracker": { 
-      ".read": "true", 
-      ".write": "true" 
-    },
-    "order_counter": { 
-      ".read": "true", 
-      ".write": "true" 
-    },
-
-    "products": { 
-      ".read": "true", 
-      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'" 
-    },
-    "categories": { 
+    "categories": {
       ".read": "true",
-      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'" 
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     },
-    "exchange_rate": { 
+    "exchange_rate": {
       ".read": "true",
-      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'" 
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     },
-    "payment_methods": { 
+    "payment_methods": {
       ".read": "true",
-      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'" 
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     },
-    "settings": { 
+    "settings": {
       ".read": "true",
-      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'" 
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     },
-    "telegram_config": { 
+    "telegram_config": {
       ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
       ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     },
-    "api_configs": { 
+    "api_configs": {
       ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
       ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     },
-    "discounts": { 
+    "discounts": {
       ".read": "true",
-      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'" 
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     }
   }
-}

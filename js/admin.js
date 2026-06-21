@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (localStorage.getItem('recargashark_theme') === 'light') {
     document.body.classList.add('light-theme');
   }
-  
+
   if (typeof firebase !== 'undefined' && firebase.auth) {
     firebase.auth().onAuthStateChanged((user) => {
       if (user && user.email === 'adminshark@gmail.com') {
@@ -176,28 +176,28 @@ function switchTab(tabId) {
 function renderActiveTab() {
   const main = document.getElementById('admin-main-content');
   if (!main) return;
-  
+
   // Initialize notification counts when layout loads
   lastPendingOrders = getPendingOrdersCount();
   lastUnreadMessages = getUnreadMessagesCount();
-  
+
   switch (adminState.currentTab) {
-    case 'dashboard':  renderDashboard(main); break;
-    case 'orders':     renderOrders(main); break;
-    case 'products':   renderProducts(main); break;
-    case 'customers':  renderCustomers(main); break;
-    case 'banners':    renderBanners(main); break;
+    case 'dashboard': renderDashboard(main); break;
+    case 'orders': renderOrders(main); break;
+    case 'products': renderProducts(main); break;
+    case 'customers': renderCustomers(main); break;
+    case 'banners': renderBanners(main); break;
     case 'categories': renderCategories(main); break;
-    case 'payments':   renderPayments(main); break;
-    case 'exchange':   renderExchange(main); break;
-    case 'apis':       renderApis(main); break;
-    case 'discounts':  renderDiscounts(main); break;
-    case 'telegram':   renderTelegram(main); break;
-    case 'messages':   renderMessages(main); break;
+    case 'payments': renderPayments(main); break;
+    case 'exchange': renderExchange(main); break;
+    case 'apis': renderApis(main); break;
+    case 'discounts': renderDiscounts(main); break;
+    case 'telegram': renderTelegram(main); break;
+    case 'messages': renderMessages(main); break;
     case 'quick-replies': renderQuickReplies(main); break;
     case 'withdrawals': renderWithdrawals(main); break;
-    case 'settings':   renderSettings(main); break;
-    default:           renderDashboard(main);
+    case 'settings': renderSettings(main); break;
+    default: renderDashboard(main);
   }
 }
 
@@ -211,7 +211,7 @@ function getUnreadMessagesCount() {
 // ════════════════════════════════════════
 function renderDashboard(container) {
   let allOrders = getOrders();
-  
+
   // Date filtering
   if (adminState.dashboardStartDate) {
     const start = new Date(adminState.dashboardStartDate).getTime();
@@ -226,7 +226,7 @@ function renderDashboard(container) {
   const completedOrders = allOrders.filter(o => o.status === 'completed');
   const pendingCount = allOrders.filter(o => o.status === 'pending' || o.status === 'processing').length;
   const completedCount = completedOrders.length;
-  
+
   let totalRevenue = 0;
   let totalCost = 0;
 
@@ -380,7 +380,7 @@ function renderDashboard(container) {
       completedOrders.forEach(o => {
         salesByProduct[o.productName] = (salesByProduct[o.productName] || 0) + 1;
       });
-      
+
       new Chart(ctx, {
         type: 'bar',
         data: {
@@ -516,9 +516,9 @@ async function renderCustomers(container) {
 
   const allOrders = getOrders();
   const completedOrders = allOrders.filter(o => o.status === 'completed');
-  
+
   const customersMap = {};
-  
+
   users.forEach(u => {
     customersMap[u.uid] = {
       uid: u.uid,
@@ -541,7 +541,7 @@ async function renderCustomers(container) {
       if (!o.customerContact) return;
       key = o.customerContact.toLowerCase().trim();
     }
-    
+
     if (!customersMap[key]) {
       customersMap[key] = {
         uid: null,
@@ -564,11 +564,11 @@ async function renderCustomers(container) {
   });
 
   let customers = Object.values(customersMap).sort((a, b) => b.totalSpent - a.totalSpent);
-  
+
   const searchTerm = (adminState.customersSearch || '').toLowerCase().trim();
   if (searchTerm) {
-    customers = customers.filter(c => 
-      c.contact.toLowerCase().includes(searchTerm) || 
+    customers = customers.filter(c =>
+      c.contact.toLowerCase().includes(searchTerm) ||
       (c.whatsapp && c.whatsapp.toLowerCase().includes(searchTerm)) ||
       (c.name && c.name.toLowerCase().includes(searchTerm))
     );
@@ -602,7 +602,7 @@ async function renderCustomers(container) {
 
   const loadingEl = document.getElementById('customers-loading');
   if (loadingEl) loadingEl.style.display = 'none';
-  
+
   const contentEl = document.getElementById('customers-content');
   if (contentEl) {
     contentEl.style.display = 'block';
@@ -637,7 +637,7 @@ async function exportCustomersCSV() {
   const allOrders = getOrders();
   const completedOrders = allOrders.filter(o => o.status === 'completed');
   const customersMap = {};
-  
+
   users.forEach(u => {
     customersMap[u.uid] = {
       uid: u.uid,
@@ -656,7 +656,7 @@ async function exportCustomersCSV() {
       if (!o.customerContact) return;
       key = o.customerContact.toLowerCase().trim();
     }
-    
+
     if (!customersMap[key]) {
       customersMap[key] = {
         uid: null,
@@ -676,8 +676,8 @@ async function exportCustomersCSV() {
   });
 
   const customers = Object.values(customersMap).sort((a, b) => b.totalSpent - a.totalSpent);
-  
-  if(customers.length === 0) return showAdminToast('No hay clientes para exportar', 'error');
+
+  if (customers.length === 0) return showAdminToast('No hay clientes para exportar', 'error');
 
   let csv = 'Nombre,Contacto,WhatsApp,Total Pedidos,Total Gastado (USD),Ultima Compra\n';
   customers.forEach(c => {
@@ -689,7 +689,7 @@ async function exportCustomersCSV() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.setAttribute("href", url);
-  link.setAttribute("download", `clientes_${new Date().toISOString().slice(0,10)}.csv`);
+  link.setAttribute("download", `clientes_${new Date().toISOString().slice(0, 10)}.csv`);
   link.style.visibility = 'hidden';
   document.body.appendChild(link);
   link.click();
@@ -1048,12 +1048,12 @@ async function testApiConnection(idx) {
     showAdminToast(`❌ ${api.name || 'API'}: Ingresa una URL base`, 'error');
     return;
   }
-  
+
   // Clean trailing slash
   const baseUrl = api.baseUrl.endsWith('/') ? api.baseUrl.slice(0, -1) : api.baseUrl;
-  
+
   showAdminToast(`🔌 Conectando con ${api.name || 'API'}...`, 'info');
-  
+
   try {
     const proxyUrl = '/api/proxy';
     const response = await fetch(proxyUrl, {
@@ -1088,7 +1088,7 @@ async function processAutomaticTopup(orderId, fromModal = false) {
   if (!order) return;
 
   const apiIdx = parseInt(order.apiProvider);
-  
+
   // Si el producto no tiene API asignada, es un producto manual.
   if (isNaN(apiIdx) || !API_CONFIGS[apiIdx]) {
     completeOrderLocally(orderId, fromModal);
@@ -1103,7 +1103,7 @@ async function processAutomaticTopup(orderId, fromModal = false) {
 
   const api = API_CONFIGS[apiIdx];
   const apiProductId = parseInt(order.apiProductId);
-  
+
   // Si tiene API asignada pero el paquete específico no tiene ID de Servicio:
   if (isNaN(apiProductId)) {
     showAdminToast(`❌ Error: El paquete de este pedido no tiene "ID Servicio API" asignado. Edita el producto.`, 'error');
@@ -1113,7 +1113,7 @@ async function processAutomaticTopup(orderId, fromModal = false) {
   showAdminToast(`⏳ Procesando recarga por API para ${orderId}...`, 'info');
 
   const baseUrl = api.baseUrl.endsWith('/') ? api.baseUrl.slice(0, -1) : api.baseUrl;
-  
+
   updateOrderStatus(orderId, 'processing', 'Enviando a API externa...');
   refreshOrdersView();
 
@@ -1178,7 +1178,7 @@ async function processAutomaticTopup(orderId, fromModal = false) {
       updateOrderStatus(orderId, 'rejected', `Error API: ${data.error}${refundMsg}`);
       refreshOrdersView();
       if (fromModal) closeAdminModal();
-      
+
       // Notify Admin via Telegram about the API error
       sendTelegramMessage(`❌ <b>ERROR API — Pedido #${orderId}</b>\nLa API rechazó la recarga automática.\n\n<b>Motivo:</b> ${data.error}${refundMsg}\n\n<i>Estado cambiado a Rechazado. Verifica el ID o saldo.</i>`);
     }
@@ -1204,7 +1204,7 @@ function completeOrderLocally(orderId, fromModal, customNote = 'Aprobado y entre
 function pollApiStatus(baseUrl, apiKey, orderId, fromModal) {
   let attempts = 0;
   const maxAttempts = 15;
-  
+
   const interval = setInterval(async () => {
     attempts++;
     try {
@@ -1220,11 +1220,11 @@ function pollApiStatus(baseUrl, apiKey, orderId, fromModal) {
         })
       });
       const data = await resp.json();
-      
+
       if (data.ok) {
         if (data.status === 'completed' || data.estado === 'completado') {
           clearInterval(interval);
-          
+
           let note = 'Aprobado y entregado por API (luego de procesar)';
           if (data.codigo) {
             note = 'Código entregado: ' + data.codigo;
@@ -1615,13 +1615,13 @@ function renderOrders(container) {
   const allOrders = getOrders();
   const filter = adminState.ordersFilter || 'all';
   const searchTerm = (adminState.ordersSearch || '').toLowerCase().trim();
-  
+
   // First, filter by status
   let filteredOrders = filter === 'all' ? allOrders : allOrders.filter(o => o.status === filter);
-  
+
   // Then, filter by search term if provided
   if (searchTerm) {
-    filteredOrders = filteredOrders.filter(o => 
+    filteredOrders = filteredOrders.filter(o =>
       o.id.toLowerCase().includes(searchTerm) ||
       (o.customerContact && o.customerContact.toLowerCase().includes(searchTerm)) ||
       (o.accountEmail && o.accountEmail.toLowerCase().includes(searchTerm)) ||
@@ -1641,11 +1641,11 @@ function renderOrders(container) {
   };
 
   const filters = [
-    { id: 'all',        label: 'Todos',       icon: '📦' },
-    { id: 'pending',    label: 'Pendientes',  icon: '📋' },
-    { id: 'processing', label: 'Procesando',  icon: '⚙️' },
-    { id: 'completed',  label: 'Completados', icon: '✅' },
-    { id: 'rejected',   label: 'Rechazados',  icon: '❌' },
+    { id: 'all', label: 'Todos', icon: '📦' },
+    { id: 'pending', label: 'Pendientes', icon: '📋' },
+    { id: 'processing', label: 'Procesando', icon: '⚙️' },
+    { id: 'completed', label: 'Completados', icon: '✅' },
+    { id: 'rejected', label: 'Rechazados', icon: '❌' },
     { id: 'invalid-id', label: 'ID Inválido', icon: '⚠️' }
   ];
 
@@ -1682,7 +1682,7 @@ function renderOrders(container) {
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage) || 1;
   if (adminState.ordersPage > totalPages) adminState.ordersPage = totalPages;
   if (adminState.ordersPage < 1) adminState.ordersPage = 1;
-  
+
   const startIndex = (adminState.ordersPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
@@ -1695,7 +1695,7 @@ function renderOrders(container) {
 
     // Build action buttons based on current status
     let actionsHtml = '';
-    
+
     if (order.status === 'pending' || order.status === 'processing') {
       if (order.status === 'pending') {
         actionsHtml += `<button class="admin-order-action-btn admin-action-process" onclick="event.stopPropagation(); quickUpdateStatus('${order.id}', 'processing')" title="Marcar como procesando">⚙️ Procesar</button>`;
@@ -1740,7 +1740,7 @@ function renderOrders(container) {
             <span class="admin-order-meta-item">💰 $${order.priceUsd.toFixed(2)} | Bs. ${formatBs(order.priceBs)}</span>
             <span class="admin-order-meta-item">💳 ${order.paymentMethodName}</span>
             <span class="admin-order-meta-item">📱 ${order.customerContact || 'Sin contacto'}</span>
-            <span class="admin-order-meta-item">📅 ${date.toLocaleDateString('es-VE', {day:'2-digit', month:'short'})} ${date.toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'})}</span>
+            <span class="admin-order-meta-item">📅 ${date.toLocaleDateString('es-VE', { day: '2-digit', month: 'short' })} ${date.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
         </div>
         <div class="admin-order-status-col">
@@ -1941,7 +1941,7 @@ function openOrderDetailModal(orderId) {
           <div style="font-weight: 500;">${s.icon || ''} ${s.label || h.status}</div>
           ${h.note ? `<div style="color: var(--text-muted); margin-top: 2px; font-size: 0.78rem;">${h.note}</div>` : ''}
         </div>
-        <div class="admin-history-time">${hDate.toLocaleDateString('es-VE', {day:'2-digit', month:'short'})} ${hDate.toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'})}</div>
+        <div class="admin-history-time">${hDate.toLocaleDateString('es-VE', { day: '2-digit', month: 'short' })} ${hDate.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}</div>
       </div>
     `;
   }).join('');
@@ -2010,7 +2010,7 @@ function openOrderDetailModal(orderId) {
         ${typeSpecificHtml}
         <div class="admin-detail-row">
           <span class="label">Fecha</span>
-          <span class="value">${date.toLocaleDateString('es-VE', {day:'2-digit', month:'long', year:'numeric'})} ${date.toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'})}</span>
+          <span class="value">${date.toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric' })} ${date.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
       </div>
     </div>
@@ -2121,7 +2121,7 @@ function exportOrders() {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `recargashark_pedidos_${new Date().toISOString().slice(0,10)}.csv`;
+  link.download = `recargashark_pedidos_${new Date().toISOString().slice(0, 10)}.csv`;
   link.click();
   URL.revokeObjectURL(link.href);
   showAdminToast(`📥 ${orders.length} pedidos exportados a CSV`, 'success');
@@ -2401,8 +2401,8 @@ function updateAdminMessagesUI() {
       const unreadBadge = isUnread ? '<span style="background:var(--error); width:10px; height:10px; border-radius:50%; display:inline-block; margin-left:10px;"></span>' : '';
       const lastMsg = conv.messages.length > 0 ? conv.messages[conv.messages.length - 1].text : '';
       const selectedStr = (currentChatSessionId === conv.sessionId) ? 'background: rgba(0, 229, 195, 0.1); border-left: 3px solid var(--accent);' : 'background: var(--bg-deep); border-left: 3px solid transparent;';
-      
-      const contactLabel = conv.contact || `Anónimo (${conv.sessionId.substring(0,8)})`;
+
+      const contactLabel = conv.contact || `Anónimo (${conv.sessionId.substring(0, 8)})`;
       listHtml += `
         <div style="padding: 15px; margin-bottom: 10px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; ${selectedStr}" onclick="openAdminChat('${conv.sessionId}')">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
@@ -2435,7 +2435,7 @@ function updateAdminMessagesUI() {
       const align = isAdmin ? 'flex-end' : 'flex-start';
       const bg = isAdmin ? 'var(--accent)' : 'var(--bg-surface)';
       const color = isAdmin ? 'var(--bg-deep)' : 'var(--text-primary)';
-      const time = new Date(msg.timestamp).toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'});
+      const time = new Date(msg.timestamp).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
       messagesHtml += `
         <div style="display:flex; flex-direction:column; align-items:${align}; margin-bottom:15px;">
           <div style="background:${bg}; color:${color}; padding:10px 15px; border-radius:15px; max-width:80%;">
@@ -2446,8 +2446,8 @@ function updateAdminMessagesUI() {
       `;
     });
 
-    const contactLabel = conv.contact || `Anónimo (${conv.sessionId.substring(0,8)})`;
-    
+    const contactLabel = conv.contact || `Anónimo (${conv.sessionId.substring(0, 8)})`;
+
     // Si ya existe el contenedor de mensajes, solo actualizar la lista para no perder foco del input
     const msgBox = document.getElementById('admin-chat-messages');
     if (msgBox) {
@@ -2537,7 +2537,7 @@ function adminSaveSettings() {
   const telegram = document.getElementById('setting-telegram').value;
   const schedule = document.getElementById('setting-schedule').value;
   const maintenance = document.getElementById('setting-maintenance').checked;
-  
+
   saveSettings({ whatsapp, whatsappChannel, instagram, telegram, schedule, maintenance });
   showAdminToast('✅ Configuración guardada', 'success');
 }
@@ -2547,7 +2547,7 @@ setInterval(() => {
   // Always update badge
   updateAdminSidebarBadges();
   checkAdminNotifications();
-  
+
   // If we are in messages tab, update UI without losing focus
   if (adminState.currentTab === 'messages') {
     if (currentChatSessionId) markMessagesAsRead(currentChatSessionId, 'admin');
@@ -2558,10 +2558,10 @@ setInterval(() => {
 function checkAdminNotifications() {
   const currentPending = getPendingOrdersCount();
   const currentUnread = getUnreadMessagesCount();
-  
+
   if (currentPending > lastPendingOrders || currentUnread > lastUnreadMessages) {
     if (typeof notifySound !== 'undefined' && notifySound.play) notifySound.play().catch(e => console.log('Audio autoplay blocked'));
-    
+
     // Web Push Notification
     if ('Notification' in window && Notification.permission === 'granted') {
       let title = 'RecargaShark';
@@ -2575,7 +2575,7 @@ function checkAdminNotifications() {
       new Notification(title, { body, icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦈</text></svg>' });
     }
   }
-  
+
   lastPendingOrders = currentPending;
   lastUnreadMessages = currentUnread;
 }
@@ -2599,12 +2599,12 @@ function adminLogin() {
   const user = document.getElementById('admin-user').value;
   const pass = document.getElementById('admin-pass').value;
   const btn = document.querySelector('.admin-btn-primary');
-  
+
   if (!user || !pass) {
     alert('Ingresa correo y contraseña');
     return;
   }
-  
+
   btn.innerHTML = '<span class="tracking-spinner"></span>';
   btn.disabled = true;
 
@@ -2626,7 +2626,7 @@ let editingQuickReplyId = null;
 
 function renderQuickReplies(main) {
   const replies = getQuickReplies();
-  
+
   let html = `
     <div class="admin-header">
       <div>
@@ -2666,7 +2666,7 @@ function renderQuickReplies(main) {
         </div>
         <div style="display: flex; flex-direction: column; gap: 12px;">
   `;
-  
+
   if (replies.length === 0) {
     html += `<div style="text-align:center; color:var(--text-muted); padding:20px; background: rgba(0,0,0,0.02); border-radius: 8px;">No hay respuestas rápidas.</div>`;
   } else {
@@ -2684,7 +2684,7 @@ function renderQuickReplies(main) {
       </div>
     `).join('');
   }
-  
+
   html += `</div></div></div>`;
   main.innerHTML = html;
 }
@@ -2692,7 +2692,7 @@ function renderQuickReplies(main) {
 function adminEditQuickReply(id) {
   editingQuickReplyId = id;
   renderQuickReplies(document.getElementById('admin-main-content'));
-  
+
   const replies = getQuickReplies();
   const reply = replies.find(r => r.id === id);
   if (reply) {
@@ -2712,12 +2712,12 @@ function adminAddQuickReply() {
   const title = document.getElementById('qr-title').value.trim();
   const keywords = document.getElementById('qr-keywords').value.trim();
   const response = document.getElementById('qr-response').value.trim();
-  
+
   if (!title || !keywords || !response) {
     alert('Completa todos los campos');
     return;
   }
-  
+
   if (editingQuickReplyId) {
     updateQuickReply(editingQuickReplyId, title, keywords, response);
     showAdminToast('✅ Respuesta actualizada', 'success');
@@ -2726,7 +2726,7 @@ function adminAddQuickReply() {
     addQuickReply(title, keywords, response);
     showAdminToast('✅ Respuesta guardada', 'success');
   }
-  
+
   renderQuickReplies(document.getElementById('admin-main-content'));
 }
 
@@ -2753,12 +2753,12 @@ function renderCustomers(container) {
         <input type="text" id="admin-customers-search" class="admin-form-input" style="flex: 1; margin-bottom: 0;" placeholder="Buscar por Email, Nombre o WhatsApp..." onkeyup="filterCustomersSearch(this.value)">
       </div>
       <div style="overflow-x: auto; padding-bottom: 15px;">
-        <table class="admin-table" style="width: 100%; border-collapse: collapse; min-width: 900px;">
+        <table class="admin-table" style="width: 100%; border-collapse: collapse; min-width: 1000px;">
           <thead>
             <tr>
-              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Email</th>
-              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Nombre</th>
-              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">WhatsApp</th>
+              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Email</th>
+              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Nombre</th>
+              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">WhatsApp</th>
               <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Fecha Registro</th>
               <th style="text-align: right; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Monedero</th>
               <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Rol / Descuento</th>
@@ -2780,7 +2780,7 @@ function renderCustomers(container) {
       uid: uid,
       ...usersData[uid]
     })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    
+
     // Store in global state for search filtering
     window.ADMIN_CUSTOMERS = usersList;
     renderCustomersTable(usersList);
@@ -2804,9 +2804,9 @@ function renderCustomersTable(usersList) {
     const wallet = user.wallet || 0;
     return `
       <tr class="customer-row">
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.email || 'N/A'}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.name || '-'}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.whatsapp || 'N/A'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${user.email || 'N/A'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${user.name || '-'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${user.whatsapp || 'N/A'}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${dateStr}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: right; color: #10b981; font-weight: bold; white-space: nowrap;">${wallet.toFixed(2)}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; white-space: nowrap;">
@@ -2820,7 +2820,7 @@ function renderCustomersTable(usersList) {
           </button>
         </td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; white-space: nowrap;">
-          <div style="display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;">
+          <div style="display: flex; gap: 5px; justify-content: center;">
             <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openCustomerInfoModal('${user.uid}')">ℹ️ Info</button>
             <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openEditWalletModal('${user.uid}', '${user.email}', ${wallet})">Editar Saldo</button>
           </div>
@@ -2833,8 +2833,8 @@ function renderCustomersTable(usersList) {
 function filterCustomersSearch(searchTerm) {
   if (!window.ADMIN_CUSTOMERS) return;
   const term = searchTerm.toLowerCase().trim();
-  const filtered = window.ADMIN_CUSTOMERS.filter(u => 
-    (u.email && u.email.toLowerCase().includes(term)) || 
+  const filtered = window.ADMIN_CUSTOMERS.filter(u =>
+    (u.email && u.email.toLowerCase().includes(term)) ||
     (u.name && u.name.toLowerCase().includes(term)) ||
     (u.whatsapp && u.whatsapp.toLowerCase().includes(term)) ||
     (u.cedula && u.cedula.toLowerCase().includes(term))
@@ -2868,7 +2868,7 @@ function openEditWalletModal(uid, email, currentWallet) {
 function saveUserWallet(uid, email, oldWallet) {
   const input = document.getElementById('edit-wallet-amount');
   const newAmount = parseFloat(input.value);
-  
+
   if (isNaN(newAmount) || newAmount < 0) {
     alert("Por favor ingresa un monto válido mayor o igual a cero.");
     return;
@@ -2905,9 +2905,9 @@ function renderWithdrawals(container) {
         withdrawals.push(data[key]);
       }
     }
-    
+
     withdrawals.sort((a, b) => b.createdAt - a.createdAt);
-    
+
     const html = `
       <div class="admin-header">
         <h2 class="admin-title">Retiros de Ganancias</h2>
@@ -2929,19 +2929,19 @@ function renderWithdrawals(container) {
             </thead>
             <tbody>
               ${withdrawals.map(w => {
-                let detailsStr = '';
-                if (w.method === 'binance') {
-                  detailsStr = `Binance Pay: <strong>${w.details?.account}</strong>`;
-                } else if (w.method === 'pagomovil') {
-                  detailsStr = `Pago Móvil: <strong>${w.details?.bank}</strong> | ${w.details?.phone} | ${w.details?.cedula}`;
-                }
-                
-                let statusBadge = '';
-                if (w.status === 'pending') statusBadge = '<span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">⏳ Pendiente</span>';
-                else if (w.status === 'completed') statusBadge = '<span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">✅ Pagado</span>';
-                else if (w.status === 'rejected') statusBadge = '<span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">🚫 Rechazado</span>';
+      let detailsStr = '';
+      if (w.method === 'binance') {
+        detailsStr = `Binance Pay: <strong>${w.details?.account}</strong>`;
+      } else if (w.method === 'pagomovil') {
+        detailsStr = `Pago Móvil: <strong>${w.details?.bank}</strong> | ${w.details?.phone} | ${w.details?.cedula}`;
+      }
 
-                return `
+      let statusBadge = '';
+      if (w.status === 'pending') statusBadge = '<span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">⏳ Pendiente</span>';
+      else if (w.status === 'completed') statusBadge = '<span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">✅ Pagado</span>';
+      else if (w.status === 'rejected') statusBadge = '<span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">🚫 Rechazado</span>';
+
+      return `
                   <tr style="border-bottom: 1px solid var(--border-color);">
                     <td style="padding: 12px; font-size: 0.85rem;">${new Date(w.createdAt).toLocaleString()}</td>
                     <td style="padding: 12px; font-size: 0.9rem;">
@@ -2960,7 +2960,7 @@ function renderWithdrawals(container) {
                     </td>
                   </tr>
                 `;
-              }).join('')}
+    }).join('')}
               
               ${withdrawals.length === 0 ? `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-secondary);">No hay retiros registrados.</td></tr>` : ''}
             </tbody>
@@ -2975,9 +2975,9 @@ function renderWithdrawals(container) {
   });
 }
 
-window.updateWithdrawalStatus = function(withdrawalId, newStatus, userId, pointsToRefund) {
+window.updateWithdrawalStatus = function (withdrawalId, newStatus, userId, pointsToRefund) {
   if (!confirm(newStatus === 'completed' ? '¿Confirmas que ya enviaste el dinero a este usuario?' : '¿Seguro que deseas RECHAZAR este retiro? (Se le devolverán los puntos al usuario)')) return;
-  
+
   firebase.database().ref('withdrawals/' + withdrawalId).update({
     status: newStatus,
     processedAt: Date.now()
@@ -2989,7 +2989,7 @@ window.updateWithdrawalStatus = function(withdrawalId, newStatus, userId, points
         firebase.database().ref('users/' + userId).update({
           points: currentPts + pointsToRefund
         });
-        
+
         firebase.database().ref('users/' + userId + '/transactions').push({
           id: Date.now().toString(),
           type: 'deposit',
@@ -3004,21 +3004,21 @@ window.updateWithdrawalStatus = function(withdrawalId, newStatus, userId, points
   }).catch(err => {
     alert("Error: " + err.message);
   });
-};window.viewUserTransactions = function(userId) {
+}; window.viewUserTransactions = function (userId) {
   const user = window.CUSTOMERS_DATA?.find(u => u.id === userId);
   if (!user) return;
-  
+
   const modal = document.createElement('div');
   modal.id = 'tx-modal';
   modal.style.position = 'fixed';
   modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
   modal.style.background = 'rgba(0,0,0,0.8)'; modal.style.zIndex = '1000';
   modal.style.display = 'flex'; modal.style.alignItems = 'center'; modal.style.justifyContent = 'center';
-  
+
   let txHtml = '<div style="text-align:center; padding: 20px; color: var(--text-secondary);">No hay movimientos.</div>';
-  
+
   if (user.transactions && user.transactions.length > 0) {
-    const sortedTx = [...user.transactions].sort((a,b) => b.date - a.date);
+    const sortedTx = [...user.transactions].sort((a, b) => b.date - a.date);
     txHtml = sortedTx.map(tx => {
       let sign = tx.amount >= 0 ? '+' : '';
       let color = tx.amount >= 0 ? '#10b981' : '#ff5252';
@@ -3037,7 +3037,7 @@ window.updateWithdrawalStatus = function(withdrawalId, newStatus, userId, points
       `;
     }).join('');
   }
-  
+
   modal.innerHTML = `
     <div style="background: var(--bg-surface); padding: 30px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 500px; max-height: 80vh; display: flex; flex-direction: column;">
       <h3 style="margin-top: 0; margin-bottom: 20px; display: flex; justify-content: space-between;">
@@ -3056,14 +3056,14 @@ window.updateWithdrawalStatus = function(withdrawalId, newStatus, userId, points
 };
 
 // ── Roles and Blocking ──
-window.openCustomerInfoModal = function(uid) {
+window.openCustomerInfoModal = function (uid) {
   if (!window.ADMIN_CUSTOMERS) return;
   const user = window.ADMIN_CUSTOMERS.find(u => u.uid === uid);
   if (!user) return;
 
   const allOrders = typeof getOrders === 'function' ? getOrders() : [];
   const userOrders = allOrders.filter(o => o.userId === uid);
-  
+
   const pending = userOrders.filter(o => o.status === 'pending' || o.status === 'processing').length;
   const completed = userOrders.filter(o => o.status === 'completed').length;
   const rejected = userOrders.filter(o => o.status === 'rejected').length;
@@ -3134,7 +3134,7 @@ window.openCustomerInfoModal = function(uid) {
   `;
   document.body.insertAdjacentHTML('beforeend', modalHTML);
 };
-window.openRoleModal = function(uid, currentRole, currentDiscount, currentReferralLimit) {
+window.openRoleModal = function (uid, currentRole, currentDiscount, currentReferralLimit) {
   const modalHTML = `
     <div class="modal-overlay active" id="role-modal-overlay">
       <div class="modal">
@@ -3167,11 +3167,11 @@ window.openRoleModal = function(uid, currentRole, currentDiscount, currentReferr
   document.body.insertAdjacentHTML('beforeend', modalHTML);
 };
 
-window.saveUserRole = function(uid) {
+window.saveUserRole = function (uid) {
   const role = document.getElementById('role-select').value;
   const discount = parseFloat(document.getElementById('discount-input').value) || 0;
   const referralLimit = parseInt(document.getElementById('referral-limit-input').value) || 30;
-  
+
   firebase.database().ref('users/' + uid).update({
     role: role,
     discountPercentage: role === 'revendedor' ? discount : 0,
@@ -3183,7 +3183,7 @@ window.saveUserRole = function(uid) {
   });
 };
 
-window.toggleBlockUser = function(uid, isBlocked) {
+window.toggleBlockUser = function (uid, isBlocked) {
   if (confirm(isBlocked ? '¿Seguro que deseas DESBLOQUEAR a este usuario?' : '¿Seguro que deseas BLOQUEAR a este usuario? Se cerrará su sesión y no podrá comprar.')) {
     firebase.database().ref('users/' + uid).update({
       isBlocked: !isBlocked
@@ -3212,8 +3212,8 @@ function renderBanners(container) {
     html += `<p style="color: var(--text-muted); grid-column: 1 / -1;">No hay banners configurados.</p>`;
   } else {
     BANNERS.forEach(banner => {
-      const bg = banner.imageUrl 
-        ? `background: url('${banner.imageUrl}') center/cover;` 
+      const bg = banner.imageUrl
+        ? `background: url('${banner.imageUrl}') center/cover;`
         : `background: ${banner.bgGradient};`;
 
       html += `
@@ -3243,7 +3243,7 @@ function renderBanners(container) {
 function adminEditBanner(id) {
   let b = { id: 'banner-' + Date.now(), title: '', desc: '', badge: '', badgeColor: '#00e5c3', imageUrl: '', bgGradient: 'linear-gradient(135deg, #111827, #1f2937)', btnText: 'Ver Más', btnLink: 'catalog', btnColor: 'var(--accent)', btnTextColor: 'var(--bg-deep)' };
   let isEdit = false;
-  
+
   if (id) {
     const existing = BANNERS.find(x => x.id === id);
     if (existing) {
@@ -3323,26 +3323,26 @@ function handleBannerImageUpload(input) {
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = function (e) {
     const img = new Image();
-    img.onload = function() {
+    img.onload = function () {
       // Resize to max 800px width/height for base64 storage
       const canvas = document.createElement('canvas');
       let width = img.width;
       let height = img.height;
       const MAX = 800;
-      
+
       if (width > height) {
         if (width > MAX) { height *= MAX / width; width = MAX; }
       } else {
         if (height > MAX) { width *= MAX / height; height = MAX; }
       }
-      
+
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
-      
+
       const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
       document.getElementById('banner-imageUrl').value = dataUrl;
       const preview = document.getElementById('banner-image-preview');
