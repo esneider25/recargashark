@@ -711,8 +711,52 @@ async function processWalletOrderAuto(order, isReseller = false) {
         }
       } else if (data.ok && data.estado === 'procesando') {
         if (typeof firebase !== 'undefined') {
-          firebase.database().ref('orders/' + order.id).update({ adminNote: 'En proceso por API' });
+          firebase.database().ref('orders/' + order.id).update({ adminNote: 'En proceso por API (esperando confirmación...)' });
         }
+        
+        let attempts = 0;
+        const maxAttempts = 12; // 12 intentos * 5 seg = 60 seg (1 minuto)
+        const pollInterval = setInterval(async () => {
+          attempts++;
+          try {
+            const resp = await fetch(proxyUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                endpoint: `recargas/status?merchant_ref=${finalMerchantRef}`,
+                method: "GET",
+                apiKey: api.apiKey,
+                baseUrl: baseUrl
+              })
+            });
+            const pollData = await resp.json();
+            
+            if (pollData.ok && (pollData.status === 'completed' || pollData.estado === 'completado')) {
+              clearInterval(pollInterval);
+              let note = 'Aprobado y entregado por API (luego de procesar)';
+              if (pollData.codigo) note = 'Código entregado: ' + pollData.codigo;
+              if (pollData.codigos && pollData.codigos.length > 0) note = 'Códigos entregados:\n' + pollData.codigos.join('\n');
+              
+              if (typeof updateOrderStatus === 'function') {
+                updateOrderStatus(order.id, 'completed', note);
+              }
+            } else if (attempts >= maxAttempts) {
+              clearInterval(pollInterval);
+              if (typeof updateOrderStatus === 'function') {
+                updateOrderStatus(order.id, 'completed', 'Marcado como completado automáticamente tras 1 minuto de espera.');
+              }
+            }
+          } catch (e) {
+            console.error("Error polling", e);
+            if (attempts >= maxAttempts) {
+              clearInterval(pollInterval);
+              if (typeof updateOrderStatus === 'function') {
+                updateOrderStatus(order.id, 'completed', 'Marcado como completado automáticamente tras 1 minuto de espera.');
+              }
+            }
+          }
+        }, 5000);
+
       } else {
         updateOrderStatus(order.id, 'invalid-id', `Verifica que el ID o la cuenta sean correctos.`);
         if (typeof sendTelegramMessage === 'function') {
