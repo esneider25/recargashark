@@ -1,38 +1,22 @@
 {
   "rules": {
-    ".read": "true",
-    ".write": "true"
+    "products": { ".read": true },
+    "categories": { ".read": true },
+    "exchange_rate": { ".read": true },
+    "payment_methods": { ".read": true },
+    "settings": { ".read": true },
+    "messages": { ".read": true, ".write": true },
+    "orders": { 
+      ".read": true,
+      ".write": true 
     },
-    "products": {
-      ".read": "true",
-      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
-    },
-    "categories": {
-      ".read": "true",
-      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
-    },
-    "exchange_rate": {
-      ".read": "true",
-      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
-    },
-    "payment_methods": {
-      ".read": "true",
-      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
-    },
-    "settings": {
-      ".read": "true",
-      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
-    },
-    "telegram_config": {
-      ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
-      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
-    },
-    "api_configs": {
-      ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
-      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
-    },
-    "discounts": {
-      ".read": "true",
-      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
-    }
+    "telegram_config": { ".read": true },
+    "discounts": { ".read": true },
+    "spam_tracker": { ".read": true, ".write": true },
+    "order_counter": { ".read": true },
+    "api_configs": { ".read": "auth != null" },
+
+    ".read": "auth != null",
+    ".write": "auth != null"
   }
+}

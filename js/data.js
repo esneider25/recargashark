@@ -594,7 +594,7 @@ function updateOrderStatus(orderId, newStatus, note) {
     }
   }
 
-  if ((newStatus === 'rejected' || newStatus === 'invalid-id') && (order.status !== 'rejected' && order.status !== 'invalid-id') && order.userId && order.paymentMethodId === 'wallet' && order.productType !== 'wallet-recharge') {
+  if (newStatus === 'rejected' && order.status !== 'rejected' && order.userId && order.paymentMethodId === 'wallet' && order.productType !== 'wallet-recharge') {
     if (typeof firebase !== 'undefined') {
       const fdb = firebase.database();
       fdb.ref('users/' + order.userId + '/wallet').once('value').then(snap => {
