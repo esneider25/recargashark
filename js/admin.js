@@ -2567,33 +2567,33 @@ function renderSettings(container) {
 window.renderTermsEditor = function() {
   const container = document.getElementById('terms-editor-container');
   if(!container) return;
-  container.innerHTML = window.currentTermsEditorData.map((t, i) => \`
+  container.innerHTML = window.currentTermsEditorData.map((t, i) => `
     <div style="border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-bottom: 10px; background: rgba(0,0,0,0.2);">
       <div style="display: flex; gap: 10px; margin-bottom: 10px;">
         <div style="flex: 1;">
-          <label class="admin-form-label">Título \${i+1}</label>
-          <input type="text" class="admin-form-input" value="\${t.title || ''}" onchange="window.currentTermsEditorData[\${i}].title = this.value">
+          <label class="admin-form-label">Título ${i+1}</label>
+          <input type="text" class="admin-form-input" value="${t.title || ''}" onchange="window.currentTermsEditorData[${i}].title = this.value">
         </div>
         <div style="width: 80px;">
           <label class="admin-form-label">Color</label>
-          <input type="color" class="admin-form-input" value="\${t.titleColor || '#00e5c3'}" style="height: 48px; padding: 2px;" onchange="window.currentTermsEditorData[\${i}].titleColor = this.value">
+          <input type="color" class="admin-form-input" value="${t.titleColor || '#00e5c3'}" style="height: 48px; padding: 2px;" onchange="window.currentTermsEditorData[${i}].titleColor = this.value">
         </div>
       </div>
       <div style="display: flex; gap: 10px;">
         <div style="flex: 1;">
           <label class="admin-form-label">Descripción</label>
-          <textarea class="admin-form-textarea" rows="2" onchange="window.currentTermsEditorData[\${i}].desc = this.value">\${t.desc || ''}</textarea>
+          <textarea class="admin-form-textarea" rows="2" onchange="window.currentTermsEditorData[${i}].desc = this.value">${t.desc || ''}</textarea>
         </div>
         <div style="width: 80px;">
           <label class="admin-form-label">Color</label>
-          <input type="color" class="admin-form-input" value="\${t.descColor || '#e2e8f0'}" style="height: 48px; padding: 2px;" onchange="window.currentTermsEditorData[\${i}].descColor = this.value">
+          <input type="color" class="admin-form-input" value="${t.descColor || '#e2e8f0'}" style="height: 48px; padding: 2px;" onchange="window.currentTermsEditorData[${i}].descColor = this.value">
         </div>
-        <button class="btn-secondary" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; height: 48px; align-self: flex-end; padding: 0 15px;" onclick="window.currentTermsEditorData.splice(\${i}, 1); window.renderTermsEditor()">🗑️</button>
+        <button class="btn-secondary" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; height: 48px; align-self: flex-end; padding: 0 15px;" onclick="window.currentTermsEditorData.splice(${i}, 1); window.renderTermsEditor()">🗑️</button>
       </div>
     </div>
-  \`).join('') + \`
+  `).join('') + `
     <button class="btn-secondary" onclick="window.currentTermsEditorData.push({title:'', titleColor:'#00e5c3', desc:'', descColor:'#e2e8f0'}); window.renderTermsEditor()" style="width: 100%; border-style: dashed; padding: 12px; margin-top: 10px; justify-content: center;">+ Agregar Nueva Sección</button>
-  \`;
+  `;
 };
 
 function adminSaveSettings() {
