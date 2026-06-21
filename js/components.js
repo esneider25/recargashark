@@ -88,7 +88,7 @@ function renderPromoCarousel() {
   const cards = BANNERS.map(b => {
     const hasImg = !!b.imageUrl;
     const bgStyle = hasImg 
-      ? `background: url('${b.imageUrl}') center/cover no-repeat;`
+      ? `background: url('${b.imageUrl}') center/contain no-repeat, ${b.bgGradient || 'linear-gradient(135deg, #111827, #1f2937)'};`
       : `background: ${b.bgGradient || 'linear-gradient(135deg, #111827, #1f2937)'};`;
       
     const btnAction = b.btnLink && b.btnLink.startsWith('product:') 

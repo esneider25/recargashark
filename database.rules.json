@@ -20,6 +20,10 @@
       ".read": "true",
       ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     },
+    "banners": { 
+      ".read": "true",
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
+    },
     "messages": { 
       ".read": "true", 
       ".write": "true" 

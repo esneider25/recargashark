@@ -3306,7 +3306,7 @@ function renderBanners(container) {
   } else {
     BANNERS.forEach(banner => {
       const bg = banner.imageUrl
-        ? `background: url('${banner.imageUrl}') center/cover;`
+        ? `background: url('${banner.imageUrl}') center/contain no-repeat, ${banner.bgGradient || 'var(--bg-card)'};`
         : `background: ${banner.bgGradient};`;
 
       html += `
@@ -3353,7 +3353,7 @@ function adminEditBanner(id) {
         <label>🖼️ Imagen de Fondo (Opcional)</label>
         <input type="file" id="banner-file" accept="image/*" class="admin-input" style="padding: 10px;" onchange="handleBannerImageUpload(this)">
         <input type="hidden" id="banner-imageUrl" value="${b.imageUrl || ''}">
-        <div id="banner-image-preview" style="margin-top: 10px; height: 120px; border-radius: 8px; border: 1px dashed var(--border-color); background: ${b.imageUrl ? `url('${b.imageUrl}') center/cover` : 'rgba(0,0,0,0.2)'}; display: flex; align-items: center; justify-content: center;">
+        <div id="banner-image-preview" style="margin-top: 10px; height: 120px; border-radius: 8px; border: 1px dashed var(--border-color); background: ${b.imageUrl ? `url('${b.imageUrl}') center/contain no-repeat, ${b.bgGradient || 'rgba(0,0,0,0.2)'}` : 'rgba(0,0,0,0.2)'}; display: flex; align-items: center; justify-content: center;">
           ${!b.imageUrl ? '<span style="color: var(--text-muted); font-size: 0.85rem;">Sin imagen</span>' : ''}
         </div>
       </div>
@@ -3439,7 +3439,8 @@ function handleBannerImageUpload(input) {
       const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
       document.getElementById('banner-imageUrl').value = dataUrl;
       const preview = document.getElementById('banner-image-preview');
-      preview.style.background = `url('${dataUrl}') center/cover`;
+      const currentGrad = document.getElementById('banner-bgGradient').value || 'rgba(0,0,0,0.2)';
+      preview.style.background = `url('${dataUrl}') center/contain no-repeat, ${currentGrad}`;
       preview.innerHTML = '';
     };
     img.src = e.target.result;
