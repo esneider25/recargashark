@@ -447,6 +447,7 @@ async function submitOrder() {
     contactInput?.focus();
     return;
   }
+  let numberOfOrders = 1;
 
   // Validate type-specific fields
   let gameId = '';
@@ -460,7 +461,21 @@ async function submitOrder() {
       uidInput?.focus();
       return;
     }
-    gameId = uidInput.value.trim();
+    if (typeof userProfile !== 'undefined' && userProfile && userProfile.role === 'revendedor') {
+      const ids = uidInput.value.trim().split(/[\n,]+/).map(i => i.trim()).filter(i => i.length > 0);
+      if (ids.length === 0) {
+        showToast('⚠️ Ingresa al menos un ID');
+        return;
+      }
+      if (ids.length > 10) {
+        showToast('⚠️ Máximo 10 IDs permitidos por pedido masivo');
+        return;
+      }
+      gameId = ids;
+      numberOfOrders = ids.length;
+    } else {
+      gameId = uidInput.value.trim();
+    }
   } else if (productType === 'game-id-zone') {
     const uidInput = document.getElementById('game-uid');
     const zoneInput = document.getElementById('game-zone');
@@ -515,6 +530,9 @@ async function submitOrder() {
     }
   }
 
+  // Multiplica el precio por la cantidad de pedidos masivos
+  finalUsd = finalUsd * numberOfOrders;
+
   let discountCode = null;
   let discountValue = 0;
   let discountType = null;
@@ -557,56 +575,67 @@ async function submitOrder() {
       id: Date.now().toString(),
       type: 'purchase',
       amount: -finalUsd,
-      description: `Compra: ${product.name} - ${pkg.label}`,
+      description: numberOfOrders > 1 ? `Compra Masiva (${numberOfOrders} IDs): ${product.name} - ${pkg.label}` : `Compra: ${product.name} - ${pkg.label}`,
       date: Date.now()
     });
   }
 
-  // Create the order
-  const order = createOrder({
-    userId: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.uid : null,
-    userName: (typeof currentUser !== 'undefined' && currentUser) ? (currentUser.displayName || currentUser.email) : null,
-    productId: product.id,
-    productName: product.name,
-    productType: productType,
-    packageLabel: pkg.label,
-    apiProductId: pkg.apiServiceId,
-    apiProvider: product.apiProvider,
-    priceUsd: finalUsd,
-    priceBs: priceBs,
-    paymentMethodId: method.id,
-    paymentMethodName: method.name,
-    paymentCurrency: method.currency || 'bs',
-    customerContact: contactInput.value.trim(),
-    gameId: gameId,
-    accountEmail: accountEmail,
-    accountPassword: accountPassword,
-    ocrNumbers: appState.selectedScreenshotOcr || [],
-    imageHash: appState.selectedScreenshotHash || null,
-    discountCode: discountCode,
-    discountValue: discountValue,
-    discountType: discountType,
-    playerName: appState.verifiedPlayerName
-  });
+  // Create the orders
+  let lastOrder = null;
+  const orderList = Array.isArray(gameId) ? gameId : [gameId];
+  
+  for (let i = 0; i < orderList.length; i++) {
+    const singleGameId = orderList[i];
+    const orderPriceUsd = finalUsd / numberOfOrders;
+    const orderPriceBs = priceBs / numberOfOrders;
+    
+    const order = createOrder({
+      userId: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.uid : null,
+      userName: (typeof currentUser !== 'undefined' && currentUser) ? (currentUser.displayName || currentUser.email) : null,
+      productId: product.id,
+      productName: product.name,
+      productType: productType,
+      packageLabel: pkg.label,
+      apiProductId: pkg.apiServiceId,
+      apiProvider: product.apiProvider,
+      priceUsd: orderPriceUsd,
+      priceBs: orderPriceBs,
+      paymentMethodId: method.id,
+      paymentMethodName: method.name,
+      paymentCurrency: method.currency || 'bs',
+      customerContact: contactInput.value.trim(),
+      gameId: singleGameId,
+      accountEmail: accountEmail,
+      accountPassword: accountPassword,
+      ocrNumbers: appState.selectedScreenshotOcr || [],
+      imageHash: appState.selectedScreenshotHash || null,
+      discountCode: discountCode,
+      discountValue: discountValue / numberOfOrders,
+      discountType: discountType,
+      playerName: appState.verifiedPlayerName
+    });
 
-  if (typeof recordOrderAttempt === 'function') recordOrderAttempt();
+    if (typeof recordOrderAttempt === 'function') recordOrderAttempt();
 
-  // Handle Telegram notification first so it arrives before any auto-completion messages
-  if (typeof triggerTelegramNotification === 'function') {
-    await triggerTelegramNotification(order);
-  }
+    // Handle Telegram notification
+    if (typeof triggerTelegramNotification === 'function') {
+      await triggerTelegramNotification(order);
+    }
+    
+    lastOrder = order;
 
-  // Show success animation then redirect to tracking
-  showOrderConfirmation(order);
+    const isReseller = typeof userProfile !== 'undefined' && userProfile && userProfile.role === 'revendedor';
 
-  const isReseller = typeof userProfile !== 'undefined' && userProfile && userProfile.role === 'revendedor';
-
-  // Auto-process if paid with wallet or is a reseller
-  if ((order.paymentMethodId === 'wallet' || isReseller) && typeof window !== 'undefined') {
-    if (typeof processWalletOrderAuto === 'function') {
-      processWalletOrderAuto(order, isReseller);
+    // Auto-process if paid with wallet or is a reseller
+    if ((order.paymentMethodId === 'wallet' || isReseller) && typeof window !== 'undefined') {
+      if (typeof processWalletOrderAuto === 'function') {
+        processWalletOrderAuto(order, isReseller);
+      }
     }
   }
+
+  // Show success animation then redirect to tracking using the last order created
+  showOrderConfirmation(lastOrder);
 }
 
 async function processWalletOrderAuto(order, isReseller = false) {

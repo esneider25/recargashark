@@ -366,11 +366,18 @@ function renderProductDetail(productId) {
         </div>
       `;
     }
+    let uidInputHtml = `<input type="text" class="form-input" id="game-uid" placeholder="Ingresa tu ID del juego" autocomplete="off">`;
+    if (typeof userProfile !== 'undefined' && userProfile && userProfile.role === 'revendedor') {
+      uidInputHtml = `
+        <textarea class="form-input" id="game-uid" placeholder="Múltiples IDs: sepáralas por comas o saltos de línea (Max 10)" style="height:80px; resize:vertical; font-family: monospace;"></textarea>
+        <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:5px;">🌟 Revendedor: Se creará un pedido por cada ID ingresado (se multiplicará el costo).</div>
+      `;
+    }
+    
     typeFieldsHtml = `
       <div class="form-group">
         <label for="game-uid">🎮 ID del juego</label>
-        <input type="text" class="form-input" id="game-uid"
-               placeholder="Ingresa tu ID del juego" autocomplete="off">
+        ${uidInputHtml}
         ${verifierHtml}
       </div>
     `;
