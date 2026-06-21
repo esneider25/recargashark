@@ -16,7 +16,9 @@ let SITE_SETTINGS = {
   whatsapp: '+584120000000',
   instagram: 'https://instagram.com/recargashark',
   telegram: 'https://t.me/recargashark',
-  schedule: 'Lunes a Domingo 8:00 AM – 11:00 PM'
+  schedule: 'Lunes a Domingo 8:00 AM – 11:00 PM',
+  announcementEnabled: false,
+  announcementMessage: '¡Bienvenido a RecargaShark! Estamos procesando pedidos con normalidad.'
 };
 
 // ── Messaging System ──

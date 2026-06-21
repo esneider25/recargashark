@@ -46,6 +46,37 @@ function toggleTheme() {
 }
 
 // ── Render ──
+function showAnnouncementModal(message) {
+  if (sessionStorage.getItem('recargashark_announcement_seen') === 'true') return;
+  
+  const modalContainer = document.createElement('div');
+  modalContainer.id = 'announcement-modal-container';
+  modalContainer.innerHTML = `
+    <div class="modal-overlay active" style="z-index: 9999; backdrop-filter: blur(5px);">
+      <div class="modal payment-flow-modal" style="text-align: center; max-width: 500px; border: 1px solid rgba(0, 229, 195, 0.3); background: var(--bg-card); padding: 35px 25px;">
+        <div style="font-size: 3.5rem; margin-bottom: 15px; text-shadow: 0 0 15px rgba(0, 229, 195, 0.4);">📢</div>
+        <h3 style="color: #00e5c3; margin-bottom: 15px; font-size: 1.5rem;">Aviso Importante</h3>
+        <div style="color: var(--text-secondary); margin-bottom: 30px; line-height: 1.6; font-size: 1.05rem; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+          ${message}
+        </div>
+        <button id="announcement-modal-btn" class="btn-primary" style="width: 100%; padding: 14px; font-size: 1.1rem; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 15px rgba(0, 229, 195, 0.3);">
+          Entendido 👍
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modalContainer);
+
+  document.getElementById('announcement-modal-btn').addEventListener('click', () => {
+    sessionStorage.setItem('recargashark_announcement_seen', 'true');
+    const overlay = modalContainer.querySelector('.modal-overlay');
+    overlay.classList.remove('active');
+    setTimeout(() => {
+      modalContainer.remove();
+    }, 300);
+  });
+}
+
 function renderApp() {
   const app = document.getElementById('app');
   if (!app) return;
@@ -99,6 +130,9 @@ function renderApp() {
       initCounters();
       initScrollObserver();
       initCarousel();
+      if (config.announcementEnabled && config.announcementMessage) {
+        setTimeout(() => showAnnouncementModal(config.announcementMessage), 500);
+      }
     });
   } else if (appState.currentView === 'product') {
     app.innerHTML = `

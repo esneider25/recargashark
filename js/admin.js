@@ -2516,7 +2516,7 @@ function renderSettings(container) {
         </div>
         <div class="admin-form-group">
           <label class="admin-form-label">Horario de Atención <span style="font-weight: 400; color:var(--text-muted);">(Permite saltos de línea)</span></label>
-          <textarea id="setting-schedule" class="admin-form-textarea" rows="4">${config.schedule || ''}</textarea>
+          <textarea id="setting-schedule" class="admin-form-textarea" rows="2">${config.schedule || ''}</textarea>
         </div>
         <div class="admin-form-group" style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
           <label class="admin-form-label" style="display: flex; justify-content: space-between; align-items: center;">
@@ -2524,6 +2524,22 @@ function renderSettings(container) {
             <input type="checkbox" id="setting-maintenance" ${config.maintenance ? 'checked' : ''} style="width: 24px; height: 24px; accent-color: var(--error); cursor: pointer;">
           </label>
           <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">Si se activa, los clientes verán una pantalla de "Regresamos pronto" y no podrán comprar.</p>
+        </div>
+      </div>
+
+      <div class="admin-card" style="grid-column: 1 / -1;">
+        <div class="admin-card-header">
+          <h3 class="admin-card-title">📢 Mensaje Emergente (Aviso Inicial)</h3>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Activar Mensaje al entrar a la página</span>
+            <input type="checkbox" id="setting-announcement-enabled" ${config.announcementEnabled ? 'checked' : ''} style="width: 24px; height: 24px; accent-color: #00e5c3; cursor: pointer;">
+          </label>
+        </div>
+        <div class="admin-form-group">
+          <label class="admin-form-label">Contenido del Mensaje <span style="font-weight: 400; color:var(--text-muted);">(Permite HTML básico)</span></label>
+          <textarea id="setting-announcement-msg" class="admin-form-textarea" rows="3">${config.announcementMessage || ''}</textarea>
         </div>
       </div>
     </div>
@@ -2537,8 +2553,10 @@ function adminSaveSettings() {
   const telegram = document.getElementById('setting-telegram').value;
   const schedule = document.getElementById('setting-schedule').value;
   const maintenance = document.getElementById('setting-maintenance').checked;
+  const announcementEnabled = document.getElementById('setting-announcement-enabled').checked;
+  const announcementMessage = document.getElementById('setting-announcement-msg').value;
 
-  saveSettings({ whatsapp, whatsappChannel, instagram, telegram, schedule, maintenance });
+  saveSettings({ whatsapp, whatsappChannel, instagram, telegram, schedule, maintenance, announcementEnabled, announcementMessage });
   showAdminToast('✅ Configuración guardada', 'success');
 }
 
