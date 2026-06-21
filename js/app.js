@@ -569,7 +569,37 @@ async function submitOrder() {
 
   const isResellerAlert = typeof userProfile !== 'undefined' && userProfile && userProfile.role === 'revendedor';
   if ((appState.selectedPaymentId === 'wallet' || isResellerAlert) && typeof window !== 'undefined') {
-    alert("⚠️ IMPORTANTE:\n\nTu orden está en proceso. Al presionar 'Aceptar' comenzará el envío automático.\n\nPor favor, NO CIERRES NI ACTUALICES el navegador hasta terminar para evitar que la conexión se corte.");
+    await new Promise((resolve) => {
+      const modalContainer = document.createElement('div');
+      modalContainer.id = 'warning-modal-container';
+      modalContainer.innerHTML = `
+        <div class="modal-overlay active" style="z-index: 9999; backdrop-filter: blur(5px);">
+          <div class="modal payment-flow-modal" style="text-align: center; max-width: 420px; border: 1px solid rgba(255, 183, 77, 0.3); background: var(--bg-card); padding: 30px 24px;">
+            <div style="font-size: 3.5rem; margin-bottom: 10px; text-shadow: 0 0 15px rgba(255,183,77,0.4);">⚠️</div>
+            <h3 style="color: #ffb74d; margin-bottom: 15px; font-size: 1.4rem;">Aviso Importante</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 25px; line-height: 1.6; font-size: 1rem;">
+              Tu orden está en proceso. Al presionar <b>Aceptar</b> comenzará el envío automático.<br><br>
+              <span style="color: #ff6b6b; font-weight: 600; background: rgba(255,107,107,0.1); padding: 5px 10px; border-radius: 6px; display: inline-block; margin-top: 5px;">
+                Por favor, NO CIERRES NI ACTUALICES el navegador hasta terminar.
+              </span>
+            </p>
+            <button id="warning-modal-btn" class="btn-primary" style="width: 100%; padding: 14px; font-size: 1.05rem; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 15px rgba(0, 229, 195, 0.3);">
+              Aceptar y Continuar 🚀
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modalContainer);
+
+      document.getElementById('warning-modal-btn').addEventListener('click', () => {
+        const overlay = modalContainer.querySelector('.modal-overlay');
+        overlay.classList.remove('active');
+        setTimeout(() => {
+          modalContainer.remove();
+          resolve();
+        }, 200);
+      });
+    });
   }
 
   if (appState.selectedPaymentId === 'wallet') {
