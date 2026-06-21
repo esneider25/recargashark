@@ -1225,16 +1225,16 @@ function pollApiStatus(baseUrl, apiKey, orderId, fromModal) {
         if (data.status === 'completed' || data.estado === 'completado') {
           clearInterval(interval);
 
-          let note = 'Aprobado y entregado por API (luego de procesar)';
+          let note = 'Aprobado y entregado automáticamente (luego de procesar)';
           if (data.codigo) {
             note = 'Código entregado: ' + data.codigo;
           }
           completeOrderLocally(orderId, fromModal, note);
         } else if (data.status === 'failed' || data.estado === 'cancelado') {
           clearInterval(interval);
-          updateOrderStatus(orderId, 'rejected', 'API canceló la recarga');
+          updateOrderStatus(orderId, 'rejected', 'El proveedor canceló la recarga');
           refreshOrdersView();
-          showAdminToast(`❌ API canceló el pedido ${orderId}`, 'error');
+          showAdminToast(`❌ Proveedor canceló el pedido ${orderId}`, 'error');
           if (fromModal) closeAdminModal();
         } else {
           if (attempts >= maxAttempts) {

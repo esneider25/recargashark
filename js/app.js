@@ -711,7 +711,7 @@ async function processWalletOrderAuto(order, isReseller = false) {
         }
       } else if (data.ok && data.estado === 'procesando') {
         if (typeof firebase !== 'undefined') {
-          firebase.database().ref('orders/' + order.id).update({ adminNote: 'En proceso por API (esperando confirmación...)' });
+          firebase.database().ref('orders/' + order.id).update({ adminNote: 'En proceso automático (esperando confirmación...)' });
         }
         
         let attempts = 0;
@@ -734,7 +734,7 @@ async function processWalletOrderAuto(order, isReseller = false) {
             
             if (pollData.ok && (estadoStr === 'completado' || estadoStr === 'completed')) {
               clearInterval(pollInterval);
-              let note = 'Aprobado y entregado por API (luego de procesar)';
+              let note = 'Aprobado y entregado automáticamente (luego de procesar)';
               if (pollData.codigo) note = 'Código entregado: ' + pollData.codigo;
               if (pollData.codigos && pollData.codigos.length > 0) note = 'Códigos entregados:\n' + pollData.codigos.join('\n');
               
@@ -757,10 +757,10 @@ async function processWalletOrderAuto(order, isReseller = false) {
               clearInterval(pollInterval);
               let errorMsg = pollData.error || pollData.msg || pollData.estado || 'Rechazado';
               if (typeof updateOrderStatus === 'function') {
-                updateOrderStatus(order.id, 'invalid-id', `Verifica que el ID o la cuenta sean correctos. La API rechazó la recarga. (${errorMsg})`);
+                updateOrderStatus(order.id, 'invalid-id', `Verifica que el ID o la cuenta sean correctos. El proveedor rechazó la recarga. (${errorMsg})`);
               }
               if (typeof sendTelegramMessage === 'function') {
-                sendTelegramMessage(`⚠️ <b>DATOS INVÁLIDOS — #${order.id}</b>\n\nLa API rechazó el pedido luego de procesar. El cliente debe corregir los datos. Mensaje de API: ${errorMsg}`);
+                sendTelegramMessage(`⚠️ <b>DATOS INVÁLIDOS — #${order.id}</b>\n\nEl proveedor rechazó el pedido luego de procesar. El cliente debe corregir los datos. Mensaje de error: ${errorMsg}`);
               }
             }
           } catch (e) {
@@ -777,7 +777,7 @@ async function processWalletOrderAuto(order, isReseller = false) {
       } else {
         updateOrderStatus(order.id, 'invalid-id', `Verifica que el ID o la cuenta sean correctos.`);
         if (typeof sendTelegramMessage === 'function') {
-          sendTelegramMessage(`⚠️ <b>DATOS INVÁLIDOS — #${order.id}</b>\n\nLa API rechazó el pedido automáticamente. El cliente debe corregir los datos.`);
+          sendTelegramMessage(`⚠️ <b>DATOS INVÁLIDOS — #${order.id}</b>\n\nEl sistema rechazó el pedido automáticamente. El cliente debe corregir los datos.`);
         }
       }
     } else if (typeof firebase !== 'undefined') {
@@ -789,11 +789,11 @@ async function processWalletOrderAuto(order, isReseller = false) {
       }
     }
   } catch (error) {
-    console.error('Error auto API:', error);
+    console.error('Error auto proveedor:', error);
     if (typeof firebase !== 'undefined') {
-      firebase.database().ref('orders/' + order.id).update({ status: 'pending', adminNote: 'Fallo auto-API. Requiere revisión manual' });
+      firebase.database().ref('orders/' + order.id).update({ status: 'pending', adminNote: 'Fallo conexión automática. Requiere revisión manual' });
       if (typeof sendTelegramMessage === 'function') {
-        sendTelegramMessage(`❌ <b>FALLO API — #${order.id}</b>\n\nOcurrió un error de conexión con la API externa. Requiere revisión manual en el panel.`);
+        sendTelegramMessage(`❌ <b>FALLO PROVEEDOR — #${order.id}</b>\n\nOcurrió un error de conexión con el proveedor externo. Requiere revisión manual en el panel.`);
       }
     }
   }
