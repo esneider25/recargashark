@@ -535,8 +535,10 @@ function updateOrderStatus(orderId, newStatus, note) {
                   const referrerData = refSnap.val()[referrerUid];
                   
                   const referrerRole = referrerData.role || 'cliente';
-                  // Solo clientes pueden ganar por referidos
-                  if (referrerRole !== 'cliente') return;
+                  // Solo clientes e influencers pueden ganar por referidos
+                  if (referrerRole !== 'cliente' && referrerRole !== 'influencer') return;
+                  
+                  const maxReferrals = referrerRole === 'influencer' ? (referrerData.referralLimit || 30) : 10;
                   
                   let refPoints = referrerData.points || 0;
                   let refCount = referrerData.referralsCount || 0;
@@ -546,8 +548,8 @@ function updateOrderStatus(orderId, newStatus, note) {
                   let isFirst = false;
                   
                   if (!p.hasMadeFirstPurchase) {
-                    // Si ya tiene 10 amigos, quitamos el referido para que este usuario ya no genere ganancias
-                    if (refCount >= 10) {
+                    // Si ya tiene el máximo de amigos, quitamos el referido para que este usuario ya no genere ganancias
+                    if (refCount >= maxReferrals) {
                       db.ref('users/' + order.userId).update({ referredBy: null, hasMadeFirstPurchase: true });
                       return;
                     }
