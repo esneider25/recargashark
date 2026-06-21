@@ -20,9 +20,42 @@ let SITE_SETTINGS = {
   announcementEnabled: false,
   announcementMessage: '¡Bienvenido a RecargaShark! Estamos procesando pedidos con normalidad.',
   termsAndConditions: [
-    { title: 'Aceptación del Servicio', titleColor: '#00e5c3', desc: 'Al utilizar nuestros servicios, aceptas que todas las recargas son procesadas tras la verificación del pago.', descColor: '#e2e8f0' },
-    { title: 'Reembolsos', titleColor: '#00e5c3', desc: 'No nos hacemos responsables por IDs incorrectos proporcionados por el usuario. Verifica bien tus datos antes de pagar.', descColor: '#e2e8f0' },
-    { title: 'Tiempos de Entrega', titleColor: '#00e5c3', desc: 'El tiempo de procesamiento varía entre 5 a 15 minutos en horario laboral.', descColor: '#e2e8f0' }
+    { 
+      title: 'Aceptación del Servicio', 
+      titleColor: '#00e5c3', 
+      desc: 'Al utilizar RecargaShark, registrarte o realizar un pedido, aceptas estar de acuerdo con todos los términos aquí descritos. Nos reservamos el derecho de modificar estos términos en cualquier momento.', 
+      descColor: '#e2e8f0' 
+    },
+    { 
+      title: 'Responsabilidad de Datos (IDs y Cuentas)', 
+      titleColor: '#facc15', 
+      desc: 'El cliente es el único responsable de proporcionar correctamente su ID de jugador, Zona o datos de cuenta. RecargaShark no se hace responsable por recargas enviadas a cuentas equivocadas debido a errores tipográficos por parte del usuario.', 
+      descColor: '#e2e8f0' 
+    },
+    { 
+      title: 'Tiempos de Procesamiento y Entrega', 
+      titleColor: '#60a5fa', 
+      desc: 'Las recargas automatizadas toman de 1 a 5 minutos una vez confirmado el pago. Las recargas manuales (internas) o envíos de códigos pueden tardar entre 10 a 30 minutos dentro de nuestro horario de atención. En caso de fallas con los servidores del juego, el tiempo puede extenderse.', 
+      descColor: '#e2e8f0' 
+    },
+    { 
+      title: 'Política de Reembolsos', 
+      titleColor: '#ef4444', 
+      desc: 'Una vez que una recarga o código digital ha sido procesado y entregado con éxito, NO hay devoluciones ni reembolsos bajo ninguna circunstancia. Solo se emitirán reembolsos (a su saldo de Monedero o cuenta bancaria) si el producto no pudo ser entregado por falta de stock o error de nuestra plataforma.', 
+      descColor: '#e2e8f0' 
+    },
+    { 
+      title: 'Uso del Monedero y Revendedores', 
+      titleColor: '#10b981', 
+      desc: 'El saldo cargado al Monedero (Wallet) no puede ser retirado en efectivo, solo puede ser utilizado para compras dentro de la tienda. Los usuarios con rol de "Revendedor" gozan de descuentos exclusivos, pero están sujetos a las mismas políticas de no-reembolso por errores de tipeo de IDs.', 
+      descColor: '#e2e8f0' 
+    },
+    { 
+      title: 'Prevención de Fraude y Bloqueos', 
+      titleColor: '#a855f7', 
+      desc: 'Contamos con sistemas Anti-Spam. Cualquier intento de enviar comprobantes falsos, comprobantes reciclados, o hacer múltiples pedidos falsos resultará en el BLOQUEO PERMANENTE de la IP, número de WhatsApp y cuenta del usuario, perdiendo acceso a su Monedero sin derecho a reclamo.', 
+      descColor: '#e2e8f0' 
+    }
   ]
 };
 
