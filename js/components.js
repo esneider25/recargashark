@@ -88,24 +88,28 @@ function renderPromoCarousel() {
   const cards = BANNERS.map(b => {
     const hasImg = !!b.imageUrl;
     const bgStyle = hasImg 
-      ? `background: url('${b.imageUrl}') center/contain no-repeat, ${b.bgGradient || 'linear-gradient(135deg, #111827, #1f2937)'};`
+      ? `background: ${b.bgGradient || 'var(--bg-surface)'};`
       : `background: ${b.bgGradient || 'linear-gradient(135deg, #111827, #1f2937)'};`;
       
     const btnAction = b.btnLink && b.btnLink.startsWith('product:') 
       ? `navigateTo('product', '${b.btnLink.split(':')[1]}')` 
       : `scrollToSection('${b.btnLink || 'catalog'}')`;
 
-    const overlay = hasImg ? `<div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); height: 60%; pointer-events: none; z-index: 1;"></div>` : '';
-
     return `
       <div class="promo-card" style="${bgStyle} cursor: pointer;" onclick="${btnAction}">
-        ${overlay}
-        ${!hasImg ? `<div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; opacity: 0.05; z-index: 0;">${b.icon || '✨'}</div>` : ''}
-        <div style="position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: flex-end;">
+        ${hasImg ? `
+          <div style="position: absolute; inset: -20px; background: url('${b.imageUrl}') center/cover; filter: blur(15px); opacity: 0.6; z-index: 0;"></div>
+          <div style="position: absolute; inset: 0; background: url('${b.imageUrl}') center/contain no-repeat; z-index: 1;"></div>
+          <div style="position: absolute; inset: 0; background: linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, transparent 100%); z-index: 2;"></div>
+        ` : `
+          <div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; opacity: 0.05; z-index: 0;">${b.icon || '✨'}</div>
+          <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); z-index: 1;"></div>
+        `}
+        <div style="position: relative; z-index: 3; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; width: 100%; max-width: ${hasImg ? '65%' : '100%'};">
           <div>
             ${b.badge ? `<div style="background: ${b.badgeColor ? b.badgeColor+'e6' : 'rgba(0, 229, 195, 0.9)'}; color: #000; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">${b.badge}</div>` : ''}
             ${(!hasImg || b.title) ? `<h3 style="color: white; font-size: clamp(1.2rem, 3vw, 1.8rem); margin-bottom: 8px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">${b.title}</h3>` : ''}
-            ${(!hasImg || b.desc) ? `<p style="color: rgba(255,255,255,0.9); font-size: clamp(0.85rem, 2vw, 1rem); margin-bottom: 15px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); max-width: 80%; line-height: 1.4;">${b.desc}</p>` : ''}
+            ${(!hasImg || b.desc) ? `<p style="color: rgba(255,255,255,0.9); font-size: clamp(0.85rem, 2vw, 1rem); margin-bottom: 15px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); line-height: 1.4;">${b.desc}</p>` : ''}
             ${!hasImg ? `<button style="background: ${b.btnColor || 'var(--accent)'}; color: ${b.btnTextColor || 'var(--bg-deep)'}; border: none; padding: 10px 24px; border-radius: 30px; font-weight: bold; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">${b.btnText || 'Ver Más'}</button>` : ''}
           </div>
         </div>
