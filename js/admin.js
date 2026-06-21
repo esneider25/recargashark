@@ -2547,14 +2547,54 @@ function renderSettings(container) {
         <div class="admin-card-header">
           <h3 class="admin-card-title">📜 Términos y Condiciones</h3>
         </div>
-        <div class="admin-form-group">
-          <label class="admin-form-label">Texto de Términos (Se mostrará a nuevos usuarios) <span style="font-weight: 400; color:var(--text-muted);">(Permite HTML)</span></label>
-          <textarea id="setting-terms" class="admin-form-textarea" rows="6">${config.termsAndConditions || ''}</textarea>
-        </div>
+        <div id="terms-editor-container"></div>
+        <img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" onload="
+          window.currentTermsEditorData = Array.isArray(getSettings().termsAndConditions) 
+            ? getSettings().termsAndConditions 
+            : typeof getSettings().termsAndConditions === 'string'
+              ? [{ title: 'Términos', titleColor: '#00e5c3', desc: getSettings().termsAndConditions, descColor: '#e2e8f0' }]
+              : [
+                  { title: 'Aceptación del Servicio', titleColor: '#00e5c3', desc: 'Al utilizar nuestros servicios, aceptas que todas las recargas son procesadas tras la verificación del pago.', descColor: '#e2e8f0' },
+                  { title: 'Reembolsos', titleColor: '#00e5c3', desc: 'No nos hacemos responsables por IDs incorrectos...', descColor: '#e2e8f0' }
+                ];
+          window.renderTermsEditor();
+        ">
       </div>
     </div>
   `;
 }
+
+window.renderTermsEditor = function() {
+  const container = document.getElementById('terms-editor-container');
+  if(!container) return;
+  container.innerHTML = window.currentTermsEditorData.map((t, i) => \`
+    <div style="border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-bottom: 10px; background: rgba(0,0,0,0.2);">
+      <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <div style="flex: 1;">
+          <label class="admin-form-label">Título \${i+1}</label>
+          <input type="text" class="admin-form-input" value="\${t.title || ''}" onchange="window.currentTermsEditorData[\${i}].title = this.value">
+        </div>
+        <div style="width: 80px;">
+          <label class="admin-form-label">Color</label>
+          <input type="color" class="admin-form-input" value="\${t.titleColor || '#00e5c3'}" style="height: 48px; padding: 2px;" onchange="window.currentTermsEditorData[\${i}].titleColor = this.value">
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+          <label class="admin-form-label">Descripción</label>
+          <textarea class="admin-form-textarea" rows="2" onchange="window.currentTermsEditorData[\${i}].desc = this.value">\${t.desc || ''}</textarea>
+        </div>
+        <div style="width: 80px;">
+          <label class="admin-form-label">Color</label>
+          <input type="color" class="admin-form-input" value="\${t.descColor || '#e2e8f0'}" style="height: 48px; padding: 2px;" onchange="window.currentTermsEditorData[\${i}].descColor = this.value">
+        </div>
+        <button class="btn-secondary" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; height: 48px; align-self: flex-end; padding: 0 15px;" onclick="window.currentTermsEditorData.splice(\${i}, 1); window.renderTermsEditor()">🗑️</button>
+      </div>
+    </div>
+  \`).join('') + \`
+    <button class="btn-secondary" onclick="window.currentTermsEditorData.push({title:'', titleColor:'#00e5c3', desc:'', descColor:'#e2e8f0'}); window.renderTermsEditor()" style="width: 100%; border-style: dashed; padding: 12px; margin-top: 10px; justify-content: center;">+ Agregar Nueva Sección</button>
+  \`;
+};
 
 function adminSaveSettings() {
   const whatsapp = document.getElementById('setting-whatsapp').value;
@@ -2565,7 +2605,7 @@ function adminSaveSettings() {
   const maintenance = document.getElementById('setting-maintenance').checked;
   const announcementEnabled = document.getElementById('setting-announcement-enabled').checked;
   const announcementMessage = document.getElementById('setting-announcement-msg').value;
-  const termsAndConditions = document.getElementById('setting-terms').value;
+  const termsAndConditions = window.currentTermsEditorData || [];
 
   saveSettings({ whatsapp, whatsappChannel, instagram, telegram, schedule, maintenance, announcementEnabled, announcementMessage, termsAndConditions });
   showAdminToast('✅ Configuración guardada', 'success');

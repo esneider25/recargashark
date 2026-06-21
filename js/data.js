@@ -19,7 +19,11 @@ let SITE_SETTINGS = {
   schedule: 'Lunes a Domingo 8:00 AM – 11:00 PM',
   announcementEnabled: false,
   announcementMessage: '¡Bienvenido a RecargaShark! Estamos procesando pedidos con normalidad.',
-  termsAndConditions: '<h4>1. Aceptación del Servicio</h4><p>Al utilizar nuestros servicios, aceptas que todas las recargas son procesadas tras la verificación del pago.</p><h4>2. Reembolsos</h4><p>No nos hacemos responsables por IDs incorrectos proporcionados por el usuario. Verifica bien tus datos antes de pagar.</p><h4>3. Tiempos de Entrega</h4><p>El tiempo de procesamiento varía entre 5 a 15 minutos en horario laboral.</p>'
+  termsAndConditions: [
+    { title: 'Aceptación del Servicio', titleColor: '#00e5c3', desc: 'Al utilizar nuestros servicios, aceptas que todas las recargas son procesadas tras la verificación del pago.', descColor: '#e2e8f0' },
+    { title: 'Reembolsos', titleColor: '#00e5c3', desc: 'No nos hacemos responsables por IDs incorrectos proporcionados por el usuario. Verifica bien tus datos antes de pagar.', descColor: '#e2e8f0' },
+    { title: 'Tiempos de Entrega', titleColor: '#00e5c3', desc: 'El tiempo de procesamiento varía entre 5 a 15 minutos en horario laboral.', descColor: '#e2e8f0' }
+  ]
 };
 
 // ── Messaging System ──
