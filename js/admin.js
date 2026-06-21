@@ -2753,12 +2753,12 @@ function renderCustomers(container) {
         <input type="text" id="admin-customers-search" class="admin-form-input" style="flex: 1; margin-bottom: 0;" placeholder="Buscar por Email, Nombre o WhatsApp..." onkeyup="filterCustomersSearch(this.value)">
       </div>
       <div style="overflow-x: auto; padding-bottom: 15px;">
-        <table class="admin-table" style="width: 100%; border-collapse: collapse; min-width: 1000px;">
+        <table class="admin-table" style="width: 100%; border-collapse: collapse;">
           <thead>
             <tr>
-              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Email</th>
-              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Nombre</th>
-              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">WhatsApp</th>
+              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Email</th>
+              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">Nombre</th>
+              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">WhatsApp</th>
               <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Fecha Registro</th>
               <th style="text-align: right; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Monedero</th>
               <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Rol / Descuento</th>
@@ -2804,9 +2804,9 @@ function renderCustomersTable(usersList) {
     const wallet = user.wallet || 0;
     return `
       <tr class="customer-row">
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${user.email || 'N/A'}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${user.name || '-'}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${user.whatsapp || 'N/A'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.email || 'N/A'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.name || '-'}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">${user.whatsapp || 'N/A'}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${dateStr}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: right; color: #10b981; font-weight: bold; white-space: nowrap;">${wallet.toFixed(2)}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; white-space: nowrap;">
@@ -2820,7 +2820,7 @@ function renderCustomersTable(usersList) {
           </button>
         </td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; white-space: nowrap;">
-          <div style="display: flex; gap: 5px; justify-content: center;">
+          <div style="display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;">
             <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openCustomerInfoModal('${user.uid}')">ℹ️ Info</button>
             <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openEditWalletModal('${user.uid}', '${user.email}', ${wallet})">Editar Saldo</button>
           </div>
