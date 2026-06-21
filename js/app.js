@@ -590,8 +590,7 @@ async function submitOrder() {
 
   const priceBs = parseFloat(usdToBs(finalUsd));
 
-  const isResellerAlert = typeof userProfile !== 'undefined' && userProfile && userProfile.role === 'revendedor';
-  if ((appState.selectedPaymentId === 'wallet' || isResellerAlert) && typeof window !== 'undefined') {
+  if (appState.selectedPaymentId === 'wallet' && typeof window !== 'undefined') {
     await new Promise((resolve) => {
       const modalContainer = document.createElement('div');
       modalContainer.id = 'warning-modal-container';

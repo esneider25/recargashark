@@ -277,7 +277,11 @@ function initFirebaseData() {
           SPAM_TRACKER.blocked = data.blocked || [];
         }
         else if (key === 'order_counter') localStorage.setItem('recargashark_order_counter', data.toString());
-        else if (key === 'banners') BANNERS = data || [];
+        else if (key === 'banners') {
+          if (!data) BANNERS = [];
+          else if (Array.isArray(data)) BANNERS = data.filter(Boolean);
+          else BANNERS = Object.values(data);
+        }
       }
       checkLoadComplete(key);
     }, (error) => {
