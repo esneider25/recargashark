@@ -3290,7 +3290,10 @@ function renderBanners(container) {
   let html = `
     <div class="admin-header-flex">
       <h2>🖼️ Gestión de Banners</h2>
-      <button class="btn-primary" onclick="adminEditBanner(null)">+ Nuevo Banner</button>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-secondary" onclick="saveToDb('banners', BANNERS); showAdminToast('✅ Banners guardados', 'success');">💾 Guardar Cambios</button>
+        <button class="btn-primary" onclick="adminEditBanner(null)">+ Nuevo Banner</button>
+      </div>
     </div>
     <p style="color: var(--text-secondary); margin-bottom: 20px;">
       Configura los banners deslizantes de la página principal. Opcionalmente sube una imagen para el fondo.
