@@ -3666,6 +3666,8 @@ function renderLanding(container) {
   const config = (typeof getLandingConfig === 'function') ? getLandingConfig() : {};
   const hero = config.heroStats || [{},{},{},{}];
   const how = config.howItWorks || [{},{},{}];
+  const features = config.features || [{},{},{},{},{},{}];
+  const faq = config.faq || [{},{},{},{}];
   const footer = config.footer || {};
 
   container.innerHTML = `
@@ -3713,7 +3715,41 @@ function renderLanding(container) {
       </div>
     </div>
 
-    <!-- 3. Footer -->
+    <!-- 3. ¿Por qué RecargaShark? (Ventajas) -->
+    <div class="admin-card" style="margin-bottom: 20px;">
+      <h2 class="admin-card-title">¿Por qué RecargaShark? (Ventajas)</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">Edita las 6 ventajas competitivas.</p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+        ${[0, 1, 2, 3, 4, 5].map(i => `
+          <div class="admin-form-group" style="background: var(--bg-deep); padding: 15px; border-radius: 8px;">
+            <label style="font-size: 0.8rem; color: var(--text-secondary);">Icono (Emoji) ${i+1}</label>
+            <input type="text" id="landing-feat-icon-${i}" class="admin-form-input" value="${features[i] && features[i].icon ? features[i].icon : ''}" placeholder="Ej: ⚡">
+            <label style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">Título Ventaja ${i+1}</label>
+            <input type="text" id="landing-feat-title-${i}" class="admin-form-input" value="${features[i] && features[i].title ? features[i].title : ''}">
+            <label style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">Descripción Ventaja ${i+1}</label>
+            <textarea id="landing-feat-desc-${i}" class="admin-form-textarea" rows="2">${features[i] && features[i].desc ? features[i].desc : ''}</textarea>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- 4. Preguntas Frecuentes (FAQ) -->
+    <div class="admin-card" style="margin-bottom: 20px;">
+      <h2 class="admin-card-title">Preguntas Frecuentes (FAQ)</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">Edita las 4 preguntas más frecuentes.</p>
+      <div style="display: flex; flex-direction: column; gap: 15px;">
+        ${[0, 1, 2, 3].map(i => `
+          <div class="admin-form-group" style="background: var(--bg-deep); padding: 15px; border-radius: 8px;">
+            <label style="font-size: 0.8rem; color: var(--text-secondary);">Pregunta ${i+1}</label>
+            <input type="text" id="landing-faq-q-${i}" class="admin-form-input" value="${faq[i] && faq[i].q ? faq[i].q : ''}">
+            <label style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">Respuesta ${i+1} (Permite HTML como &lt;strong&gt;)</label>
+            <textarea id="landing-faq-a-${i}" class="admin-form-textarea" rows="2">${faq[i] && faq[i].a ? faq[i].a : ''}</textarea>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- 5. Footer -->
     <div class="admin-card">
       <h2 class="admin-card-title">Pie de Página (Footer)</h2>
       <div class="admin-form-group">
@@ -3734,6 +3770,15 @@ function adminSaveLanding() {
       icon: document.getElementById(`landing-how-icon-${i}`).value,
       title: document.getElementById(`landing-how-title-${i}`).value,
       desc: document.getElementById(`landing-how-desc-${i}`).value
+    })),
+    features: [0, 1, 2, 3, 4, 5].map(i => ({
+      icon: document.getElementById(`landing-feat-icon-${i}`).value,
+      title: document.getElementById(`landing-feat-title-${i}`).value,
+      desc: document.getElementById(`landing-feat-desc-${i}`).value
+    })),
+    faq: [0, 1, 2, 3].map(i => ({
+      q: document.getElementById(`landing-faq-q-${i}`).value,
+      a: document.getElementById(`landing-faq-a-${i}`).value
     })),
     footer: {
       disclaimer: document.getElementById('landing-footer-disc').value

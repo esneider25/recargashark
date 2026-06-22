@@ -870,36 +870,23 @@ function renderFeaturesSection() {
           <p>La mejor experiencia en recargas digitales de Venezuela</p>
         </div>
         <div class="features-grid">
-          <div class="feature-card fade-in-up stagger-1">
-            <span class="feature-icon">⚡</span>
-            <h3>Entrega Inmediata</h3>
-            <p>Recibe tu recarga en minutos después de confirmar el pago. Sin esperas innecesarias.</p>
-          </div>
-          <div class="feature-card fade-in-up stagger-2">
-            <span class="feature-icon">🔒</span>
-            <h3>100% Seguro</h3>
-            <p>Tus datos están protegidos. Proceso transparente y confiable con cada transacción.</p>
-          </div>
-          <div class="feature-card fade-in-up stagger-3">
-            <span class="feature-icon">💬</span>
-            <h3>Soporte 24/7</h3>
-            <p>Atención personalizada por WhatsApp. Estamos disponibles para resolver cualquier duda.</p>
-          </div>
-          <div class="feature-card fade-in-up stagger-4">
-            <span class="feature-icon">💰</span>
-            <h3>Mejores Precios</h3>
-            <p>Tasas competitivas actualizadas diariamente. Precios justos para todos.</p>
-          </div>
-          <div class="feature-card fade-in-up stagger-5">
-            <span class="feature-icon">📡</span>
-            <h3>Rastreo en Vivo</h3>
-            <p>Sigue el estado de tu pedido en tiempo real. Sabrás exactamente cuándo estará lista tu recarga.</p>
-          </div>
-          <div class="feature-card fade-in-up stagger-6">
-            <span class="feature-icon">🌎</span>
-            <h3>Cobertura Total</h3>
-            <p>Servicio para toda Venezuela con pagos en bolívares, dólares y criptomonedas.</p>
-          </div>
+          ${(() => {
+            const features = (typeof LANDING_CONFIG !== 'undefined' && LANDING_CONFIG.features) ? LANDING_CONFIG.features : [
+              { title: 'Entrega Inmediata', desc: 'Recibe tu recarga en minutos después de confirmar el pago. Sin esperas innecesarias.', icon: '⚡' },
+              { title: '100% Seguro', desc: 'Tus datos están protegidos. Proceso transparente y confiable con cada transacción.', icon: '🔒' },
+              { title: 'Soporte 24/7', desc: 'Atención personalizada por WhatsApp. Estamos disponibles para resolver cualquier duda.', icon: '💬' },
+              { title: 'Mejores Precios', desc: 'Tasas competitivas actualizadas diariamente. Precios justos para todos.', icon: '💰' },
+              { title: 'Rastreo en Vivo', desc: 'Sigue el estado de tu pedido en tiempo real. Sabrás exactamente cuándo estará lista tu recarga.', icon: '📡' },
+              { title: 'Cobertura Total', desc: 'Servicio para toda Venezuela con pagos en bolívares, dólares y criptomonedas.', icon: '🌎' }
+            ];
+            return features.map((feat, idx) => `
+              <div class="feature-card fade-in-up stagger-${(idx % 6) + 1}">
+                <span class="feature-icon">${feat.icon}</span>
+                <h3>${feat.title}</h3>
+                <p>${feat.desc}</p>
+              </div>
+            `).join('');
+          })()}
         </div>
       </div>
     </section>
@@ -916,45 +903,25 @@ function renderFAQ() {
         </div>
         <div class="faq-accordion" style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;">
           
-          <details style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.3s ease;">
-            <summary style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); outline: none; list-style: none; position: relative; padding-right: 24px;">
-              ⏱️ ¿Cuánto tiempo tarda en llegar mi recarga?
-              <span style="position: absolute; right: 0; top: 0; color: var(--accent);">+</span>
-            </summary>
-            <p style="color: var(--text-secondary); margin-top: 12px; font-size: 0.95rem; line-height: 1.6;">
-              Por lo general, las recargas se procesan en un tiempo de <strong>5 a 15 minutos</strong> una vez que tu pago ha sido confirmado. En algunos casos excepcionales o durante mantenimientos del juego, puede demorar un poco más.
-            </p>
-          </details>
-
-          <details style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.3s ease;">
-            <summary style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); outline: none; list-style: none; position: relative; padding-right: 24px;">
-              ⚠️ ¿Qué pasa si me equivoco al poner mi ID del juego?
-              <span style="position: absolute; right: 0; top: 0; color: var(--accent);">+</span>
-            </summary>
-            <p style="color: var(--text-secondary); margin-top: 12px; font-size: 0.95rem; line-height: 1.6;">
-              Si notas un error en tu ID, contáctanos inmediatamente a través de nuestro botón de soporte en WhatsApp o Telegram. Si la recarga <strong>aún no ha sido procesada</strong>, podemos corregirlo. Si ya fue enviada al ID erróneo, lamentablemente no podemos revertir la transacción.
-            </p>
-          </details>
-
-          <details style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.3s ease;">
-            <summary style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); outline: none; list-style: none; position: relative; padding-right: 24px;">
-              💳 ¿Cuáles son los métodos de pago aceptados?
-              <span style="position: absolute; right: 0; top: 0; color: var(--accent);">+</span>
-            </summary>
-            <p style="color: var(--text-secondary); margin-top: 12px; font-size: 0.95rem; line-height: 1.6;">
-              Aceptamos pagos a través de <strong>Pago Móvil</strong>, <strong>Transferencia Bancaria Nacional</strong> y también criptomonedas como USDT a través de <strong>Binance Pay</strong>.
-            </p>
-          </details>
-
-          <details style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.3s ease;">
-            <summary style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); outline: none; list-style: none; position: relative; padding-right: 24px;">
-              ✅ ¿Cómo sé si mi pedido fue exitoso?
-              <span style="position: absolute; right: 0; top: 0; color: var(--accent);">+</span>
-            </summary>
-            <p style="color: var(--text-secondary); margin-top: 12px; font-size: 0.95rem; line-height: 1.6;">
-              Al finalizar tu compra, recibirás un número de referencia (Ej: RS-1234). Puedes ingresar ese código en la sección de <strong>"🔍 Mis Pedidos"</strong> en el menú superior para ver el estado en tiempo real.
-            </p>
-          </details>
+          ${(() => {
+            const faq = (typeof LANDING_CONFIG !== 'undefined' && LANDING_CONFIG.faq) ? LANDING_CONFIG.faq : [
+              { q: '⏱️ ¿Cuánto tiempo tarda en llegar mi recarga?', a: 'Por lo general, las recargas se procesan en un tiempo de <strong>5 a 15 minutos</strong> una vez que tu pago ha sido confirmado. En algunos casos excepcionales o durante mantenimientos del juego, puede demorar un poco más.' },
+              { q: '⚠️ ¿Qué pasa si me equivoco al poner mi ID del juego?', a: 'Si notas un error en tu ID, contáctanos inmediatamente a través de nuestro botón de soporte en WhatsApp o Telegram. Si la recarga <strong>aún no ha sido procesada</strong>, podemos corregirlo. Si ya fue enviada al ID erróneo, lamentablemente no podemos revertir la transacción.' },
+              { q: '💳 ¿Cuáles son los métodos de pago aceptados?', a: 'Aceptamos pagos a través de <strong>Pago Móvil</strong>, <strong>Transferencia Bancaria Nacional</strong> y también criptomonedas como USDT a través de <strong>Binance Pay</strong>.' },
+              { q: '✅ ¿Cómo sé si mi pedido fue exitoso?', a: 'Al finalizar tu compra, recibirás un número de referencia (Ej: RS-1234). Puedes ingresar ese código en la sección de <strong>"🔍 Mis Pedidos"</strong> en el menú superior para ver el estado en tiempo real.' }
+            ];
+            return faq.map(item => `
+              <details style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.3s ease;">
+                <summary style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); outline: none; list-style: none; position: relative; padding-right: 24px;">
+                  ${item.q}
+                  <span style="position: absolute; right: 0; top: 0; color: var(--accent);">+</span>
+                </summary>
+                <p style="color: var(--text-secondary); margin-top: 12px; font-size: 0.95rem; line-height: 1.6;">
+                  ${item.a}
+                </p>
+              </details>
+            `).join('');
+          })()}
 
         </div>
       </div>
