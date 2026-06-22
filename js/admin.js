@@ -224,9 +224,14 @@ function renderDashboard(container) {
   }
 
   const completedOrders = allOrders.filter(o => o.status === 'completed');
+  const rejectedOrders = allOrders.filter(o => o.status === 'rejected' || o.status === 'invalid-id');
   const pendingCount = allOrders.filter(o => o.status === 'pending' || o.status === 'processing').length;
   const completedCount = completedOrders.length;
+  const totalProcessed = completedCount + rejectedOrders.length;
+  const rejectionRate = totalProcessed > 0 ? ((rejectedOrders.length / totalProcessed) * 100).toFixed(1) : 0;
 
+  let totalResponseTimeMs = 0;
+  let validResponseCount = 0;
   let totalRevenue = 0;
   let totalCost = 0;
 
@@ -241,10 +246,26 @@ function renderDashboard(container) {
       }
     }
     totalCost += cost;
+
+    const created = new Date(o.createdAt).getTime();
+    const completedHistory = o.statusHistory && o.statusHistory.find(h => h.status === 'completed');
+    if (completedHistory && completedHistory.timestamp) {
+      const completedTime = new Date(completedHistory.timestamp).getTime();
+      totalResponseTimeMs += (completedTime - created);
+      validResponseCount++;
+    }
   });
 
   const totalProfit = totalRevenue - totalCost;
   const marginPercentage = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0;
+
+  let avgResponseText = '--';
+  if (validResponseCount > 0) {
+    const avgMs = totalResponseTimeMs / validResponseCount;
+    const avgMins = Math.round(avgMs / 60000);
+    if (avgMins < 60) avgResponseText = `${avgMins} min`;
+    else avgResponseText = `${(avgMins / 60).toFixed(1)} h`;
+  }
 
   // Recent orders (last 5 from the filtered set)
   const recentOrders = allOrders.slice(0, 5);
@@ -297,7 +318,7 @@ function renderDashboard(container) {
     </div>
 
     <!-- General Stats -->
-    <div class="admin-stats-grid" style="margin-bottom: 24px;">
+    <div class="admin-stats-grid" style="margin-bottom: 24px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
       <div class="admin-stat-card" style="cursor: pointer;" onclick="switchTab('orders')">
         <div class="admin-stat-icon">📋</div>
         <div class="admin-stat-value" style="color: #ffb74d;">${pendingCount}</div>
@@ -307,6 +328,16 @@ function renderDashboard(container) {
         <div class="admin-stat-icon">✅</div>
         <div class="admin-stat-value" style="color: #66bb6a;">${completedCount}</div>
         <div class="admin-stat-label">Completados</div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon">⏱️</div>
+        <div class="admin-stat-value" style="color: #29b6f6;">${avgResponseText}</div>
+        <div class="admin-stat-label">Tiempo Promedio</div>
+      </div>
+      <div class="admin-stat-card">
+        <div class="admin-stat-icon">❌</div>
+        <div class="admin-stat-value" style="color: #ef5350;">${rejectionRate}%</div>
+        <div class="admin-stat-label">Tasa Rechazo</div>
       </div>
       <div class="admin-stat-card">
         <div class="admin-stat-icon">📈</div>
@@ -320,10 +351,10 @@ function renderDashboard(container) {
       </div>
     </div>
 
-    <div class="admin-dashboard-grid">
+    <div class="admin-dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 24px;">
       <div class="admin-card" style="grid-column: 1 / -1;">
         <div class="admin-card-header">
-          <h2 class="admin-card-title">📈 Ingresos de los Últimos 7 Días (USD)</h2>
+          <h2 class="admin-card-title">📈 Ingresos de Pedidos Completados (USD)</h2>
         </div>
         <div style="height: 300px; width: 100%; position: relative;">
           <canvas id="earningsChart"></canvas>
@@ -360,12 +391,30 @@ function renderDashboard(container) {
         </div>
       </div>
 
-      <div class="admin-card" style="grid-column: 1 / -1;">
+      <div class="admin-card">
         <div class="admin-card-header">
           <h2 class="admin-card-title">📊 Ventas por Producto</h2>
         </div>
-        <div style="height: 300px; width: 100%;">
+        <div style="height: 300px; width: 100%; position: relative;">
           <canvas id="ordersChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h2 class="admin-card-title">💳 Métodos de Pago Usados</h2>
+        </div>
+        <div style="height: 300px; width: 100%; position: relative;">
+          <canvas id="paymentsChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="admin-card" style="grid-column: 1 / -1;">
+        <div class="admin-card-header">
+          <h2 class="admin-card-title">🌟 Top Clientes VIP</h2>
+        </div>
+        <div id="dash-top-clients" style="min-height: 100px; position: relative;">
+          <div class="admin-loading-spinner" style="margin: 40px auto;"></div>
         </div>
       </div>
     </div>
@@ -373,54 +422,160 @@ function renderDashboard(container) {
 
   // Initialize Chart.js
   setTimeout(() => {
-    const ctx = document.getElementById('ordersChart');
-    if (ctx && window.Chart) {
+    if (window.Chart) {
       const completedOrders = allOrders.filter(o => o.status === 'completed');
-      const salesByProduct = {};
-      completedOrders.forEach(o => {
-        salesByProduct[o.productName] = (salesByProduct[o.productName] || 0) + 1;
-      });
+      
+      // 1. Orders Chart Data
+      const ctxOrders = document.getElementById('ordersChart');
+      if (ctxOrders) {
+        const salesByProduct = {};
+        completedOrders.forEach(o => {
+          salesByProduct[o.productName] = (salesByProduct[o.productName] || 0) + 1;
+        });
 
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: Object.keys(salesByProduct).length > 0 ? Object.keys(salesByProduct) : ['Sin Datos'],
-          datasets: [{
-            label: 'Pedidos Completados',
-            data: Object.keys(salesByProduct).length > 0 ? Object.values(salesByProduct) : [0],
-            backgroundColor: 'rgba(0, 229, 195, 0.6)',
-            borderColor: 'rgba(0, 229, 195, 1)',
-            borderWidth: 1,
-            borderRadius: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              labels: { color: '#a0b1cc' }
-            }
+        new Chart(ctxOrders, {
+          type: 'bar',
+          data: {
+            labels: Object.keys(salesByProduct).length > 0 ? Object.keys(salesByProduct) : ['Sin Datos'],
+            datasets: [{
+              label: 'Pedidos Completados',
+              data: Object.keys(salesByProduct).length > 0 ? Object.values(salesByProduct) : [0],
+              backgroundColor: 'rgba(0, 229, 195, 0.6)',
+              borderColor: 'rgba(0, 229, 195, 1)',
+              borderWidth: 1,
+              borderRadius: 4
+            }]
           },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { color: '#a0b1cc', stepSize: 1 },
-              grid: { color: 'rgba(255,255,255,0.1)' }
-            },
-            x: {
-              ticks: { color: '#a0b1cc' },
-              grid: { display: false }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#a0b1cc' } } },
+            scales: {
+              y: { beginAtZero: true, ticks: { color: '#a0b1cc', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.1)' } },
+              x: { ticks: { color: '#a0b1cc' }, grid: { display: false } }
             }
           }
-        }
-      });
+        });
+      }
+
+      // 2. Earnings Chart Data
+      const ctxEarnings = document.getElementById('earningsChart');
+      if (ctxEarnings) {
+        const earningsByDate = {};
+        completedOrders.forEach(o => {
+          const date = new Date(o.createdAt).toLocaleDateString('es-VE', { month: 'short', day: 'numeric' });
+          earningsByDate[date] = (earningsByDate[date] || 0) + (o.priceUsd || 0);
+        });
+
+        const dates = Object.keys(earningsByDate).reverse();
+        const amounts = Object.values(earningsByDate).reverse();
+
+        new Chart(ctxEarnings, {
+          type: 'line',
+          data: {
+            labels: dates.length > 0 ? dates : ['Sin Datos'],
+            datasets: [{
+              label: 'Ingresos (USD)',
+              data: amounts.length > 0 ? amounts : [0],
+              borderColor: '#42a5f5',
+              backgroundColor: 'rgba(66, 165, 245, 0.2)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.3,
+              pointBackgroundColor: '#42a5f5',
+              pointRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#a0b1cc' } } },
+            scales: {
+              y: { beginAtZero: true, ticks: { color: '#a0b1cc' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+              x: { ticks: { color: '#a0b1cc' }, grid: { display: false } }
+            }
+          }
+        });
+      }
+
+      // 3. Payments Chart Data
+      const ctxPayments = document.getElementById('paymentsChart');
+      if (ctxPayments) {
+        const pmCounts = {};
+        completedOrders.forEach(o => {
+          pmCounts[o.paymentMethodName || 'Monedero'] = (pmCounts[o.paymentMethodName || 'Monedero'] || 0) + 1;
+        });
+
+        new Chart(ctxPayments, {
+          type: 'doughnut',
+          data: {
+            labels: Object.keys(pmCounts).length > 0 ? Object.keys(pmCounts) : ['Sin Datos'],
+            datasets: [{
+              data: Object.keys(pmCounts).length > 0 ? Object.values(pmCounts) : [1],
+              backgroundColor: ['#42a5f5', '#66bb6a', '#ffb74d', '#ef5350', '#ab47bc', '#26c6da'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'right', labels: { color: '#a0b1cc' } } }
+          }
+        });
+      }
     }
-    // Fetch total users dynamically
+    // Fetch total users and top VIPs dynamically
     firebase.database().ref('users').once('value').then(snap => {
-      const el = document.getElementById('dash-total-users');
-      if (el) el.innerText = snap.numChildren();
-    }).catch(e => console.error("Error fetching users count:", e));
+      const usersData = snap.val() || {};
+      const elUsers = document.getElementById('dash-total-users');
+      if (elUsers) elUsers.innerText = snap.numChildren();
+
+      const elTopClients = document.getElementById('dash-top-clients');
+      if (elTopClients) {
+        const usersArray = Object.keys(usersData).map(uid => ({
+          uid,
+          name: usersData[uid].name || 'Usuario',
+          email: usersData[uid].email || '',
+          role: usersData[uid].role || 'cliente',
+          spent: usersData[uid].totalSpent || 0
+        })).filter(u => u.spent > 0);
+
+        usersArray.sort((a, b) => b.spent - a.spent);
+        const top5 = usersArray.slice(0, 5);
+
+        if (top5.length === 0) {
+          elTopClients.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted);">Aún no hay clientes con compras.</div>`;
+        } else {
+          elTopClients.innerHTML = `
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+              <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); text-align: left; font-size: 0.85rem;">
+                  <th style="padding: 10px;">#</th>
+                  <th style="padding: 10px;">Cliente</th>
+                  <th style="padding: 10px;">Rol</th>
+                  <th style="padding: 10px; text-align: right;">Total Comprado</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${top5.map((u, i) => `
+                  <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 12px 10px; color: var(--text-secondary);">${i + 1}</td>
+                    <td style="padding: 12px 10px;">
+                      <div style="font-weight: bold; color: #fff;">${u.name}</div>
+                      <div style="font-size: 0.75rem; color: var(--text-muted);">${u.email}</div>
+                    </td>
+                    <td style="padding: 12px 10px;">
+                      <span class="admin-badge" style="background: ${u.role === 'revendedor' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(0, 229, 195, 0.15)'}; color: ${u.role === 'revendedor' ? '#d8b4fe' : '#00e5c3'};">${u.role.toUpperCase()}</span>
+                    </td>
+                    <td style="padding: 12px 10px; text-align: right; font-weight: bold; color: #42a5f5;">$${u.spent.toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          `;
+        }
+      }
+    }).catch(e => console.error("Error fetching users data:", e));
   }, 100);
 }
 
