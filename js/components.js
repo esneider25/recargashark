@@ -57,22 +57,17 @@ function renderHero() {
           </button>
         </div>
         <div class="hero-stats">
+          ${(typeof LANDING_CONFIG !== 'undefined' && LANDING_CONFIG.heroStats ? LANDING_CONFIG.heroStats : [
+            { value: '15000', label: 'Recargas realizadas' },
+            { value: '3200', label: 'Clientes satisfechos' },
+            { value: PRODUCTS.length.toString(), label: 'Productos disponibles' },
+            { value: CATEGORIES.length.toString(), label: 'Categorías' }
+          ]).map(stat => `
           <div class="hero-stat">
-            <div class="hero-stat-value" data-counter="15000">0</div>
-            <div class="hero-stat-label">Recargas realizadas</div>
+            <div class="hero-stat-value" data-counter="${stat.value.replace(/[^0-9]/g, '') || 0}">0</div>
+            <div class="hero-stat-label">${stat.label}</div>
           </div>
-          <div class="hero-stat">
-            <div class="hero-stat-value" data-counter="3200">0</div>
-            <div class="hero-stat-label">Clientes satisfechos</div>
-          </div>
-          <div class="hero-stat">
-            <div class="hero-stat-value" data-counter="${PRODUCTS.length}">0</div>
-            <div class="hero-stat-label">Productos disponibles</div>
-          </div>
-          <div class="hero-stat">
-            <div class="hero-stat-value" data-counter="${CATEGORIES.length}">0</div>
-            <div class="hero-stat-label">Categorías</div>
-          </div>
+          `).join('')}
         </div>
       </div>
       <div class="hero-gradient-orb hero-orb-1"></div>
@@ -201,30 +196,25 @@ function renderHowItWorks() {
           <p>Tres simples pasos para recargar</p>
         </div>
         <div class="steps-grid">
-          <div class="step-card fade-in-up stagger-1">
-            <div class="step-number">1</div>
-            <div class="step-icon">🎯</div>
-            <h3>Elige tu Producto</h3>
-            <p>Selecciona el juego, gift card, streaming o billetera que deseas recargar y elige el paquete.</p>
-          </div>
-          <div class="step-connector">
-            <svg width="40" height="2" viewBox="0 0 40 2"><line x1="0" y1="1" x2="40" y2="1" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 4"/></svg>
-          </div>
-          <div class="step-card fade-in-up stagger-2">
-            <div class="step-number">2</div>
-            <div class="step-icon">💳</div>
-            <h3>Realiza el Pago</h3>
-            <p>Paga con Pago Móvil, transferencia bancaria o Binance Pay. Envía el comprobante.</p>
-          </div>
-          <div class="step-connector">
-            <svg width="40" height="2" viewBox="0 0 40 2"><line x1="0" y1="1" x2="40" y2="1" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 4"/></svg>
-          </div>
-          <div class="step-card fade-in-up stagger-3">
-            <div class="step-number">3</div>
-            <div class="step-icon">🚀</div>
-            <h3>Recibe tu Recarga</h3>
-            <p>Verificamos tu pago y procesamos la recarga. ¡Listo en minutos!</p>
-          </div>
+          ${(() => {
+            const steps = (typeof LANDING_CONFIG !== 'undefined' && LANDING_CONFIG.howItWorks) ? LANDING_CONFIG.howItWorks : [
+              { title: 'Elige tu Producto', desc: 'Selecciona el juego, gift card, streaming o billetera que deseas recargar y elige el paquete.', icon: '🎯' },
+              { title: 'Realiza el Pago', desc: 'Paga con Pago Móvil, transferencia bancaria o Binance Pay. Envía el comprobante.', icon: '💳' },
+              { title: 'Recibe tu Recarga', desc: 'Verificamos tu pago y procesamos la recarga. ¡Listo en minutos!', icon: '🚀' }
+            ];
+            return steps.map((step, idx) => `
+              <div class="step-card fade-in-up stagger-${idx + 1}">
+                <div class="step-number">${idx + 1}</div>
+                <div class="step-icon">${step.icon}</div>
+                <h3>${step.title}</h3>
+                <p>${step.desc}</p>
+              </div>
+              ${idx < steps.length - 1 ? `
+              <div class="step-connector">
+                <svg width="40" height="2" viewBox="0 0 40 2"><line x1="0" y1="1" x2="40" y2="1" stroke="var(--accent)" stroke-width="2" stroke-dasharray="4 4"/></svg>
+              </div>` : ''}
+            `).join('');
+          })()}
         </div>
       </div>
     </section>
@@ -1023,8 +1013,9 @@ function renderFooter() {
         </div>
         <div class="footer-bottom">
           <p class="footer-disclaimer">
-            RecargaShark no está afiliado con Garena, Tencent, Roblox Corporation, miHoYo ni ninguna otra empresa mencionada.
-            Todos los nombres y logotipos son marcas registradas de sus respectivos dueños.
+            ${(typeof LANDING_CONFIG !== 'undefined' && LANDING_CONFIG.footer && LANDING_CONFIG.footer.disclaimer) 
+              ? LANDING_CONFIG.footer.disclaimer.replace(/\\n/g, '<br>') 
+              : 'RecargaShark no está afiliado con Garena, Tencent, Roblox Corporation, miHoYo ni ninguna otra empresa mencionada.<br>Todos los nombres y logotipos son marcas registradas de sus respectivos dueños.'}
           </p>
           <p class="footer-copy">© ${new Date().getFullYear()} RecargaShark. Todos los derechos reservados.</p>
         </div>

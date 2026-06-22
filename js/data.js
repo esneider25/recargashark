@@ -59,6 +59,24 @@ let SITE_SETTINGS = {
   ]
 };
 
+// ── Landing Page Config ──
+let LANDING_CONFIG = {
+  heroStats: [
+    { value: '15000', label: 'Recargas realizadas' },
+    { value: '3200', label: 'Clientes satisfechos' },
+    { value: '25+', label: 'Productos disponibles' },
+    { value: '4', label: 'Categorías' }
+  ],
+  howItWorks: [
+    { title: 'Elige tu Producto', desc: 'Selecciona el juego, gift card, streaming o billetera que deseas recargar y elige el paquete.', icon: '🛒' },
+    { title: 'Realiza el Pago', desc: 'Paga con Pago Móvil, transferencia bancaria o Binance Pay. Envía el comprobante.', icon: '💳' },
+    { title: 'Recibe tu Recarga', desc: 'Procesaremos tu pedido en minutos y recibirás tus diamantes, saldo o código directo en tu cuenta.', icon: '⚡' }
+  ],
+  footer: {
+    disclaimer: 'RecargaShark no está afiliado con Garena, Tencent, Roblox Corporation, miHoYo ni ninguna otra empresa mencionada. Todos los nombres y logotipos son marcas registradas de sus respectivos dueños.'
+  }
+};
+
 // ── Messaging System ──
 let MESSAGES = JSON.parse(localStorage.getItem('recargashark_messages') || '[]');
 
@@ -226,7 +244,7 @@ function initFirebaseData() {
     });
   }
 
-  const keysToLoad = ['products', 'categories', 'payment_methods', 'exchange_rate', 'settings', 'api_configs', 'discounts', 'messages', 'orders', 'telegram_config', 'quick_replies', 'spam_tracker', 'order_counter', 'banners'];
+  const keysToLoad = ['products', 'categories', 'payment_methods', 'exchange_rate', 'settings', 'api_configs', 'discounts', 'messages', 'orders', 'telegram_config', 'quick_replies', 'spam_tracker', 'order_counter', 'banners', 'landing_config'];
   const loadedKeys = new Set();
 
   function checkLoadComplete(key) {
@@ -236,7 +254,7 @@ function initFirebaseData() {
       if (typeof renderApp === 'function') renderApp();
       if (typeof initAdminApp === 'function') initAdminApp();
     } else if (window.DATA_LOADED) {
-      const uiKeys = ['products', 'categories', 'payment_methods', 'exchange_rate', 'settings', 'banners'];
+      const uiKeys = ['products', 'categories', 'payment_methods', 'exchange_rate', 'settings', 'banners', 'landing_config'];
       const adminKeys = [...uiKeys, 'orders', 'api_configs', 'discounts', 'quick_replies'];
       if (uiKeys.includes(key)) {
         if (typeof renderApp === 'function' && typeof appState !== 'undefined' && appState.currentView === 'home') renderApp();
@@ -257,6 +275,7 @@ function initFirebaseData() {
         else if (key === 'payment_methods') { PAYMENT_METHODS.length = 0; data.forEach(p => PAYMENT_METHODS.push(p)); }
         else if (key === 'exchange_rate') Object.assign(EXCHANGE_RATE, data);
         else if (key === 'settings') Object.assign(SITE_SETTINGS, data);
+        else if (key === 'landing_config') Object.assign(LANDING_CONFIG, data);
         else if (key === 'api_configs') { API_CONFIGS.length = 0; data.forEach(a => API_CONFIGS.push(a)); }
         else if (key === 'discounts') { DISCOUNT_CODES.length = 0; data.forEach(d => DISCOUNT_CODES.push(d)); }
         else if (key === 'messages') {
@@ -366,6 +385,15 @@ function getSettings() {
 function saveSettings(newSettings) {
   Object.assign(SITE_SETTINGS, newSettings);
   saveToDb('settings', SITE_SETTINGS);
+}
+
+function saveLandingConfig(newConfig) {
+  Object.assign(LANDING_CONFIG, newConfig);
+  saveToDb('landing_config', LANDING_CONFIG);
+}
+
+function getLandingConfig() {
+  return LANDING_CONFIG;
 }
 
 // ── Messages CRUD ──
