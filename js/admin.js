@@ -3742,7 +3742,7 @@ function renderLanding(container) {
           <div class="admin-form-group" style="background: var(--bg-deep); padding: 15px; border-radius: 8px;">
             <label style="font-size: 0.8rem; color: var(--text-secondary);">Pregunta ${i+1}</label>
             <input type="text" id="landing-faq-q-${i}" class="admin-form-input" value="${faq[i] && faq[i].q ? faq[i].q : ''}">
-            <label style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">Respuesta ${i+1} (Permite HTML como &lt;strong&gt;)</label>
+            <label style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">Respuesta ${i+1}</label>
             <textarea id="landing-faq-a-${i}" class="admin-form-textarea" rows="2">${faq[i] && faq[i].a ? faq[i].a : ''}</textarea>
           </div>
         `).join('')}
