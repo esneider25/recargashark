@@ -83,10 +83,12 @@ function renderApp() {
   border: 1px solid transparent;
 }
 
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-  transform: translateX(4px);
+@media (hover: hover) {
+  .nav-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    transform: translateX(4px);
+  }
 }
 
 .nav-item.active {
@@ -132,10 +134,12 @@ function renderApp() {
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.glass-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  border-color: rgba(255, 255, 255, 0.1);
+@media (hover: hover) {
+  .glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
 }
 
 /* Responsive */
@@ -148,19 +152,28 @@ function renderApp() {
     bottom: 0;
     top: auto;
     flex-direction: row;
-    padding: 10px;
+    padding: 10px 15px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
     z-index: 100;
     border-right: none;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(6, 13, 26, 0.95);
-    justify-content: space-around;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 10px;
   }
+  /* Hide scrollbar for a cleaner look */
+  .panel-sidebar::-webkit-scrollbar { display: none; }
+  .panel-sidebar { -ms-overflow-style: none; scrollbar-width: none; }
+  
   .nav-item {
     flex-direction: column;
-    padding: 8px 4px;
+    padding: 8px 10px;
     gap: 4px;
     font-size: 0.65rem;
     text-align: center;
+    min-width: 75px;
   }
   .nav-item:hover { transform: none; }
   #nav-spacer { display: none; }
