@@ -1399,7 +1399,7 @@ function initNotifications() {
       // Check if chat is currently open
       const secSupport = document.getElementById('sec-support');
       if (!(secSupport && secSupport.classList.contains('active'))) {
-         const lastMsg = userConv.messages[userConv.messages.length - 1];
+         const lastMsg = (userConv.messages && userConv.messages.length > 0) ? userConv.messages[userConv.messages.length - 1] : null;
          if (lastMsg && lastMsg.sender === 'admin') {
            triggerNotification('Nuevo mensaje de Soporte', lastMsg.text);
          }
