@@ -301,12 +301,12 @@ function initFirebaseData() {
         else if (key === 'messages') {
           if (!data) MESSAGES = [];
           else if (Array.isArray(data)) MESSAGES = data.filter(Boolean);
-          else MESSAGES = Object.values(data);
+          else MESSAGES = Object.values(data).filter(Boolean);
         }
         else if (key === 'orders') {
           if (!data) ORDERS = [];
           else if (Array.isArray(data)) ORDERS = data.filter(Boolean);
-          else ORDERS = Object.values(data);
+          else ORDERS = Object.values(data).filter(Boolean);
           ORDERS.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         }
         else if (key === 'telegram_config') Object.assign(TELEGRAM_CONFIG, data);
@@ -319,7 +319,7 @@ function initFirebaseData() {
         else if (key === 'banners') {
           if (!data) BANNERS = [];
           else if (Array.isArray(data)) BANNERS = data.filter(Boolean);
-          else BANNERS = Object.values(data);
+          else BANNERS = Object.values(data).filter(Boolean);
         }
       }
       checkLoadComplete(key);
