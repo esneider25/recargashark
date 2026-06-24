@@ -672,6 +672,7 @@ async function renderCustomers(container) {
     if (snap.exists()) {
       const data = snap.val();
       users = Object.keys(data).map(uid => ({ uid, ...data[uid] }));
+      window.ADMIN_CUSTOMERS = users;
     }
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -694,7 +695,8 @@ async function renderCustomers(container) {
       lastOrder: null,
       role: u.role || 'cliente',
       discountPercentage: u.discountPercentage || 0,
-      isBlocked: !!u.isBlocked
+      isBlocked: !!u.isBlocked,
+      wallet: u.wallet || 0
     };
   });
 
@@ -748,16 +750,31 @@ async function renderCustomers(container) {
           ${c.whatsapp ? `<span style="font-size: 0.8rem; color: #25D366; margin-top: 2px;">WhatsApp: ${c.whatsapp}</span>` : ''}
         </div>
       </div>
-      <div style="color: var(--text-secondary);">Pedidos: <b>${c.totalOrders}</b></div>
-      <div style="font-weight: bold; color: #00e5c3;">$${c.totalSpent.toFixed(2)}</div>
+      <div style="color: var(--text-secondary);">
+        Pedidos: <b>${c.totalOrders}</b><br>
+        <span style="font-size: 0.8rem; color: #0ea5e9;">Gasto: $${c.totalSpent.toFixed(2)}</span>
+      </div>
+      <div style="font-weight: bold; color: #10b981; font-size: 1.1rem;">
+        $${(parseFloat(c.wallet) || 0).toFixed(2)}
+      </div>
       <div style="display: flex; flex-direction: column; gap: 8px;">
         ${c.uid ? `
-          <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; width: fit-content;" onclick="openRoleModal('${c.uid}', '${c.role}', ${c.discountPercentage})">
-            ${c.role === 'revendedor' ? '💼 Revend (' + c.discountPercentage + '%)' : '👤 Cliente'}
-          </button>
-          <button class="btn ${c.isBlocked ? 'btn-danger' : 'btn-secondary'}" style="padding: 4px 10px; font-size: 0.75rem; width: fit-content;" onclick="toggleBlockUser('${c.uid}', ${c.isBlocked})">
-            ${c.isBlocked ? '🚫 Bloqueado' : '✅ Activo'}
-          </button>
+          <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+            <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; width: fit-content;" onclick="openRoleModal('${c.uid}', '${c.role}', ${c.discountPercentage})">
+              ${c.role === 'revendedor' ? '💼 Revend (' + c.discountPercentage + '%)' : '👤 Cliente'}
+            </button>
+            <button class="btn ${c.isBlocked ? 'btn-danger' : 'btn-secondary'}" style="padding: 4px 10px; font-size: 0.75rem; width: fit-content;" onclick="toggleBlockUser('${c.uid}', ${c.isBlocked})">
+              ${c.isBlocked ? '🚫 Bloqueado' : '✅ Activo'}
+            </button>
+          </div>
+          <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+            <button class="btn btn-primary" style="padding: 4px 10px; font-size: 0.75rem; width: fit-content;" onclick="openEditWalletModal('${c.uid}', '${c.contact}', ${c.wallet})">
+              💰 Saldo
+            </button>
+            <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; width: fit-content;" onclick="openCustomerInfoModal('${c.uid}')">
+              ℹ️ Info
+            </button>
+          </div>
         ` : `<span style="font-size: 0.8rem; color: var(--text-muted);">Invitado</span>`}
       </div>
     </div>
@@ -773,8 +790,8 @@ async function renderCustomers(container) {
       <div class="admin-card" style="padding: 0; overflow: hidden;">
         <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; background: rgba(0,0,0,0.2); padding: 16px; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border);">
           <div>Cliente</div>
-          <div>Total Pedidos</div>
-          <div>Gastado (USD)</div>
+          <div>Pedidos / Gasto</div>
+          <div>Saldo (Monedero)</div>
           <div>Gestión</div>
         </div>
         <div style="padding: 16px;">
@@ -907,7 +924,7 @@ function openCategoryModal(catId = null) {
   const modalContent = document.getElementById('admin-modal-content');
   if (!overlay || !modalContent) return;
 
-  let cat = { id: '', name: '', icon: '📦', color: '#00e5c3', gradient: 'linear-gradient(135deg, #00e5c3, #00b89c)' };
+  let cat = { id: '', name: '', icon: '📦', color: '#0ea5e9', gradient: 'linear-gradient(135deg, #0ea5e9, #00b89c)' };
   if (catId) {
     const found = CATEGORIES.find(c => c.id === catId);
     if (found) cat = JSON.parse(JSON.stringify(found));
@@ -1536,7 +1553,7 @@ function openProductModal(productId = null) {
             <label class="admin-form-label" for="m-prod-gradient">Gradiente CSS</label>
             <input type="text" class="admin-form-input" id="m-prod-gradient" value="${product.colorGradient}" placeholder="linear-gradient(135deg, #00b2ff, #0066ff)">
           </div>
-          <div class="admin-form-group" style="display: flex; gap: 20px; align-items: center; margin-top: 12px;">
+          <div class="admin-form-group" style="display: flex; gap: 20px; align-items: center; margin-top: 12px; flex-wrap: wrap;">
             <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem;">
               <input type="checkbox" id="m-prod-popular" ${product.popular ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: var(--accent);">
               🔥 Popular
@@ -1544,6 +1561,10 @@ function openProductModal(productId = null) {
             <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem;">
               <input type="checkbox" id="m-prod-isnew" ${product.isNew ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: var(--accent);">
               ✨ Nuevo
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem;">
+              <input type="checkbox" id="m-prod-out-of-stock" ${product.isOutofStock ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #ef5350;">
+              ⛔ Agotado
             </label>
           </div>
         </div>
@@ -1630,7 +1651,7 @@ function renderTempPackages() {
         <label style="font-size: 0.75rem; color: var(--text-muted);">ID API (Opc.)</label>
         <input type="text" class="admin-form-input" style="padding: 6px 10px; font-size: 0.85rem;" value="${pkg.apiServiceId || ''}" onchange="updateTempPackageField(${idx}, 'apiServiceId', this.value)" placeholder="Ej. 341">
       </div>
-      <div style="display: flex; flex-direction: column; gap: 4px; flex: 0.5; min-width: 50px;">
+      <div style="display: flex; flex-direction: column; gap: 4px; flex: 0.5; min-width: 60px; justify-content: flex-end; align-items: center; margin-bottom: 10px;">
         <label style="font-size: 0.75rem; color: var(--text-muted); text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px;">
           <span>Agotado</span>
           <input type="checkbox" ${pkg.isOutofStock ? 'checked' : ''} onchange="updateTempPackageField(${idx}, 'isOutofStock', this.checked)" style="width: 16px; height: 16px; accent-color: #ef5350; cursor: pointer;">
@@ -1660,6 +1681,7 @@ function updateTempPackageField(index, field, value) {
   else if (field === 'priceUsd') pkg.priceUsd = parseFloat(value) || 0.0;
   else if (field === 'costUsd') pkg.costUsd = parseFloat(value) || 0.0;
   else if (field === 'apiServiceId') pkg.apiServiceId = value.trim();
+  else if (field === 'isOutofStock') pkg.isOutofStock = value;
   else pkg.label = value.trim();
 }
 
@@ -1792,7 +1814,7 @@ function renderOrders(container) {
   // Then, filter by search term if provided
   if (searchTerm) {
     filteredOrders = filteredOrders.filter(o =>
-      o.id.toLowerCase().includes(searchTerm) ||
+      (o.id && o.id.toLowerCase().includes(searchTerm)) ||
       (o.customerContact && o.customerContact.toLowerCase().includes(searchTerm)) ||
       (o.accountEmail && o.accountEmail.toLowerCase().includes(searchTerm)) ||
       (o.gameId && o.gameId.toLowerCase().includes(searchTerm)) ||
@@ -2291,7 +2313,7 @@ function exportOrders() {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `recargashark_pedidos_${new Date().toISOString().slice(0, 10)}.csv`;
+  link.download = `recargaaccessplay_pedidos_${new Date().toISOString().slice(0, 10)}.csv`;
   link.click();
   URL.revokeObjectURL(link.href);
   showAdminToast(`📥 ${orders.length} pedidos exportados a CSV`, 'success');
@@ -2402,7 +2424,7 @@ async function testTelegramConnection() {
     return;
   }
   showAdminToast('Probando conexión...', 'info');
-  const success = await sendTelegramMessage('🦈 <b>¡Conexión Exitosa!</b>\nLas notificaciones de RecargaShark están funcionando correctamente.');
+  const success = await sendTelegramMessage('🤖 <b>¡Conexión Exitosa!</b>\nLas notificaciones de AccessPlay están funcionando correctamente.');
   if (success) {
     showAdminToast('✅ Mensaje de prueba enviado', 'success');
   } else {
@@ -2704,7 +2726,7 @@ function renderSettings(container) {
         <div class="admin-form-group">
           <label class="admin-form-label" style="display: flex; justify-content: space-between; align-items: center;">
             <span>Activar Mensaje al entrar a la página</span>
-            <input type="checkbox" id="setting-announcement-enabled" ${config.announcementEnabled ? 'checked' : ''} style="width: 24px; height: 24px; accent-color: #00e5c3; cursor: pointer;">
+            <input type="checkbox" id="setting-announcement-enabled" ${config.announcementEnabled ? 'checked' : ''} style="width: 24px; height: 24px; accent-color: #0ea5e9; cursor: pointer;">
           </label>
         </div>
         <div class="admin-form-group">
@@ -2728,18 +2750,18 @@ function renderSettings(container) {
     const isOldHtmlString = typeof savedTerms === 'string' && savedTerms.includes('<h4>');
     
     const defaultTerms = [
-      { title: 'Aceptación del Servicio', titleColor: '#00e5c3', desc: 'Al utilizar RecargaShark, registrarte o realizar un pedido, aceptas estar de acuerdo con todos los términos aquí descritos. Nos reservamos el derecho de modificar estos términos en cualquier momento.', descColor: '#e2e8f0' },
-      { title: 'Responsabilidad de Datos (IDs y Cuentas)', titleColor: '#facc15', desc: 'El cliente es el único responsable de proporcionar correctamente su ID de jugador, Zona o datos de cuenta. RecargaShark no se hace responsable por recargas enviadas a cuentas equivocadas debido a errores tipográficos por parte del usuario.', descColor: '#e2e8f0' },
+      { title: 'Aceptación del Servicio', titleColor: '#0ea5e9', desc: 'Al utilizar AccessPlay, registrarte o realizar un pedido, aceptas estar de acuerdo con todos los términos aquí descritos. Nos reservamos el derecho de modificar estos términos en cualquier momento.', descColor: '#e2e8f0' },
+      { title: 'Responsabilidad de Datos (IDs y Cuentas)', titleColor: '#facc15', desc: 'El cliente es el único responsable de proporcionar correctamente su ID de jugador, Zona o datos de cuenta. AccessPlay no se hace responsable por recargas enviadas a cuentas equivocadas debido a errores tipográficos por parte del usuario.', descColor: '#e2e8f0' },
       { title: 'Tiempos de Procesamiento y Entrega', titleColor: '#60a5fa', desc: 'Las recargas automatizadas toman de 1 a 5 minutos una vez confirmado el pago. Las recargas manuales (internas) o envíos de códigos pueden tardar entre 10 a 30 minutos dentro de nuestro horario de atención. En caso de fallas con los servidores del juego, el tiempo puede extenderse.', descColor: '#e2e8f0' },
       { title: 'Política de Reembolsos', titleColor: '#ef4444', desc: 'Una vez que una recarga o código digital ha sido procesado y entregado con éxito, NO hay devoluciones ni reembolsos bajo ninguna circunstancia. Solo se emitirán reembolsos (a su saldo de Monedero o cuenta bancaria) si el producto no pudo ser entregado por falta de stock o error de nuestra plataforma.', descColor: '#e2e8f0' },
-      { title: 'Uso del Monedero y Revendedores', titleColor: '#10b981', desc: 'El saldo cargado al Monedero (Wallet) no puede ser retirado en efectivo, solo puede ser utilizado para compras dentro de la tienda. Los usuarios con rol de \'Revendedor\' gozan de descuentos exclusivos, pero están sujetos a las mismas políticas de no-reembolso por errores de tipeo de IDs.', descColor: '#e2e8f0' },
+      { title: 'Uso del Monedero y Revendedores', titleColor: '#0ea5e9', desc: 'El saldo cargado al Monedero (Wallet) no puede ser retirado en efectivo, solo puede ser utilizado para compras dentro de la tienda. Los usuarios con rol de \'Revendedor\' gozan de descuentos exclusivos, pero están sujetos a las mismas políticas de no-reembolso por errores de tipeo de IDs.', descColor: '#e2e8f0' },
       { title: 'Prevención de Fraude y Bloqueos', titleColor: '#a855f7', desc: 'Contamos con sistemas Anti-Spam. Cualquier intento de enviar comprobantes falsos, comprobantes reciclados, o hacer múltiples pedidos falsos resultará en el BLOQUEO PERMANENTE de la IP, número de WhatsApp y cuenta del usuario, perdiendo acceso a su Monedero sin derecho a reclamo.', descColor: '#e2e8f0' }
     ];
 
     window.currentTermsEditorData = Array.isArray(savedTerms) 
       ? savedTerms 
       : typeof savedTerms === 'string' && !isOldHtmlString
-        ? [{ title: 'Términos', titleColor: '#00e5c3', desc: savedTerms, descColor: '#e2e8f0' }]
+        ? [{ title: 'Términos', titleColor: '#0ea5e9', desc: savedTerms, descColor: '#e2e8f0' }]
         : defaultTerms;
     
     if (!window.currentTermsEditorData) window.currentTermsEditorData = defaultTerms;
@@ -2767,7 +2789,7 @@ window.renderTermsEditor = function() {
         </div>
         <div style="width: 80px;">
           <label class="admin-form-label">Color</label>
-          <input type="color" class="admin-form-input" value="${t.titleColor || '#00e5c3'}" style="height: 48px; padding: 2px;" onchange="window.currentTermsEditorData[${i}].titleColor = this.value">
+          <input type="color" class="admin-form-input" value="${t.titleColor || '#0ea5e9'}" style="height: 48px; padding: 2px;" onchange="window.currentTermsEditorData[${i}].titleColor = this.value">
         </div>
       </div>
       <div style="display: flex; gap: 10px;">
@@ -2783,7 +2805,7 @@ window.renderTermsEditor = function() {
       </div>
     </div>
   `).join('') + `
-    <button class="btn-secondary" onclick="window.currentTermsEditorData.push({title:'', titleColor:'#00e5c3', desc:'', descColor:'#e2e8f0'}); window.renderTermsEditor()" style="width: 100%; border-style: dashed; padding: 12px; margin-top: 10px; justify-content: center;">+ Agregar Nueva Sección</button>
+    <button class="btn-secondary" onclick="window.currentTermsEditorData.push({title:'', titleColor:'#0ea5e9', desc:'', descColor:'#e2e8f0'}); window.renderTermsEditor()" style="width: 100%; border-style: dashed; padding: 12px; margin-top: 10px; justify-content: center;">+ Agregar Nueva Sección</button>
   `;
 };
 
@@ -2824,7 +2846,7 @@ function checkAdminNotifications() {
 
     // Web Push Notification
     if ('Notification' in window && Notification.permission === 'granted') {
-      let title = 'RecargaShark';
+      let title = 'AccessPlay';
       let body = '';
       if (currentPending > lastPendingOrders) {
         body += `¡Nuevo pedido recibido! Tienes ${currentPending} pendiente(s).\n`;
@@ -2832,7 +2854,7 @@ function checkAdminNotifications() {
       if (currentUnread > lastUnreadMessages) {
         body += `¡Nuevo mensaje de soporte!`;
       }
-      new Notification(title, { body, icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦈</text></svg>' });
+      new Notification(title, { body, icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>' });
     }
   }
 
@@ -2840,84 +2862,6 @@ function checkAdminNotifications() {
   lastUnreadMessages = currentUnread;
 }
 
-// ── Login System & PWA & Theme ──
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  window.deferredAdminPrompt = e;
-});
-
-function toggleAdminTheme() {
-  document.body.classList.toggle('light-theme');
-  const isLight = document.body.classList.contains('light-theme');
-  localStorage.setItem('recargashark_theme', isLight ? 'light' : 'dark');
-}
-
-function handleAdminInstallClick() {
-  if (window.deferredAdminPrompt) {
-    window.deferredAdminPrompt.prompt();
-    window.deferredAdminPrompt.userChoice.then((choice) => {
-      window.deferredAdminPrompt = null;
-    });
-  } else if (typeof window.showManualInstallModal === 'function') {
-    window.showManualInstallModal();
-  } else {
-    alert("Para instalar la app, abre las opciones de tu navegador y selecciona 'Instalar aplicación'.");
-  }
-}
-
-function renderAdminLogin(container) {
-  container.innerHTML = `
-    <div style="position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-deep); color: var(--text-primary); text-align: center; padding: 20px;">
-      <div style="font-size: 4rem; margin-bottom: 20px;">🦈</div>
-      <h1 style="font-family: var(--font-display); font-size: 2rem; margin-bottom: 10px;">Acceso Administrativo</h1>
-      <p style="color: var(--text-secondary); max-width: 400px; line-height: 1.5; margin-bottom: 30px;">
-        Por favor, ingresa tus credenciales para acceder al panel.
-      </p>
-      
-      <form id="admin-login-form" style="width: 100%; max-width: 320px; text-align: left; background: var(--bg-surface); padding: 30px; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-        <div class="admin-form-group" style="margin-bottom: 16px;">
-          <label class="admin-form-label" style="display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px;">Correo Electrónico</label>
-          <input type="email" id="admin-email" class="admin-form-input" style="width: 100%; padding: 10px 14px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); outline: none;" placeholder="admin@recargashark.com" required>
-        </div>
-        <div class="admin-form-group" style="margin-bottom: 24px;">
-          <label class="admin-form-label" style="display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px;">Contraseña</label>
-          <input type="password" id="admin-pass" class="admin-form-input" style="width: 100%; padding: 10px 14px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); outline: none;" placeholder="********" required>
-        </div>
-        <button type="submit" id="admin-login-btn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 1rem; border: none; border-radius: var(--radius-md); cursor: pointer;">Iniciar Sesión</button>
-        <div id="admin-login-error" style="color: #ff6b6b; font-size: 0.85rem; margin-top: 15px; text-align: center; display: none;">Credenciales incorrectas.</div>
-      </form>
-      
-      <button id="pwa-install-btn" onclick="handleAdminInstallClick()" class="btn btn-secondary" style="margin-top: 15px; width: 100%; max-width: 320px; justify-content: center; background: rgba(0, 229, 195, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 12px; border-radius: var(--radius-md); font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease;">📲 Instalar App Admin</button>
-      
-      <a href="index.html" class="admin-view-store-btn" style="margin-top: 30px; border: none; background: transparent; color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">← Volver a la Tienda</a>
-    </div>
-  `;
-
-  document.getElementById('admin-login-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const email = document.getElementById('admin-email').value.trim();
-    const pass = document.getElementById('admin-pass').value.trim();
-    const btn = document.getElementById('admin-login-btn');
-    const errorDiv = document.getElementById('admin-login-error');
-    
-    if (!email || !pass) return;
-    
-    btn.innerHTML = 'Verificando... <span class="tracking-spinner" style="display:inline-block; font-size: 0.9rem;">⏳</span>';
-    btn.disabled = true;
-    errorDiv.style.display = 'none';
-
-    firebase.auth().signInWithEmailAndPassword(email, pass)
-      .then(result => {
-        // success handled by onAuthStateChanged
-      })
-      .catch(error => {
-        errorDiv.textContent = 'Acceso denegado: Credenciales incorrectas';
-        errorDiv.style.display = 'block';
-        btn.innerHTML = 'Iniciar Sesión';
-        btn.disabled = false;
-      });
-  });
-}
 
 // ════════════════════════════════════════
 // QUICK REPLIES
@@ -3038,57 +2982,6 @@ function adminDeleteQuickReply(id) {
   }
 }
 
-// ════════════════════════════════════════
-// CUSTOMERS (USERS & WALLETS)
-// ════════════════════════════════════════
-
-function renderCustomers(container) {
-  container.innerHTML = `
-    <div class="admin-header-flex">
-      <h2 class="admin-page-title">👥 Gestión de Clientes</h2>
-      <button class="btn btn-secondary" onclick="renderCustomers(document.getElementById('admin-main-content'))">🔄 Refrescar</button>
-    </div>
-    <div class="admin-card" style="margin-top: 20px;">
-      <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <input type="text" id="admin-customers-search" class="admin-form-input" style="flex: 1; margin-bottom: 0;" placeholder="Buscar por Email, Nombre o WhatsApp..." onkeyup="filterCustomersSearch(this.value)">
-      </div>
-      <div style="overflow-x: auto; padding-bottom: 15px;">
-        <table class="admin-table" style="width: 100%; border-collapse: collapse; min-width: 1000px;">
-          <thead>
-            <tr>
-              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Email</th>
-              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Nombre</th>
-              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">WhatsApp</th>
-              <th style="text-align: left; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Fecha Registro</th>
-              <th style="text-align: right; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Monedero</th>
-              <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Rol / Descuento</th>
-              <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Estado</th>
-              <th style="text-align: center; padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); white-space: nowrap;">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="customers-table-body">
-            <tr><td colspan="8" style="text-align: center; padding: 20px;">Cargando clientes...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-
-  firebase.database().ref('users').once('value').then(snap => {
-    const usersData = snap.val() || {};
-    const usersList = Object.keys(usersData).map(uid => ({
-      uid: uid,
-      ...usersData[uid]
-    })).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-    // Store in global state for search filtering
-    window.ADMIN_CUSTOMERS = usersList;
-    renderCustomersTable(usersList);
-  }).catch(err => {
-    console.error(err);
-    document.getElementById('customers-table-body').innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: red;">Error cargando clientes</td></tr>`;
-  });
-}
 
 function renderCustomersTable(usersList) {
   const tbody = document.getElementById('customers-table-body');
@@ -3099,7 +2992,9 @@ function renderCustomersTable(usersList) {
     return;
   }
 
-  tbody.innerHTML = usersList.map(user => {
+  const displayList = usersList.slice(0, 100);
+
+  let html = displayList.map(user => {
     const dateStr = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A';
     const wallet = user.wallet || 0;
     return `
@@ -3108,7 +3003,7 @@ function renderCustomersTable(usersList) {
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${user.name || '-'}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${user.whatsapp || 'N/A'}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); white-space: nowrap;">${dateStr}</td>
-        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: right; color: #10b981; font-weight: bold; white-space: nowrap;">${wallet.toFixed(2)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: right; color: #0ea5e9; font-weight: bold; white-space: nowrap;">${wallet.toFixed(2)}</td>
         <td style="padding: 12px; border-bottom: 1px solid var(--border-color); text-align: center; white-space: nowrap;">
           <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="openRoleModal('${user.uid}', '${user.role || 'cliente'}', ${user.discountPercentage || 0}, ${user.referralLimit || 30})">
             ${(user.role === 'revendedor') ? '💼 Revend (+' + (user.discountPercentage || 0) + '%)' : (user.role === 'influencer' ? '✨ Influencer' : '👤 Cliente')}
@@ -3128,6 +3023,12 @@ function renderCustomersTable(usersList) {
       </tr>
     `;
   }).join('');
+
+  if (usersList.length > 100) {
+    html += `<tr><td colspan="8" style="text-align: center; padding: 15px; color: var(--text-muted); font-size: 0.9rem;">Mostrando 100 de ${usersList.length} clientes. Usa el buscador para encontrar a alguien específico.</td></tr>`;
+  }
+
+  tbody.innerHTML = html;
 }
 
 function filterCustomersSearch(searchTerm) {
@@ -3238,7 +3139,7 @@ function renderWithdrawals(container) {
 
       let statusBadge = '';
       if (w.status === 'pending') statusBadge = '<span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">⏳ Pendiente</span>';
-      else if (w.status === 'completed') statusBadge = '<span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">✅ Pagado</span>';
+      else if (w.status === 'completed') statusBadge = '<span style="background: rgba(16, 185, 129, 0.2); color: #0ea5e9; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">✅ Pagado</span>';
       else if (w.status === 'rejected') statusBadge = '<span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">🚫 Rechazado</span>';
 
       return `
@@ -3249,12 +3150,12 @@ function renderWithdrawals(container) {
                       <div style="font-size: 0.75rem; color: var(--text-secondary);">${w.userEmail}</div>
                     </td>
                     <td style="padding: 12px; font-size: 0.9rem; text-align: right; font-weight: bold; color: #3b82f6;">${w.amountPoints} PTS</td>
-                    <td style="padding: 12px; font-size: 0.9rem; text-align: right; font-weight: bold; color: #10b981;">$${w.amountUsd} USD</td>
+                    <td style="padding: 12px; font-size: 0.9rem; text-align: right; font-weight: bold; color: #0ea5e9;">$${w.amountUsd} USD</td>
                     <td style="padding: 12px; font-size: 0.85rem;">${detailsStr}</td>
                     <td style="padding: 12px; text-align: center;">${statusBadge}</td>
                     <td style="padding: 12px; text-align: right;">
                       ${w.status === 'pending' ? `
-                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem; margin-bottom: 5px; background: #10b981; border-color: #10b981;" onclick="updateWithdrawalStatus('${w.id}', 'completed', '${w.userId}', ${w.amountPoints})">Aprobar</button>
+                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem; margin-bottom: 5px; background: #0ea5e9; border-color: #0ea5e9;" onclick="updateWithdrawalStatus('${w.id}', 'completed', '${w.userId}', ${w.amountPoints})">Aprobar</button>
                         <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="updateWithdrawalStatus('${w.id}', 'rejected', '${w.userId}', ${w.amountPoints})">Rechazar</button>
                       ` : ''}
                     </td>
@@ -3321,7 +3222,7 @@ window.updateWithdrawalStatus = function (withdrawalId, newStatus, userId, point
     const sortedTx = [...user.transactions].sort((a, b) => b.date - a.date);
     txHtml = sortedTx.map(tx => {
       let sign = tx.amount >= 0 ? '+' : '';
-      let color = tx.amount >= 0 ? '#10b981' : '#ff5252';
+      let color = tx.amount >= 0 ? '#0ea5e9' : '#ff5252';
       let icon = tx.type === 'deposit' ? '💰' : (tx.type === 'purchase' ? '🛒' : '🔄');
       return `
       <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 8px;">
@@ -3342,7 +3243,7 @@ window.updateWithdrawalStatus = function (withdrawalId, newStatus, userId, point
     <div style="background: var(--bg-surface); padding: 30px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 500px; max-height: 80vh; display: flex; flex-direction: column;">
       <h3 style="margin-top: 0; margin-bottom: 20px; display: flex; justify-content: space-between;">
         <span>Movimientos de ${user.name || user.email}</span>
-        <span style="color: #10b981;">$${parseFloat(user.wallet || 0).toFixed(2)}</span>
+        <span style="color: #0ea5e9;">$${parseFloat(user.wallet || 0).toFixed(2)}</span>
       </h3>
       <div style="overflow-y: auto; flex: 1; padding-right: 10px;">
         ${txHtml}
@@ -3406,7 +3307,7 @@ window.openCustomerInfoModal = function (uid) {
           </div>
           <div>
             <div style="font-size: 0.8rem; color: var(--text-secondary);">Saldo (Monedero)</div>
-            <div style="font-weight: bold; color: #10b981;">$${wallet.toFixed(2)}</div>
+            <div style="font-weight: bold; color: #0ea5e9;">$${wallet.toFixed(2)}</div>
           </div>
         </div>
 
@@ -3417,7 +3318,7 @@ window.openCustomerInfoModal = function (uid) {
             <div style="font-size: 0.75rem; color: var(--text-secondary);">Pendientes</div>
           </div>
           <div style="flex: 1; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 10px; text-align: center;">
-            <div style="font-size: 1.5rem; font-weight: bold; color: #10b981;">${completed}</div>
+            <div style="font-size: 1.5rem; font-weight: bold; color: #0ea5e9;">${completed}</div>
             <div style="font-size: 0.75rem; color: var(--text-secondary);">Completadas</div>
           </div>
           <div style="flex: 1; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 10px; text-align: center;">
@@ -3443,7 +3344,7 @@ window.openRoleModal = function (uid, currentRole, currentDiscount, currentRefer
           <label>Rol</label>
           <select id="role-select" class="form-input" onchange="document.getElementById('discount-group').style.display = this.value === 'revendedor' ? 'block' : 'none'; document.getElementById('referral-limit-group').style.display = this.value === 'influencer' ? 'block' : 'none'">
             <option value="cliente" ${(currentRole !== 'revendedor' && currentRole !== 'influencer') ? 'selected' : ''}>Cliente Normal</option>
-            <option value="influencer" ${currentRole === 'influencer' ? 'selected' : ''}>Influencer Shark</option>
+            <option value="influencer" ${currentRole === 'influencer' ? 'selected' : ''}>Influencer AccessPlay</option>
             <option value="revendedor" ${currentRole === 'revendedor' ? 'selected' : ''}>Revendedor</option>
           </select>
         </div>
@@ -3843,5 +3744,3 @@ function adminSaveLanding() {
     showAdminToast('❌ Error: Función de guardado no encontrada', 'error');
   }
 }
-
-

@@ -16,7 +16,7 @@ function renderNavbar() {
           <li><a onclick="scrollToSection('how-it-works')" data-section="how-it-works">¿Cómo Funciona?</a></li>
           <li><a onclick="scrollToSection('features')" data-section="features">Ventajas</a></li>
           <li><a onclick="navigateTo('lookup')" data-section="lookup">🔍 Mis Pedidos</a></li>
-          <li id="pwa-install-nav-item" style="display: none;">
+          <li id="pwa-install-nav-item">
             <a onclick="handleStoreInstallClick()" class="nav-cta" style="background: rgba(0, 229, 195, 0.15); color: var(--accent); border: 1px solid var(--accent); cursor:pointer;">📲 Instalar App</a>
           </li>
           <li id="auth-nav-item">
