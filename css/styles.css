@@ -147,6 +147,7 @@ body {
 }
 .nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
 .nav-links a {
+    white-space: nowrap;
   color: var(--text-secondary); text-decoration: none; font-size: 0.88rem;
   font-weight: 500; padding: 8px 14px; border-radius: var(--radius-sm);
   transition: var(--transition); cursor: pointer;
@@ -1396,7 +1397,8 @@ body {
     transform: translateY(0); opacity: 1; visibility: visible;
   }
   .nav-links li { width: 100%; text-align: center; }
-  .nav-links a { display: block; padding: 12px; font-size: 1.1rem; }
+  .nav-links a {
+    white-space: nowrap; display: block; padding: 12px; font-size: 1.1rem; }
 
   /* Tracking & Specifics */
   .tracking-details-grid { grid-template-columns: 1fr; }
