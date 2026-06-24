@@ -139,7 +139,7 @@ function initAdminApp() {
           </li>
         </ul>
         <div class="admin-sidebar-footer" style="display:flex; flex-direction:column; gap:10px;">
-          <button id="pwa-install-sidebar-btn" onclick="handleAdminInstallClick()" class="admin-view-store-btn" style="background:var(--accent); color:var(--bg-deep); cursor:pointer;">
+          <button id="pwa-install-sidebar-btn" onclick="handleStoreInstallClick()" class="admin-view-store-btn" style="background:var(--accent); color:var(--bg-deep); cursor:pointer;">
             📲 Instalar App
           </button>
           <button class="admin-view-store-btn" onclick="toggleAdminTheme()" style="background:var(--bg-surface); color:var(--text-primary); cursor:pointer;">
@@ -3713,34 +3713,43 @@ function renderLanding(container) {
 }
 
 function adminSaveLanding() {
-  const newConfig = {
-    heroStats: [0, 1, 2, 3].map(i => ({
-      value: document.getElementById(`landing-hero-val-${i}`).value,
-      label: document.getElementById(`landing-hero-lbl-${i}`).value
-    })),
-    howItWorks: [0, 1, 2].map(i => ({
-      icon: document.getElementById(`landing-how-icon-${i}`).value,
-      title: document.getElementById(`landing-how-title-${i}`).value,
-      desc: document.getElementById(`landing-how-desc-${i}`).value
-    })),
-    features: [0, 1, 2, 3, 4, 5].map(i => ({
-      icon: document.getElementById(`landing-feat-icon-${i}`).value,
-      title: document.getElementById(`landing-feat-title-${i}`).value,
-      desc: document.getElementById(`landing-feat-desc-${i}`).value
-    })),
-    faq: [0, 1, 2, 3].map(i => ({
-      q: document.getElementById(`landing-faq-q-${i}`).value,
-      a: document.getElementById(`landing-faq-a-${i}`).value
-    })),
-    footer: {
-      disclaimer: document.getElementById('landing-footer-disc').value
+  try {
+    const newConfig = {
+      heroStats: [0, 1, 2, 3].map(i => {
+        const valEl = document.getElementById(`landing-hero-val-${i}`);
+        const lblEl = document.getElementById(`landing-hero-lbl-${i}`);
+        return { value: valEl ? valEl.value : '', label: lblEl ? lblEl.value : '' };
+      }),
+      howItWorks: [0, 1, 2].map(i => {
+        const icEl = document.getElementById(`landing-how-icon-${i}`);
+        const titEl = document.getElementById(`landing-how-title-${i}`);
+        const descEl = document.getElementById(`landing-how-desc-${i}`);
+        return { icon: icEl ? icEl.value : '', title: titEl ? titEl.value : '', desc: descEl ? descEl.value : '' };
+      }),
+      features: [0, 1, 2, 3, 4, 5].map(i => {
+        const icEl = document.getElementById(`landing-feat-icon-${i}`);
+        const titEl = document.getElementById(`landing-feat-title-${i}`);
+        const descEl = document.getElementById(`landing-feat-desc-${i}`);
+        return { icon: icEl ? icEl.value : '', title: titEl ? titEl.value : '', desc: descEl ? descEl.value : '' };
+      }),
+      faq: [0, 1, 2, 3].map(i => {
+        const qEl = document.getElementById(`landing-faq-q-${i}`);
+        const aEl = document.getElementById(`landing-faq-a-${i}`);
+        return { q: qEl ? qEl.value : '', a: aEl ? aEl.value : '' };
+      }),
+      footer: {
+        disclaimer: document.getElementById('landing-footer-disc') ? document.getElementById('landing-footer-disc').value : ''
+      }
+    };
+    
+    if (typeof saveLandingConfig === 'function') {
+      saveLandingConfig(newConfig);
+      showAdminToast('✅ Diseño Web guardado', 'success');
+    } else {
+      showAdminToast('❌ Error: Función de guardado no encontrada', 'error');
     }
-  };
-  
-  if (typeof saveLandingConfig === 'function') {
-    saveLandingConfig(newConfig);
-    showAdminToast('✅ Diseño Web guardado', 'success');
-  } else {
-    showAdminToast('❌ Error: Función de guardado no encontrada', 'error');
+  } catch (err) {
+    console.error("Error en adminSaveLanding:", err);
+    alert("Error al guardar: " + err.message);
   }
 }

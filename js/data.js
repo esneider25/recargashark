@@ -289,7 +289,13 @@ function initFirebaseData() {
         else if (key === 'payment_methods') { PAYMENT_METHODS.length = 0; data.forEach(p => PAYMENT_METHODS.push(p)); }
         else if (key === 'exchange_rate') Object.assign(EXCHANGE_RATE, data);
         else if (key === 'settings') Object.assign(SITE_SETTINGS, data);
-        else if (key === 'landing_config') Object.assign(LANDING_CONFIG, data);
+        else if (key === 'landing_config') {
+          if (data.heroStats && !Array.isArray(data.heroStats)) data.heroStats = Object.values(data.heroStats);
+          if (data.howItWorks && !Array.isArray(data.howItWorks)) data.howItWorks = Object.values(data.howItWorks);
+          if (data.features && !Array.isArray(data.features)) data.features = Object.values(data.features);
+          if (data.faq && !Array.isArray(data.faq)) data.faq = Object.values(data.faq);
+          Object.assign(LANDING_CONFIG, data);
+        }
         else if (key === 'api_configs') { API_CONFIGS.length = 0; data.forEach(a => API_CONFIGS.push(a)); }
         else if (key === 'discounts') { DISCOUNT_CODES.length = 0; data.forEach(d => DISCOUNT_CODES.push(d)); }
         else if (key === 'messages') {
