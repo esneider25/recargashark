@@ -2,6 +2,45 @@
 // RecargaShark — Main App Logic & SPA Routing (v2 + Orders)
 // ============================================================
 
+// ── PWA Logic ──
+window.deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  window.deferredPrompt = e;
+  const navBtn = document.getElementById('pwa-install-nav-item');
+  if (navBtn) navBtn.style.display = 'block';
+});
+
+window.handleStoreInstallClick = function() {
+  if (window.deferredPrompt) {
+    window.deferredPrompt.prompt();
+    window.deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        const navBtn = document.getElementById('pwa-install-nav-item');
+        if (navBtn) navBtn.style.display = 'none';
+      }
+      window.deferredPrompt = null;
+    });
+  } else {
+    showManualInstallModal();
+  }
+};
+
+window.showManualInstallModal = function() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isAndroid = /android/i.test(navigator.userAgent);
+  
+  let instructions = 'Para instalar la app: Abre las opciones de tu navegador (los tres puntos arriba a la derecha) y selecciona "Añadir a la pantalla de inicio" o "Instalar aplicación".';
+  
+  if (isIOS) {
+    instructions = 'Para instalar en iPhone/iPad: Toca el ícono de "Compartir" (el cuadrado con la flecha hacia arriba) en Safari y selecciona "Añadir a la pantalla de inicio".';
+  } else if (isAndroid) {
+    instructions = 'Para instalar en Android: Toca el menú (los tres puntos) en Chrome y selecciona "Instalar aplicación" o "Añadir a la pantalla principal".';
+  }
+
+  showToast(instructions, 'info', 10000);
+};
+
 // ── State ──
 const appState = {
   currentView: 'home',        // 'home' | 'product' | 'tracking' | 'lookup'

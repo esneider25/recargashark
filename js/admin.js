@@ -139,6 +139,9 @@ function initAdminApp() {
           </li>
         </ul>
         <div class="admin-sidebar-footer" style="display:flex; flex-direction:column; gap:10px;">
+          <button id="pwa-install-sidebar-btn" onclick="handleAdminInstallClick()" class="admin-view-store-btn" style="background:var(--accent); color:var(--bg-deep); cursor:pointer;">
+            📲 Instalar App
+          </button>
           <button class="admin-view-store-btn" onclick="toggleAdminTheme()" style="background:var(--bg-surface); color:var(--text-primary); cursor:pointer;">
             🌓 Alternar Tema
           </button>
@@ -593,7 +596,8 @@ function renderProducts(container) {
     const maxPrice = product.packages.length > 0 ? Math.max(...product.packages.map(p => p.priceUsd)) : 0;
 
     let badgeHtml = '';
-    if (product.popular) badgeHtml = `<span class="admin-badge admin-badge-popular">🔥 Popular</span>`;
+    if (product.isOutofStock) badgeHtml = `<span class="admin-badge" style="background: rgba(239, 83, 80, 0.2); color: #ef5350;">⚠️ Agotado</span>`;
+    else if (product.popular) badgeHtml = `<span class="admin-badge admin-badge-popular">🔥 Popular</span>`;
     else if (product.isNew) badgeHtml = `<span class="admin-badge admin-badge-new">✨ Nuevo</span>`;
 
     const bannerContent = product.imageUrl
@@ -1438,7 +1442,7 @@ function openProductModal(productId = null) {
   let product = {
     id: '', name: '', category: 'juegos', currency: '', currencyIcon: '💎',
     imageUrl: '', color: '#00b2ff', colorGradient: 'linear-gradient(135deg, #00b2ff, #0066ff)',
-    description: '', popular: false, isNew: false, packages: []
+    description: '', popular: false, isNew: false, isOutofStock: false, packages: []
   };
 
   if (productId) {
@@ -1626,6 +1630,12 @@ function renderTempPackages() {
         <label style="font-size: 0.75rem; color: var(--text-muted);">ID API (Opc.)</label>
         <input type="text" class="admin-form-input" style="padding: 6px 10px; font-size: 0.85rem;" value="${pkg.apiServiceId || ''}" onchange="updateTempPackageField(${idx}, 'apiServiceId', this.value)" placeholder="Ej. 341">
       </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; flex: 0.5; min-width: 50px;">
+        <label style="font-size: 0.75rem; color: var(--text-muted); text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+          <span>Agotado</span>
+          <input type="checkbox" ${pkg.isOutofStock ? 'checked' : ''} onchange="updateTempPackageField(${idx}, 'isOutofStock', this.checked)" style="width: 16px; height: 16px; accent-color: #ef5350; cursor: pointer;">
+        </label>
+      </div>
       <button class="btn btn-danger" onclick="removeTempPackage(${idx})" title="Eliminar" style="padding: 6px; margin-bottom: 2px; flex-shrink: 0; min-width: 40px; height: 35px; display: flex; align-items: center; justify-content: center;">🗑️</button>
     </div>
   `).join('');
@@ -1634,7 +1644,7 @@ function renderTempPackages() {
 function addTempPackage() {
   const currencyInput = document.getElementById('m-prod-currency');
   const currencyName = currencyInput ? currencyInput.value.trim() : 'Unidades';
-  adminState.tempPackages.push({ amount: 100, priceUsd: 1.00, label: `100 ${currencyName}` });
+  adminState.tempPackages.push({ amount: 100, priceUsd: 1.00, label: `100 ${currencyName}`, isOutofStock: false });
   renderTempPackages();
 }
 
@@ -1703,6 +1713,7 @@ function saveProduct() {
     description: descText.value.trim(),
     popular: popularCheck.checked,
     isNew: isnewCheck.checked,
+    isOutofStock: document.getElementById('m-prod-out-of-stock') ? document.getElementById('m-prod-out-of-stock').checked : false,
     position: parseInt(document.getElementById('m-prod-position').value) || 999,
     packages: [...adminState.tempPackages]
   };
@@ -2829,43 +2840,83 @@ function checkAdminNotifications() {
   lastUnreadMessages = currentUnread;
 }
 
-// ── Login System ──
-function renderAdminLogin(container) {
-  container.innerHTML = `
-    <div style="display:flex; justify-content:center; align-items:center; min-height:100vh; background:var(--bg-body);">
-      <div style="background:var(--bg-surface); padding:40px; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.5); width:100%; max-width:400px; text-align:center;">
-        <div style="font-size:3rem; margin-bottom:10px;">🦈</div>
-        <h2 style="color:var(--text-primary); margin-bottom:30px;">RecargaShark Admin</h2>
-        <input type="email" id="admin-user" class="admin-input" placeholder="Correo de Administrador" style="margin-bottom:15px; text-align:center;">
-        <input type="password" id="admin-pass" class="admin-input" placeholder="Contraseña" style="margin-bottom:20px; text-align:center;" onkeydown="if(event.key==='Enter')adminLogin()">
-        <button class="admin-btn-primary" style="width:100%;" onclick="adminLogin()">Iniciar Sesión</button>
-      </div>
-    </div>
-  `;
+// ── Login System & PWA & Theme ──
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  window.deferredAdminPrompt = e;
+});
+
+function toggleAdminTheme() {
+  document.body.classList.toggle('light-theme');
+  const isLight = document.body.classList.contains('light-theme');
+  localStorage.setItem('recargashark_theme', isLight ? 'light' : 'dark');
 }
 
-function adminLogin() {
-  const user = document.getElementById('admin-user').value;
-  const pass = document.getElementById('admin-pass').value;
-  const btn = document.querySelector('.admin-btn-primary');
-
-  if (!user || !pass) {
-    alert('Ingresa correo y contraseña');
-    return;
-  }
-
-  btn.innerHTML = '<span class="tracking-spinner"></span>';
-  btn.disabled = true;
-
-  firebase.auth().signInWithEmailAndPassword(user, pass)
-    .then((userCredential) => {
-      // The onAuthStateChanged listener will handle initAdminApp
-    })
-    .catch((error) => {
-      alert('Error de inicio de sesión: ' + error.message);
-      btn.innerHTML = 'Iniciar Sesión';
-      btn.disabled = false;
+function handleAdminInstallClick() {
+  if (window.deferredAdminPrompt) {
+    window.deferredAdminPrompt.prompt();
+    window.deferredAdminPrompt.userChoice.then((choice) => {
+      window.deferredAdminPrompt = null;
     });
+  } else if (typeof window.showManualInstallModal === 'function') {
+    window.showManualInstallModal();
+  } else {
+    alert("Para instalar la app, abre las opciones de tu navegador y selecciona 'Instalar aplicación'.");
+  }
+}
+
+function renderAdminLogin(container) {
+  container.innerHTML = `
+    <div style="position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-deep); color: var(--text-primary); text-align: center; padding: 20px;">
+      <div style="font-size: 4rem; margin-bottom: 20px;">🦈</div>
+      <h1 style="font-family: var(--font-display); font-size: 2rem; margin-bottom: 10px;">Acceso Administrativo</h1>
+      <p style="color: var(--text-secondary); max-width: 400px; line-height: 1.5; margin-bottom: 30px;">
+        Por favor, ingresa tus credenciales para acceder al panel.
+      </p>
+      
+      <form id="admin-login-form" style="width: 100%; max-width: 320px; text-align: left; background: var(--bg-surface); padding: 30px; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <div class="admin-form-group" style="margin-bottom: 16px;">
+          <label class="admin-form-label" style="display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px;">Correo Electrónico</label>
+          <input type="email" id="admin-email" class="admin-form-input" style="width: 100%; padding: 10px 14px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); outline: none;" placeholder="admin@recargashark.com" required>
+        </div>
+        <div class="admin-form-group" style="margin-bottom: 24px;">
+          <label class="admin-form-label" style="display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px;">Contraseña</label>
+          <input type="password" id="admin-pass" class="admin-form-input" style="width: 100%; padding: 10px 14px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); outline: none;" placeholder="********" required>
+        </div>
+        <button type="submit" id="admin-login-btn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 1rem; border: none; border-radius: var(--radius-md); cursor: pointer;">Iniciar Sesión</button>
+        <div id="admin-login-error" style="color: #ff6b6b; font-size: 0.85rem; margin-top: 15px; text-align: center; display: none;">Credenciales incorrectas.</div>
+      </form>
+      
+      <button id="pwa-install-btn" onclick="handleAdminInstallClick()" class="btn btn-secondary" style="margin-top: 15px; width: 100%; max-width: 320px; justify-content: center; background: rgba(0, 229, 195, 0.1); border: 1px solid var(--accent); color: var(--accent); padding: 12px; border-radius: var(--radius-md); font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease;">📲 Instalar App Admin</button>
+      
+      <a href="index.html" class="admin-view-store-btn" style="margin-top: 30px; border: none; background: transparent; color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">← Volver a la Tienda</a>
+    </div>
+  `;
+
+  document.getElementById('admin-login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = document.getElementById('admin-email').value.trim();
+    const pass = document.getElementById('admin-pass').value.trim();
+    const btn = document.getElementById('admin-login-btn');
+    const errorDiv = document.getElementById('admin-login-error');
+    
+    if (!email || !pass) return;
+    
+    btn.innerHTML = 'Verificando... <span class="tracking-spinner" style="display:inline-block; font-size: 0.9rem;">⏳</span>';
+    btn.disabled = true;
+    errorDiv.style.display = 'none';
+
+    firebase.auth().signInWithEmailAndPassword(email, pass)
+      .then(result => {
+        // success handled by onAuthStateChanged
+      })
+      .catch(error => {
+        errorDiv.textContent = 'Acceso denegado: Credenciales incorrectas';
+        errorDiv.style.display = 'block';
+        btn.innerHTML = 'Iniciar Sesión';
+        btn.disabled = false;
+      });
+  });
 }
 
 // ════════════════════════════════════════
@@ -3792,6 +3843,5 @@ function adminSaveLanding() {
     showAdminToast('❌ Error: Función de guardado no encontrada', 'error');
   }
 }
-
 
 

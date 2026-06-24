@@ -16,13 +16,16 @@ function renderNavbar() {
           <li><a onclick="scrollToSection('how-it-works')" data-section="how-it-works">¿Cómo Funciona?</a></li>
           <li><a onclick="scrollToSection('features')" data-section="features">Ventajas</a></li>
           <li><a onclick="navigateTo('lookup')" data-section="lookup">🔍 Mis Pedidos</a></li>
+          <li id="pwa-install-nav-item" style="display: none;">
+            <a onclick="handleStoreInstallClick()" class="nav-cta" style="background: rgba(0, 229, 195, 0.15); color: var(--accent); border: 1px solid var(--accent); cursor:pointer;">📲 Instalar App</a>
+          </li>
           <li id="auth-nav-item">
             ${(typeof currentUser !== 'undefined' && currentUser) 
               ? `<a onclick="navigateTo('dashboard')" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Mi Perfil ($${Number((typeof userProfile !== 'undefined' && userProfile && userProfile.wallet) ? userProfile.wallet : 0).toFixed(2)})</a>`
               : `<a onclick="showAuthModal()" class="nav-cta" style="background: linear-gradient(135deg, #4f46e5, #3b82f6); cursor:pointer;">Iniciar Sesión</a>`
             }
           </li>
-          <li><a class="nav-cta" onclick="scrollToSection('catalog')">Recargar 🎮</a></li>
+          <li><a class="nav-cta" onclick="scrollToSection('catalog')">Recargar ⚡</a></li>
           <li><a class="theme-toggle-btn" onclick="toggleTheme()" style="cursor:pointer; font-size: 1.2rem;" title="Cambiar Tema">🌓</a></li>
         </ul>
         <button class="mobile-toggle" onclick="toggleMobileMenu()" aria-label="Menu">☰</button>
@@ -268,11 +271,11 @@ function renderProductCard(product, index) {
   const productType = product.type || 'game-id';
   const typeBadges = { 'account': '🔐', 'code': '🎫', 'game-id': '' };
 
-  const badge = product.popular
-    ? '<span class="game-card-badge badge-popular">🔥 Popular</span>'
-    : product.isNew
-      ? '<span class="game-card-badge badge-new">✨ Nuevo</span>'
-      : '';
+  let badge = '';
+  if (product.isOutofStock) badge = '<span class="game-card-badge" style="background: rgba(239, 83, 80, 0.9); color: white;">⚠️ Agotado</span>';
+  else if (product.popular) badge = '<span class="game-card-badge badge-popular">🔥 Popular</span>';
+  else if (product.isNew) badge = '<span class="game-card-badge badge-new">✨ Nuevo</span>';
+
   const minPrice = Math.min(...product.packages.map(p => p.priceUsd));
   const maxPrice = Math.max(...product.packages.map(p => p.priceUsd));
 
@@ -282,7 +285,7 @@ function renderProductCard(product, index) {
 
   return `
     <div class="game-card fade-in-up stagger-${(index % 7) + 1}"
-         style="--game-color: ${product.color}; --game-gradient: ${product.colorGradient};"
+         style="--game-color: ${product.color}; --game-gradient: ${product.colorGradient}; ${product.isOutofStock ? 'opacity: 0.7; filter: grayscale(0.6);' : ''}"
          onclick="navigateTo('product', '${product.id}')"
          id="card-${product.id}">
       <div class="game-card-banner" style="background: ${product.colorGradient};">
@@ -315,15 +318,31 @@ function renderProductDetail(productId) {
     ? `<img src="${product.imageUrl}" alt="${product.name}" class="game-detail-icon">`
     : `<div style="width:64px;height:64px;border-radius:14px;background:${product.colorGradient};display:flex;align-items:center;justify-content:center;font-size:1.8rem;">${product.currencyIcon}</div>`;
 
-  const packages = product.packages.map((pkg, i) => `
-    <div class="package-card fade-in-up stagger-${(i % 7) + 1}"
-         onclick="selectPackage('${product.id}', ${i})"
-         id="pkg-${product.id}-${i}">
-      <div class="package-amount">${pkg.amount.toLocaleString()}</div>
-      <div class="package-label">${product.currency}</div>
-      <div class="package-price-bs">Bs. ${formatBs(usdToBs(pkg.priceUsd))}</div>
-    </div>
-  `).join('');
+  let packagesHtml = '';
+  if (product.isOutofStock) {
+    packagesHtml = `
+      <div style="background: rgba(239, 83, 80, 0.1); border: 1px dashed #ef5350; color: #ef5350; padding: 20px; text-align: center; border-radius: 12px; margin-top: 15px;">
+        <span style="font-size: 2rem; display: block; margin-bottom: 10px;">⚠️</span>
+        <h3 style="margin-bottom: 5px;">Producto Temporalmente Agotado</h3>
+        <p style="font-size: 0.9rem;">Por favor intenta más tarde o comunícate con soporte.</p>
+      </div>
+    `;
+  } else {
+    packagesHtml = product.packages.map((pkg, i) => {
+      const isPkgOut = pkg.isOutofStock;
+      return `
+        <div class="package-card fade-in-up stagger-${(i % 7) + 1}"
+             onclick="${isPkgOut ? "showToast('Paquete agotado', 'error')" : `selectPackage('${product.id}', ${i})`}"
+             id="pkg-${product.id}-${i}"
+             style="${isPkgOut ? 'opacity: 0.5; filter: grayscale(1); cursor: not-allowed;' : ''}">
+          <div class="package-amount">${pkg.amount.toLocaleString()}</div>
+          <div class="package-label">${product.currency}</div>
+          <div class="package-price-bs">Bs. ${formatBs(usdToBs(pkg.priceUsd))}</div>
+          ${isPkgOut ? '<div style="font-size: 0.75rem; color: #ef5350; margin-top: 5px; font-weight: bold;">AGOTADO</div>' : ''}
+        </div>
+      `;
+    }).join('');
+  }
 
   // Saved IDs handling
   let savedIdsHtml = '';
@@ -451,7 +470,7 @@ function renderProductDetail(productId) {
       </div>
       <div class="packages-title" style="margin-top: 20px;">Selecciona un paquete</div>
       <div class="packages-grid" id="packages-grid">
-        ${packages}
+        ${packagesHtml}
       </div>
       <div class="order-form" id="order-form" style="display:none;">
         <h3>📝 Datos del Pedido</h3>
