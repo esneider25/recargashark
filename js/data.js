@@ -302,6 +302,8 @@ function initFirebaseData() {
           if (!data) MESSAGES = [];
           else if (Array.isArray(data)) MESSAGES = data.filter(Boolean);
           else MESSAGES = Object.values(data).filter(Boolean);
+          if (typeof updateAdminMessagesUI === 'function') updateAdminMessagesUI();
+          if (typeof updateAdminSidebarBadges === 'function') updateAdminSidebarBadges();
         }
         else if (key === 'orders') {
           if (!data) ORDERS = [];
