@@ -330,7 +330,7 @@ function saveToDb(path, data) {
   if (typeof firebase !== 'undefined') {
     const cleanData = JSON.parse(JSON.stringify(data));
     firebase.database().ref(path).set(cleanData)
-      .catch(err => console.error("Firebase write error on " + path + ":", err));
+      .catch(err => { console.error("Firebase write error on " + path + ":", err); if (window.location.pathname.includes('admin')) alert("Error al guardar (" + path + "): " + err.message); });
   }
 }
 
