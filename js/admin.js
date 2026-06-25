@@ -247,7 +247,7 @@ function renderDashboard(container) {
     let cost = 0;
     const prod = PRODUCTS.find(p => p.id === o.productId);
     if (prod && prod.packages) {
-      const pkg = prod.packages.find(pkg => pkg.label === o.packageLabel || pkg.priceUsd === o.priceUsd);
+      const pkg = prod.packages.find(pkg => pkg.label === o.packageLabel || Number(pkg.priceUsd) === Number(o.priceUsd));
       if (pkg && pkg.costUsd) {
         cost = pkg.costUsd;
       }
