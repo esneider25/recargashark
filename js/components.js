@@ -353,12 +353,19 @@ function renderProductDetail(productId) {
     const idsToShow = relevantIds.length > 0 ? relevantIds : userProfile.savedIds;
     
     savedIdsHtml = `
-      <div style="margin-bottom: 20px; padding: 15px; background: rgba(16, 185, 129, 0.05); border: 1px dashed #10b981; border-radius: 8px;">
-        <div style="font-size: 0.85rem; color: #10b981; margin-bottom: 10px; font-weight: bold;">Autocompletar con tus cuentas guardadas:</div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <div style="margin-bottom: 20px; padding: 16px; background: rgba(14, 165, 233, 0.05); border: 1px solid rgba(14, 165, 233, 0.2); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <div style="font-size: 0.9rem; color: #38bdf8; margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+          <i class="ph-fill ph-magic-wand"></i> Autocompletar con tus cuentas guardadas
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
           ${idsToShow.map(id => `
-            <button type="button" class="btn-secondary" style="padding: 5px 10px; font-size: 0.8rem; background: rgba(255,255,255,0.05);" onclick="fillSavedId('${id.uid}', '${id.zoneId || ''}')">
-              ${id.gameName}: ${id.uid}
+            <button type="button" 
+                    onclick="fillSavedId('${id.uid}', '${id.zoneId || ''}')"
+                    style="background: linear-gradient(145deg, rgba(15, 23, 42, 0.6), rgba(30, 41, 59, 0.8)); border: 1px solid rgba(56, 189, 248, 0.3); color: #f8fafc; padding: 10px 14px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"
+                    onmouseover="this.style.borderColor='#38bdf8'; this.style.boxShadow='0 4px 12px rgba(56,189,248,0.2)'; this.style.transform='translateY(-1px)';"
+                    onmouseout="this.style.borderColor='rgba(56, 189, 248, 0.3)'; this.style.boxShadow='0 2px 5px rgba(0,0,0,0.2)'; this.style.transform='translateY(0)';">
+              <span style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">${id.alias || id.gameName}</span>
+              <span style="font-size: 1.05rem; font-weight: 700; letter-spacing: 0.5px; color: #38bdf8;">${id.uid}</span>
             </button>
           `).join('')}
         </div>
@@ -389,7 +396,7 @@ function renderProductDetail(productId) {
       `;
     }
     
-    typeFieldsHtml = `
+    typeFieldsHtml = savedIdsHtml + `
       <div class="form-group">
         <label for="game-uid">🎮 ID del juego</label>
         ${uidInputHtml}
@@ -409,7 +416,7 @@ function renderProductDetail(productId) {
         </div>
       `;
     }
-    typeFieldsHtml = `
+    typeFieldsHtml = savedIdsHtml + `
       <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
         <div class="form-group">
           <label for="game-uid">🎮 Player ID</label>
@@ -425,7 +432,7 @@ function renderProductDetail(productId) {
       </div>
     `;
   } else if (productType === 'account') {
-    typeFieldsHtml = `
+    typeFieldsHtml = savedIdsHtml + `
       <div class="form-section-label">🔐 Datos de la Cuenta (Recarga Interna)</div>
       <div class="form-group">
         <label for="account-email">📧 Correo o usuario de la cuenta</label>
@@ -1407,3 +1414,17 @@ function toggleTheme() {
   const isLight = document.body.classList.contains('light-theme');
   localStorage.setItem('recargashark_theme', isLight ? 'light' : 'dark');
 }
+// Helper function to fill saved ID in the modal
+window.fillSavedId = function(uid, zoneId) {
+  const uidInput = document.getElementById('game-uid');
+  const zoneInput = document.getElementById('game-zone');
+  if (uidInput) {
+    uidInput.value = uid;
+    // Trigger input event to update any listeners
+    uidInput.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  if (zoneInput && zoneId && zoneId !== 'undefined' && zoneId !== 'null') {
+    zoneInput.value = zoneId;
+    zoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+};
