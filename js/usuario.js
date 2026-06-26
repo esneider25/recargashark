@@ -368,10 +368,10 @@ function renderDashboardSavedIds() {
           <i class="ph ph-game-controller"></i>
         </div>
         <div>
-          <div style="font-weight: bold; margin-bottom: 5px;">${item.alias || item.gameName}</div>
+          <div style="font-weight: bold; margin-bottom: 3px; font-size: 1rem;">${item.gameName}</div>
+          ${item.alias ? `<div style="font-size: 0.9rem; color: var(--accent); margin-bottom: 3px;">${item.alias}</div>` : ''}
           <div style="font-size: 0.85rem; color: var(--text-secondary);">
-            ${item.alias ? `<span style="color: var(--accent); font-size: 0.8rem; margin-right: 5px;">${item.gameName}</span> ` : ''}
-            UID: <span style="color: white;">${item.uid}</span> ${item.zoneId ? `| Zona: <span style="color: white;">${item.zoneId}</span>` : ''}
+            UID: <span style="color: white; font-family: monospace;">${item.uid}</span> ${item.zoneId ? `| Zona: <span style="color: white; font-family: monospace;">${item.zoneId}</span>` : ''}
           </div>
         </div>
       </div>
