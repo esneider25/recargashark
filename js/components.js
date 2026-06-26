@@ -1064,12 +1064,22 @@ function renderTermsModal() {
 }
 
 window.acceptTerms = function() {
-  sessionStorage.setItem('recargashark_terms_accepted', 'true');
+  sessionStorage.setItem('recargaaccessplay_terms_accepted', 'true');
+  sessionStorage.setItem('recargashark_terms_accepted', 'true'); // Backward compatibility if needed
   const container = document.getElementById('terms-modal-container');
   if (container) {
     const overlay = container.querySelector('.modal-overlay');
     if (overlay) overlay.classList.remove('active');
-    setTimeout(() => container.remove(), 300);
+    setTimeout(() => {
+      container.remove();
+      // Show announcement if exists
+      const config = typeof getSettings === 'function' ? getSettings() : {};
+      if (config.announcementEnabled && config.announcementMessage) {
+        if (typeof showAnnouncementModal === 'function') {
+          showAnnouncementModal(config.announcementMessage);
+        }
+      }
+    }, 300);
   }
 };
 
