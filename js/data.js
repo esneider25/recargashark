@@ -548,6 +548,26 @@ function saveMessages() {
 }
 
 // ── Orders CRUD ──
+function subscribeToGuestOrder(orderId) {
+  if (typeof firebase === 'undefined' || !orderId) return;
+  const db = firebase.database();
+  db.ref('orders/' + orderId).off('value'); 
+  db.ref('orders/' + orderId).on('value', (snapshot) => {
+    if (snapshot.exists()) {
+      const updatedOrder = snapshot.val();
+      const idx = ORDERS.findIndex(o => o.id === orderId);
+      if (idx !== -1) {
+        ORDERS[idx] = updatedOrder;
+      } else {
+        ORDERS.push(updatedOrder);
+      }
+      if (typeof appState !== 'undefined' && appState.currentView === 'tracking' && appState.trackingOrderId === orderId) {
+        if (typeof renderApp === 'function') renderApp();
+      }
+    }
+  });
+}
+
 function getOrders() {
   return ORDERS.map(o => {
     if (o.status === 'completado') o.status = 'completed';
