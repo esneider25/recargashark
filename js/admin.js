@@ -2842,12 +2842,20 @@ function renderSettings(container) {
           </label>
           <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">Si se activa, los clientes verán una pantalla de "Regresamos pronto" y no podrán comprar.</p>
         </div>
-        <div class="admin-form-group" style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
+
+      </div>
+      </div>
+      
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h3 class="admin-card-title">🎰 Gamificación</h3>
+        </div>
+        <div class="admin-form-group">
           <label class="admin-form-label" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>🎰 Activar Ruleta de Premios</span>
+            <span>Activar Ruleta de la Suerte</span>
             <input type="checkbox" id="setting-roulette" ${config.enableRoulette !== false ? 'checked' : ''} style="width: 24px; height: 24px; accent-color: #0ea5e9; cursor: pointer;">
           </label>
-          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">Si se activa, los clientes verán la ruleta de premios tras recargas automáticas procesadas o manuales aprobadas.</p>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">Si se activa, a los clientes que recarguen en la categoría de juegos les aparecerá el botón para girar la ruleta luego de que su pedido sea aprobado.</p>
         </div>
       </div>
 
