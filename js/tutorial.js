@@ -66,6 +66,28 @@ class WalkthroughTutorial {
   createElements() {
     if (document.getElementById('tutorial-overlay')) return;
 
+    // Crear el botón flotante dinámicamente (Shark theme)
+    const floatBtn = document.createElement('button');
+    floatBtn.id = 'floating-tutorial-btn';
+    floatBtn.innerHTML = '<span style="font-size: 1.2rem;">🎓</span> Tutorial';
+    floatBtn.style.cssText = `
+      position: fixed; left: 20px; bottom: 20px; z-index: 9999;
+      background: linear-gradient(135deg, #00e5c3, #00b89c); color: #060d1a; border: none;
+      padding: 12px 24px; border-radius: 30px; box-shadow: 0 4px 15px rgba(0,229,195,0.4);
+      cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1rem;
+      display: flex; align-items: center; gap: 8px; transition: transform 0.2s, box-shadow 0.2s;
+    `;
+    floatBtn.onmouseover = () => {
+      floatBtn.style.transform = 'translateY(-3px)';
+      floatBtn.style.boxShadow = '0 6px 20px rgba(0,229,195,0.6)';
+    };
+    floatBtn.onmouseout = () => {
+      floatBtn.style.transform = 'translateY(0)';
+      floatBtn.style.boxShadow = '0 4px 15px rgba(0,229,195,0.4)';
+    };
+    floatBtn.onclick = () => this.start();
+    document.body.appendChild(floatBtn);
+
     this.blocker = document.createElement('div');
     this.blocker.id = 'tutorial-blocker';
     this.blocker.style.cssText = `
@@ -363,11 +385,3 @@ class WalkthroughTutorial {
 }
 
 window.Tutorial = new WalkthroughTutorial();
-
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    if (!localStorage.getItem('tutorialCompleted') && (window.location.pathname === '/' || window.location.pathname.includes('index'))) {
-      window.Tutorial.start();
-    }
-  }, 2500); 
-});
