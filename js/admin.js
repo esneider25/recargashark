@@ -2873,6 +2873,17 @@ function renderSettings(container) {
         </div>
         <div id="terms-editor-container"></div>
       </div>
+      <div class="admin-card" style="grid-column: 1 / -1;">
+        <div class="admin-card-header">
+          <h3 class="admin-card-title">🛠️ Herramientas de Sistema</h3>
+        </div>
+        <div class="admin-form-group">
+          <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px;">Recalcula el dinero gastado por cada cliente excluyendo las recargas de billetera, para corregir el nivel VIP.</p>
+          <button id="btn-fix-wallet" class="btn btn-primary" onclick="fixWalletSpendingBug()" style="background: #ab47bc; width: 100%;">
+            ✨ Corregir Gastos de Billetera
+          </button>
+        </div>
+      </div>
     </div>
   `;
 
