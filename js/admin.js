@@ -540,12 +540,19 @@ function renderDashboard(container) {
 
       const elTopClients = document.getElementById('dash-top-clients');
       if (elTopClients) {
+        const userSpentMap = {};
+        allOrders.forEach(o => {
+          if (o.status === 'completed' || o.status === 'completado') {
+            if (o.userId && o.productType !== 'wallet-recharge') userSpentMap[o.userId] = (userSpentMap[o.userId] || 0) + (Number(o.priceUsd) || 0);
+          }
+        });
+
         const usersArray = Object.keys(usersData).map(uid => ({
           uid,
           name: usersData[uid].name || 'Usuario',
           email: usersData[uid].email || '',
           role: usersData[uid].role || 'cliente',
-          spent: usersData[uid].totalSpent || 0
+          spent: userSpentMap[uid] || 0
         })).filter(u => u.spent > 0);
 
         usersArray.sort((a, b) => b.spent - a.spent);
@@ -697,6 +704,7 @@ async function renderCustomers(container) {
       name: u.name || '',
       totalOrders: 0,
       totalSpent: u.totalSpent || 0,
+      hasTotalSpent: typeof u.totalSpent !== 'undefined',
       firstOrder: null,
       lastOrder: null,
       role: u.role || 'cliente',
@@ -721,14 +729,17 @@ async function renderCustomers(container) {
         name: '',
         totalOrders: 0,
         totalSpent: 0,
+        hasTotalSpent: false,
         firstOrder: o.createdAt,
         lastOrder: o.createdAt
       };
     }
     customersMap[key].totalOrders += 1;
-    // Si no tiene UID (guest), sumar lo gastado aquí
-    if (!customersMap[key].uid) {
-      customersMap[key].totalSpent += (o.priceUsd || 0);
+    // Si no tiene UID (guest) o no se migró el totalSpent, sumar lo gastado aquí
+    if (!customersMap[key].uid || !customersMap[key].hasTotalSpent) {
+      if (o.productType !== 'wallet-recharge') {
+        customersMap[key].totalSpent += (o.priceUsd || 0);
+      }
     }
     if (!customersMap[key].firstOrder || o.createdAt < customersMap[key].firstOrder) customersMap[key].firstOrder = o.createdAt;
     if (!customersMap[key].lastOrder || o.createdAt > customersMap[key].lastOrder) customersMap[key].lastOrder = o.createdAt;
@@ -886,6 +897,7 @@ async function exportCustomersCSV() {
       name: u.name || '',
       totalOrders: 0,
       totalSpent: u.totalSpent || 0,
+      hasTotalSpent: typeof u.totalSpent !== 'undefined',
       lastOrder: null
     };
   });
@@ -905,12 +917,15 @@ async function exportCustomersCSV() {
         name: '',
         totalOrders: 0,
         totalSpent: 0,
+        hasTotalSpent: false,
         lastOrder: o.createdAt
       };
     }
     customersMap[key].totalOrders += 1;
-    if (!customersMap[key].uid) {
-      customersMap[key].totalSpent += (o.priceUsd || 0);
+    if (!customersMap[key].uid || !customersMap[key].hasTotalSpent) {
+      if (o.productType !== 'wallet-recharge') {
+        customersMap[key].totalSpent += (o.priceUsd || 0);
+      }
     }
     if (!customersMap[key].lastOrder || o.createdAt > customersMap[key].lastOrder) customersMap[key].lastOrder = o.createdAt;
   });
