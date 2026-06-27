@@ -2827,6 +2827,13 @@ function renderSettings(container) {
           </label>
           <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">Si se activa, los clientes verán una pantalla de "Regresamos pronto" y no podrán comprar.</p>
         </div>
+        <div class="admin-form-group" style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
+          <label class="admin-form-label" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>🎰 Activar Ruleta de Premios</span>
+            <input type="checkbox" id="setting-roulette" ${config.enableRoulette !== false ? 'checked' : ''} style="width: 24px; height: 24px; accent-color: #0ea5e9; cursor: pointer;">
+          </label>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">Si se activa, los clientes verán la ruleta de premios tras recargas automáticas procesadas o manuales aprobadas.</p>
+        </div>
       </div>
 
       <div class="admin-card" style="grid-column: 1 / -1;">
@@ -2929,8 +2936,9 @@ function adminSaveSettings() {
   const announcementEnabled = document.getElementById('setting-announcement-enabled').checked;
   const announcementMessage = document.getElementById('setting-announcement-msg').value;
   const termsAndConditions = window.currentTermsEditorData || [];
+  const enableRoulette = document.getElementById('setting-roulette').checked;
 
-  saveSettings({ whatsapp, whatsappChannel, instagram, telegram, schedule, maintenance, announcementEnabled, announcementMessage, termsAndConditions });
+  saveSettings({ whatsapp, whatsappChannel, instagram, telegram, schedule, maintenance, announcementEnabled, announcementMessage, termsAndConditions, enableRoulette });
   showAdminToast('✅ Configuración guardada', 'success');
 }
 

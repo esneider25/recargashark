@@ -28,7 +28,9 @@ function renderNavbar() {
           <li><a class="nav-cta" onclick="scrollToSection('catalog')">Recargar ⚡</a></li>
           <li><a class="theme-toggle-btn" onclick="toggleTheme()" style="cursor:pointer; font-size: 1.2rem;" title="Cambiar Tema">🌓</a></li>
         </ul>
-        <button class="mobile-toggle" onclick="toggleMobileMenu()" aria-label="Menu">☰</button>
+        <button class="mobile-toggle" onclick="toggleMobileMenu()" aria-label="Menu" style="background: var(--bg-surface); border: 1px solid var(--border); padding: 8px 16px; border-radius: 20px; color: var(--text-primary); font-family: var(--font-primary); font-weight: 600; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+          <div style="display: flex; align-items: center; gap: 8px;">Menú Principal <span style="font-size: 0.9rem;">▼</span></div>
+        </button>
       </div>
     </nav>
   `;
@@ -746,6 +748,34 @@ function renderOrderTracking(orderId) {
 
   const typeLabel = order.productType === 'account' ? '🔐 Interna' : order.productType === 'code' ? '🎫 Código' : '🎮 Por ID';
 
+  const config = typeof getSettings === 'function' ? getSettings() : {};
+  let rouletteButtonHtml = '';
+  
+  // Solo mostrar ruleta si fue activada, el pedido está completado, no se ha jugado, 
+  // y el pedido fue creado DESPUÉS del 27 de Junio de 2026 a las 12:00 PM (16:00 UTC)
+  const rouletteCutoffTime = new Date('2026-06-27T16:00:00Z').getTime();
+  const orderTime = new Date(order.createdAt || 0).getTime();
+  const isEligibleByDate = orderTime >= rouletteCutoffTime;
+
+  if (config.enableRoulette !== false && order.status === 'completed' && !order.roulettePlayed && isEligibleByDate) {
+    const products = typeof getProducts === 'function' ? getProducts() : [];
+    const product = products.find(p => p.id === order.productId);
+    const profile = typeof userProfile !== 'undefined' ? userProfile : null;
+    const isNotReseller = !profile || profile.role !== 'revendedor';
+    
+    if (isNotReseller) {
+      rouletteButtonHtml = `
+        <div style="margin-top: 25px; background: linear-gradient(135deg, rgba(0, 229, 195, 0.1), rgba(14, 165, 233, 0.1)); border: 1px dashed var(--accent); border-radius: var(--radius-md); padding: 25px 20px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.2);">
+          <h4 style="color: var(--accent); font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 10px; text-shadow: 0 0 10px rgba(0,229,195,0.3);">🎁 ¡Tienes un giro pendiente!</h4>
+          <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 20px;">Por tu recarga, has ganado la oportunidad de girar la Ruleta de la Suerte.</p>
+          <button class="btn-primary" onclick="showRouletteModal('${order.id}')" style="background: var(--accent); color: #000; padding: 14px 30px; font-weight: 800; font-size: 1.1rem; border-radius: 30px; box-shadow: 0 0 20px rgba(0,229,195,0.4); border: none; letter-spacing: 1px; width: 100%; max-width: 300px; margin: 0 auto; display: block;">
+            🎰 GIRAR AHORA
+          </button>
+        </div>
+      `;
+    }
+  }
+
   return `
     <section class="order-tracking-section" id="order-tracking">
       <div class="container">
@@ -820,6 +850,7 @@ function renderOrderTracking(orderId) {
           </div>
         </div>
 
+        ${rouletteButtonHtml}
         <div style="text-align: center; margin-top: 24px;">
           <button class="hero-btn-secondary" onclick="navigateTo('lookup')">🔍 Buscar otro pedido</button>
         </div>
