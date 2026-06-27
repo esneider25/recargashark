@@ -688,10 +688,22 @@ function renderOrderTracking(orderId) {
     `;
   }
 
-  const statusInfo = ORDER_STATUSES[order.status] || ORDER_STATUSES['pending'];
-  const statusOrder = ['pending', 'processing', 'completed'];
-  const isErrorStatus = order.status === 'rejected' || order.status === 'invalid-id';
-  const currentIndex = isErrorStatus ? 1 : statusOrder.indexOf(order.status);
+  const cleanStr = (str) => {
+    if (!str) return str;
+    let clean = str;
+    clean = clean.replace(/Enviando a API externa\.\.\./gi, 'Procesando el pedido de forma automatizada...');
+    clean = clean.replace(/Aprobado y entregado por API/gi, 'Aprobado y entregado automáticamente');
+    clean = clean.replace(/El proveedor rechazó la recarga/gi, 'El sistema rechazó la recarga');
+    clean = clean.replace(/Fallo conexión API externa/gi, 'Fallo en el sistema de recarga automatizada');
+    clean = clean.replace(/El proveedor canceló la recarga/gi, 'El sistema canceló la recarga automáticamente');
+    clean = clean.replace(/API rechazó la cuenta/gi, 'Datos inválidos');
+    clean = clean.replace(/API Error:/gi, 'Error:');
+    clean = clean.replace(/\bAPI\b/gi, 'Sistema');
+    clean = clean.replace(/\bproveedor\b/gi, 'sistema');
+    return clean;
+  };
+
+  const cleanAdminNote = cleanStr(order.adminNote);
 
   const timelineSteps = [
     { key: 'pending', label: 'Recibido', icon: '📋', desc: 'Tu pedido fue registrado exitosamente' },
@@ -709,7 +721,7 @@ function renderOrderTracking(orderId) {
       stepClass = 'error';
       displayIcon = order.status === 'rejected' ? '❌' : '⚠️';
       displayLabel = ORDER_STATUSES[order.status]?.label || step.label;
-      displayDesc = order.adminNote || 'Contacta soporte para más información';
+      displayDesc = cleanAdminNote || 'Contacta soporte para más información';
     } else if (i < currentIndex) {
       stepClass = 'completed';
       displayIcon = '✓';
@@ -796,9 +808,9 @@ function renderOrderTracking(orderId) {
           <div class="tracking-timeline">
             ${timelineHtml}
           </div>
-          ${order.adminNote && isErrorStatus ? `
+          ${cleanAdminNote && isErrorStatus ? `
             <div class="tracking-admin-note">
-              <strong>📝 Nota del equipo:</strong> ${order.adminNote}
+              <strong>📝 Nota del equipo:</strong> ${cleanAdminNote}
             </div>
           ` : ''}
           ${order.status === 'invalid-id' ? `
