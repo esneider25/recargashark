@@ -89,6 +89,7 @@ function spinRoulette(isWinner, orderId, productId) {
   const order = orders.find(o => o.id === orderId);
   if (typeof firebase !== 'undefined') {
     firebase.database().ref('orders/' + orderId).update({ roulettePlayed: true })
+      .then(() => console.log('Roulette status saved to Firebase successfully.'))
       .catch(err => console.error('Error saving roulette status:', err));
     
     if (order) {
@@ -154,6 +155,13 @@ function processRoulettePrize(originalOrderId, productId) {
   const orders = typeof getOrders === 'function' ? getOrders() : ORDERS;
   const originalOrder = orders.find(o => o.id === originalOrderId);
   if (!originalOrder) return;
+  
+  // Prevent duplicate prizes if they clear cache
+  const alreadyWon = orders.some(o => o.paymentMethodId === 'roulette' && o.adminNote && o.adminNote.includes(originalOrderId));
+  if (alreadyWon) {
+    console.warn('Prize already claimed for this order.');
+    return;
+  }
   
   const freeOrderData = {
     userId: originalOrder.userId,
