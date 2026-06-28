@@ -727,7 +727,8 @@ async function renderCustomers(container) {
       contact: u.email || 'Sin correo',
       whatsapp: u.whatsapp || '',
       name: u.name || '',
-      totalOrders: 0,
+      totalOrders: u.totalOrders || 0,
+      hasTotalOrders: typeof u.totalOrders !== 'undefined',
       totalSpent: u.totalSpent || 0,
       hasTotalSpent: typeof u.totalSpent !== 'undefined',
       firstOrder: null,
@@ -753,13 +754,19 @@ async function renderCustomers(container) {
         whatsapp: '',
         name: '',
         totalOrders: 0,
+        hasTotalOrders: false,
         totalSpent: 0,
         hasTotalSpent: false,
         firstOrder: o.createdAt,
         lastOrder: o.createdAt
       };
     }
-    customersMap[key].totalOrders += 1;
+    
+    // Only count if it's a guest or if the database doesn't have it yet
+    if (!customersMap[key].hasTotalOrders) {
+      customersMap[key].totalOrders += 1;
+    }
+    
     // Si no tiene UID (guest) o no se migró el totalSpent, sumar lo gastado aquí
     if (!customersMap[key].uid || !customersMap[key].hasTotalSpent) {
       if (o.productType !== 'wallet-recharge') {
@@ -920,7 +927,8 @@ async function exportCustomersCSV() {
       contact: u.email || 'Sin correo',
       whatsapp: u.whatsapp || '',
       name: u.name || '',
-      totalOrders: 0,
+      totalOrders: u.totalOrders || 0,
+      hasTotalOrders: typeof u.totalOrders !== 'undefined',
       totalSpent: u.totalSpent || 0,
       hasTotalSpent: typeof u.totalSpent !== 'undefined',
       lastOrder: null
@@ -941,12 +949,17 @@ async function exportCustomersCSV() {
         whatsapp: '',
         name: '',
         totalOrders: 0,
+        hasTotalOrders: false,
         totalSpent: 0,
         hasTotalSpent: false,
         lastOrder: o.createdAt
       };
     }
-    customersMap[key].totalOrders += 1;
+    
+    if (!customersMap[key].hasTotalOrders) {
+      customersMap[key].totalOrders += 1;
+    }
+    
     if (!customersMap[key].uid || !customersMap[key].hasTotalSpent) {
       if (o.productType !== 'wallet-recharge') {
         customersMap[key].totalSpent += (o.priceUsd || 0);
@@ -4017,7 +4030,7 @@ function adminSaveLanding() {
 }
 
 window.fixWalletSpendingBug = async function() {
-  if (!confirm("¿Corregir los gastos totales de los usuarios excluyendo recargas de billetera?")) return;
+  if (!confirm("¿Corregir los gastos totales y pedidos de los usuarios excluyendo recargas de billetera?")) return;
   const btn = document.getElementById('btn-fix-wallet');
   if (btn) btn.innerHTML = "Corrigiendo...";
   
@@ -4025,12 +4038,14 @@ window.fixWalletSpendingBug = async function() {
     const ordersSnap = await firebase.database().ref('orders').once('value');
     const ordersData = ordersSnap.val() || {};
     const spentMap = {};
+    const ordersCountMap = {};
     
     Object.values(ordersData).forEach(o => {
       if ((o.status === 'completed' || o.status === 'completado') && o.userId) {
         if (o.productType !== 'wallet-recharge') {
           spentMap[o.userId] = (spentMap[o.userId] || 0) + (Number(o.priceUsd) || 0);
         }
+        ordersCountMap[o.userId] = (ordersCountMap[o.userId] || 0) + 1;
       }
     });
 
@@ -4041,17 +4056,25 @@ window.fixWalletSpendingBug = async function() {
 
     for (const uid in usersData) {
       const actualSpent = spentMap[uid] || 0;
+      const actualOrders = ordersCountMap[uid] || 0;
+      
+      let changed = false;
       if (usersData[uid].totalSpent !== actualSpent) {
         batchUpdates['users/' + uid + '/totalSpent'] = actualSpent;
-        updatedUsers++;
+        changed = true;
       }
+      if (usersData[uid].totalOrders !== actualOrders) {
+        batchUpdates['users/' + uid + '/totalOrders'] = actualOrders;
+        changed = true;
+      }
+      if (changed) updatedUsers++;
     }
 
     if (Object.keys(batchUpdates).length > 0) {
       await firebase.database().ref().update(batchUpdates);
     }
     
-    alert(`Se corrigieron los gastos de ${updatedUsers} usuarios.`);
+    alert(`Se corrigieron los gastos y pedidos de ${updatedUsers} usuarios.`);
     if (btn) btn.innerHTML = "✨ Corregir Gastos de Billetera";
   } catch (err) {
     alert("Error: " + err.message);
