@@ -22,6 +22,11 @@
       ],
       "destination": "/admin",
       "permanent": true
+    },
+    {
+      "source": "/servicio(.*)",
+      "destination": "/",
+      "permanent": true
     }
   ]
 }

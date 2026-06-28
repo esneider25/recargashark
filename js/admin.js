@@ -2563,21 +2563,32 @@ function adminUnblockUser(fingerprint) {
 }
 
 function handleUrlAction(action, orderId) {
-  setTimeout(() => {
-    switchTab('orders');
-    if (action === 'approve') {
-      const order = getOrderById(orderId);
-      if (order && order.status !== 'completed') {
-        // En lugar de forzar 'completed', usamos quickUpdateStatus que dispara la API automática (SmileOne/Moogold) si está configurada
-        quickUpdateStatus(orderId, 'completed');
+  const maxRetries = 20; // 10 segundos máximo
+  let attempts = 0;
+
+  const interval = setInterval(() => {
+    attempts++;
+    // Verificar si la data está cargada (idealmente orders debe tener algo, o al menos DATA_LOADED)
+    if (window.DATA_LOADED && (getOrders().length > 0 || attempts > 10)) {
+      clearInterval(interval);
+      
+      switchTab('orders');
+      if (action === 'approve') {
+        const order = getOrderById(orderId);
+        if (order && order.status !== 'completed') {
+          quickUpdateStatus(orderId, 'completed');
+        }
+      } else if (action === 'reject') {
+        openRejectModal(orderId, 'rejected');
+        showAdminToast('Por favor confirme el rechazo y escriba el motivo.', 'info');
+      } else if (action === 'view') {
+        openOrderDetailModal(orderId);
       }
-    } else if (action === 'reject') {
-      openRejectModal(orderId, 'rejected');
-      showAdminToast('Por favor confirme el rechazo y escriba el motivo.', 'info');
-    } else if (action === 'view') {
-      openOrderDetailModal(orderId);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (attempts >= maxRetries) {
+      clearInterval(interval);
+      showAdminToast('No se pudieron cargar los pedidos a tiempo. Intente de nuevo.', 'error');
     }
-    window.history.replaceState({}, document.title, window.location.pathname);
   }, 500);
 }
 

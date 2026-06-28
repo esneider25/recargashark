@@ -1907,12 +1907,13 @@ function initPublicAuth() {
   firebase.auth().onAuthStateChanged(async (user) => {
     currentUser = user;
     const authNavItem = document.getElementById('auth-nav-item');
+    const mobileAuthBtn = document.querySelector('.mobile-auth-btn');
     
     // If the user is the admin, don't mix them into the public UI wallet (or we can just show "Admin")
     if (user && user.email === 'adminshark@gmail.com') {
-       if (authNavItem) {
-          authNavItem.innerHTML = `<a onclick="window.location.href='/admin'" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Ir al Panel</a>`;
-       }
+       const adminHtml = `<a onclick="window.location.href='/admin'" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Ir al Panel</a>`;
+       if (authNavItem) authNavItem.innerHTML = adminHtml;
+       if (mobileAuthBtn) mobileAuthBtn.innerHTML = adminHtml;
        return;
     }
 
@@ -1927,15 +1928,22 @@ function initPublicAuth() {
           return;
         }
 
+        const balanceHtml = `<a onclick="navigateTo('dashboard')" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer; font-size: 0.85rem; padding: 6px 12px !important;">Mi Perfil ($${Number(userProfile.wallet || 0).toFixed(2)})</a>`;
+        
         if (authNavItem) {
           authNavItem.innerHTML = `<a onclick="navigateTo('dashboard')" class="nav-cta" style="background: linear-gradient(135deg, #10b981, #059669); cursor:pointer;">Mi Perfil ($${Number(userProfile.wallet || 0).toFixed(2)})</a>`;
+        }
+        if (mobileAuthBtn) {
+          mobileAuthBtn.innerHTML = balanceHtml;
         }
       });
     } else {
       userProfile = null;
-      if (authNavItem) {
-        authNavItem.innerHTML = `<a onclick="showAuthModal()" class="nav-cta" style="background: linear-gradient(135deg, #4f46e5, #3b82f6); cursor:pointer;">Iniciar Sesión</a>`;
-      }
+      const loginHtmlDesktop = `<a onclick="showAuthModal()" class="nav-cta" style="background: linear-gradient(135deg, #4f46e5, #3b82f6); cursor:pointer;">Iniciar Sesión</a>`;
+      const loginHtmlMobile = `<a onclick="showAuthModal()" class="nav-cta" style="background: linear-gradient(135deg, #4f46e5, #3b82f6); cursor:pointer; font-size: 0.85rem; padding: 6px 12px !important;">Iniciar Sesión</a>`;
+      
+      if (authNavItem) authNavItem.innerHTML = loginHtmlDesktop;
+      if (mobileAuthBtn) mobileAuthBtn.innerHTML = loginHtmlMobile;
     }
   });
 }
