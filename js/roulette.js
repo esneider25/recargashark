@@ -88,7 +88,7 @@ function spinRoulette(isWinner, orderId, productId) {
   const orders = typeof getOrders === 'function' ? getOrders() : [];
   const order = orders.find(o => o.id === orderId);
   if (typeof firebase !== 'undefined') {
-    firebase.database().ref('orders/' + orderId).update({ roulettePlayed: true })
+    firebase.database().ref('orders/' + orderId + '/roulettePlayed').set(true)
       .then(() => console.log('Roulette status saved to Firebase successfully.'))
       .catch(err => console.error('Error saving roulette status:', err));
     
