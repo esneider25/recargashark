@@ -68,6 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
     appState.currentView = 'tracking';
     appState.trackingOrderId = urlParams.get('tracking');
     window.history.replaceState({}, document.title, window.location.pathname);
+    if (typeof subscribeToGuestOrder === 'function') {
+      subscribeToGuestOrder(appState.trackingOrderId);
+    }
   }
   if (localStorage.getItem('recargashark_theme') === 'light') {
     document.body.classList.add('light-theme');
@@ -1145,7 +1148,7 @@ function closeModalOutside(event) {
 }
 
 // ── Order Lookup ──
-function lookupOrder() {
+async function lookupOrder() {
   const input = document.getElementById('lookup-input');
   if (!input || !input.value.trim()) {
     showToast('⚠️ Ingresa un dato de búsqueda');
@@ -1154,11 +1157,40 @@ function lookupOrder() {
   }
   const val = input.value.trim();
   
+  let orderIdToTrack = null;
   // Allow tracking by digits (which we prepend RS- to) or full RS- code
   if (/^\d{1,6}$/.test(val)) {
-    navigateTo('tracking', 'RS-' + val);
+    orderIdToTrack = 'RS-' + val;
   } else if (/^RS-\d{1,6}$/i.test(val)) {
-    navigateTo('tracking', val.toUpperCase());
+    orderIdToTrack = val.toUpperCase();
+  }
+
+  if (orderIdToTrack) {
+    const btn = input.nextElementSibling;
+    const oldHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.innerHTML = '⏳';
+      btn.disabled = true;
+    }
+    try {
+      const snap = await firebase.database().ref('orders/' + orderIdToTrack).once('value');
+      if (btn) { btn.innerHTML = oldHtml; btn.disabled = false; }
+      
+      if (snap.exists()) {
+        const orderData = snap.val();
+        // Insert into local ORDERS if not present
+        if (!ORDERS.find(o => o.id === orderData.id)) {
+          ORDERS.push(orderData);
+        }
+        navigateTo('tracking', orderData.id);
+      } else {
+        showToast('❌ Pedido no encontrado. Verifica el número (Ej: RS-1234)');
+      }
+    } catch (e) {
+      if (btn) { btn.innerHTML = oldHtml; btn.disabled = false; }
+      showToast('❌ Error al buscar pedido. Intenta de nuevo.');
+      console.error(e);
+    }
   } else {
     // Treat as contact search (email or phone)
     navigateTo('history', val);
@@ -1533,7 +1565,7 @@ function previewScreenshot(input) {
         <div class="pf-spinner" style="width: 30px; height: 30px; margin: 0 auto 10px;">
           <div class="pf-spinner-ring"></div>
         </div>
-        <div style="font-size: 0.85rem; opacity: 0.8;">Analizando captura (Anti-Fraude)...</div>
+        <div style="font-size: 0.85rem; opacity: 0.8;">Procesando captura...</div>
       </div>
     `;
   }
@@ -1556,37 +1588,6 @@ function previewScreenshot(input) {
 
     const orders = getOrders();
     let duplicateFound = orders.some(o => o.status !== 'rejected' && o.imageHash === imageHash);
-    
-    // OCR Check for duplicates (Catches cropped/compressed images)
-    if (!duplicateFound && window.Tesseract) {
-      try {
-        const { data: { text } } = await Tesseract.recognize(dataUrl, 'spa');
-        
-        // Buscar específicamente referencias o números de operación
-        let numbers = [];
-        const regexKeywords = /(?:ref(?:erencia)?|operaci[oó]n|orden|recibo|comprobante|autorizaci[oó]n|folio|transacci[oó]n|nro|n[uú]mero\s+de\s+operaci[oó]n)[\s:.\-#\n]*([A-Za-z0-9]{5,20})/gi;
-        let match;
-        while ((match = regexKeywords.exec(text)) !== null) {
-          numbers.push(match[1]);
-        }
-        
-        if (numbers.length > 0) {
-          for (const num of numbers) {
-            // Check if any previous order (not rejected) has this exact number string in its OCR data
-            if (orders.some(o => o.status !== 'rejected' && o.ocrNumbers && o.ocrNumbers.includes(num))) {
-              duplicateFound = true;
-              break;
-            }
-          }
-        }
-        
-        // Save OCR numbers to state to attach to order later
-        appState.selectedScreenshotOcr = numbers;
-
-      } catch (err) {
-        console.error('OCR analysis failed:', err);
-      }
-    }
     
     if (duplicateFound) {
       showToast('🚨 PAGO DUPLICADO: Esta captura ya fue procesada anteriormente.');

@@ -320,8 +320,13 @@ function initFirebaseData() {
   }
 
   keysToLoad.forEach(key => {
-    db.ref('/' + key).off('value');
-    db.ref('/' + key).on('value', (snapshot) => {
+    let queryRef = db.ref('/' + key);
+    if (key === 'orders' || key === 'messages') {
+      queryRef = queryRef.limitToLast(150);
+    }
+    
+    queryRef.off('value');
+    queryRef.on('value', (snapshot) => {
       const data = snapshot.val();
       if (data) {
         if (key === 'products') { PRODUCTS.length = 0; data.forEach(p => PRODUCTS.push(p)); }

@@ -189,7 +189,13 @@ function renderActiveTab() {
   lastUnreadMessages = getUnreadMessagesCount();
 
   switch (adminState.currentTab) {
-    case 'dashboard': renderDashboard(main); break;
+    case 'dashboard': 
+      if (adminState.showHistorical && adminState.historicalOrders) {
+        renderDashboard(main, adminState.historicalOrders);
+      } else {
+        renderDashboard(main);
+      }
+      break;
     case 'orders': renderOrders(main); break;
     case 'products': renderProducts(main); break;
     case 'customers': renderCustomers(main); break;
@@ -217,8 +223,8 @@ function getUnreadMessagesCount() {
 // ════════════════════════════════════════
 // 1. DASHBOARD
 // ════════════════════════════════════════
-function renderDashboard(container) {
-  let allOrders = getOrders();
+function renderDashboard(container, forcedOrders = null) {
+  let allOrders = forcedOrders || getOrders();
 
   // Date filtering
   if (adminState.dashboardStartDate) {
@@ -292,12 +298,23 @@ function renderDashboard(container) {
     `;
   }).join('') : '<div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.85rem;">No hay pedidos aún</div>';
 
+  const titleText = adminState.showHistorical ? 'Panel Financiero (Histórico)' : 'Panel Financiero (Últimos 150)';
+  
   container.innerHTML = `
     <div class="admin-header">
       <div>
-        <h1 class="admin-title">Panel de Control Financiero</h1>
+        <h1 class="admin-title">${titleText}</h1>
         <p class="admin-subtitle">Resumen y métricas de ganancias de RecargaShark</p>
       </div>
+      ${!adminState.showHistorical ? 
+        `<button id="btn-calc-historical" class="btn btn-secondary" style="border: 1px solid var(--accent); color: var(--accent);" onclick="calculateHistoricalStats()">
+          <span>📚</span> Calcular Historial Completo
+        </button>` : 
+        `<button class="btn btn-secondary" onclick="adminState.showHistorical = false; adminState.historicalOrders = null; renderActiveTab();">
+          ⬅️ Volver a Recientes
+        </button>`
+      }
+    </div>
       <div style="display: flex; gap: 8px; align-items: center; background: var(--bg-surface); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);">
         <input type="date" id="dash-start-date" class="admin-form-input" style="margin-bottom: 0; padding: 6px;" value="${adminState.dashboardStartDate}" onchange="updateDashboardDates()">
         <span style="color: var(--text-muted);">hasta</span>
@@ -660,15 +677,23 @@ function renderProducts(container) {
 // 2.5 CUSTOMERS (CRM)
 // ════════════════════════════════════════
 async function renderCustomers(container) {
+  const titleText = adminState.showHistoricalOrders ? 'Clientes VIP (Histórico)' : 'Clientes VIP (Últimos 150)';
+  const historyBtn = adminState.showHistoricalOrders 
+    ? `<button class="btn btn-secondary" onclick="adminState.showHistoricalOrders = false; renderActiveTab();" style="padding: 8px 16px; font-size: 0.85rem;">⬅️ Volver a Recientes</button>`
+    : `<button class="btn btn-secondary" onclick="loadHistoricalOrdersList()" style="padding: 8px 16px; font-size: 0.85rem; border: 1px solid var(--accent); color: var(--accent);">📚 Calcular con Historial Completo</button>`;
+
   container.innerHTML = `
     <div class="admin-header">
       <div>
-        <h1 class="admin-title">Clientes VIP (CRM)</h1>
+        <h1 class="admin-title">${titleText}</h1>
         <p class="admin-subtitle">Usuarios registrados y mejores compradores</p>
       </div>
-      <button class="btn btn-secondary" onclick="exportCustomersCSV()">
-        <span>📥</span> Exportar a CSV
-      </button>
+      <div style="display: flex; gap: 8px;">
+        ${historyBtn}
+        <button class="btn btn-secondary" onclick="exportCustomersCSV()">
+          <span>📥</span> Exportar a CSV
+        </button>
+      </div>
     </div>
     <div style="margin-bottom: 20px; display: flex; gap: 8px;">
       <input type="text" id="customers-search-input" value="${adminState.customersSearch || ''}" onkeyup="if(event.key==='Enter') filterCrmSearch(this.value)" placeholder="🔍 Buscar por nombre, correo o teléfono... (Presiona Enter)" style="flex: 1; padding: 14px 20px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.2); color: #fff; font-size: 1rem; outline: none;">
@@ -691,7 +716,7 @@ async function renderCustomers(container) {
     console.error("Error fetching users:", error);
   }
 
-  const allOrders = getOrders();
+  const allOrders = adminState.showHistoricalOrders && adminState.historicalOrders ? adminState.historicalOrders : getOrders();
   const completedOrders = allOrders.filter(o => o.status === 'completed');
 
   const customersMap = {};
@@ -1879,7 +1904,7 @@ function showAdminToast(message, type = 'success') {
 // 8. ORDERS MANAGEMENT
 // ════════════════════════════════════════
 function renderOrders(container) {
-  const allOrders = getOrders();
+  const allOrders = adminState.showHistoricalOrders && adminState.historicalOrders ? adminState.historicalOrders : getOrders();
   const filter = adminState.ordersFilter || 'all';
   const searchTerm = (adminState.ordersSearch || '').toLowerCase().trim();
 
@@ -1916,6 +1941,11 @@ function renderOrders(container) {
     { id: 'invalid-id', label: 'ID Inválido', icon: '⚠️' }
   ];
 
+  const titleText = adminState.showHistoricalOrders ? 'Gestión de Pedidos (Histórico)' : 'Gestión de Pedidos (Últimos 150)';
+  const historyBtn = adminState.showHistoricalOrders 
+    ? `<button class="btn btn-secondary" onclick="adminState.showHistoricalOrders = false; renderActiveTab();" style="padding: 8px 16px; font-size: 0.85rem;">⬅️ Volver a Recientes</button>`
+    : `<button class="btn btn-secondary" onclick="loadHistoricalOrdersList()" style="padding: 8px 16px; font-size: 0.85rem; border: 1px solid var(--accent); color: var(--accent);">📚 Ver Historial Completo</button>`;
+
   const filtersHtml = filters.map(f => `
     <button class="admin-filter-pill ${filter === f.id ? 'active' : ''}" onclick="filterOrders('${f.id}')">
       ${f.icon} ${f.label}
@@ -1924,6 +1954,12 @@ function renderOrders(container) {
   `).join('');
 
   const bulkActionsHtml = `
+    <div class="admin-header" style="margin-bottom: 16px; flex-direction: row;">
+      <div>
+        <h1 class="admin-title">${titleText}</h1>
+      </div>
+      <div>${historyBtn}</div>
+    </div>
     <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
       <div style="display: flex; gap: 8px; align-items: center;">
         <input type="text" id="admin-orders-search" class="admin-form-input" style="flex: 1; margin-bottom: 0; padding: 10px 16px; border-radius: 8px;" placeholder="Buscar por ID, Email, Teléfono, Juego..." value="${adminState.ordersSearch}" onkeyup="if(event.key==='Enter') filterOrdersSearch(this.value)">
@@ -4021,4 +4057,49 @@ window.fixWalletSpendingBug = async function() {
     alert("Error: " + err.message);
     if (btn) btn.innerHTML = "✨ Corregir Gastos de Billetera";
   }
+};
+
+window.calculateHistoricalStats = async function() {
+  if (!confirm("¿Deseas descargar y calcular el historial completo? Esto puede demorar unos segundos dependiendo de la cantidad de pedidos.")) return;
+  const btn = document.getElementById('btn-calc-historical');
+  if (btn) btn.innerHTML = '<div class="admin-loading-spinner" style="width:16px; height:16px; display:inline-block; vertical-align:middle; margin-right:5px;"></div> Calculando...';
+  
+  try {
+    const snap = await firebase.database().ref('orders').once('value');
+    if (snap.exists()) {
+      const ordersData = snap.val();
+      let allHistoricalOrders = Array.isArray(ordersData) ? ordersData.filter(Boolean) : Object.values(ordersData).filter(Boolean);
+      
+      const canceledIds = [20, 31, 46, 49, 50, 62, 63, 81, 82, 84, 85, 86, 88, 103, 121, 134, 139, 173, 178, 179, 180, 210, 223, 231, 246, 274, 286, 307, 348, 350, 351, 358, 370, 374, 407, 415, 439, 442, 574];
+      allHistoricalOrders.forEach(o => {
+        if (!o) return;
+        if (typeof o.priceUsd === 'string') o.priceUsd = parseFloat(o.priceUsd) || 0;
+        if (!o.priceUsd && o.priceBs && EXCHANGE_RATE && EXCHANGE_RATE.usdToBs) {
+          o.priceUsd = o.priceBs / EXCHANGE_RATE.usdToBs;
+        }
+        if (canceledIds.includes(parseInt(o.id))) {
+          o.status = 'rejected';
+        }
+        if (!o.paymentMethodName && o.paymentMethod) {
+          o.paymentMethodName = o.paymentMethod;
+        }
+        if (!o.paymentMethodName) o.paymentMethodName = 'Monedero';
+      });
+
+      allHistoricalOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      adminState.historicalOrders = allHistoricalOrders;
+      adminState.showHistorical = true;
+      adminState.showHistoricalOrders = true; 
+      
+      renderActiveTab();
+    }
+  } catch (error) {
+    console.error("Error fetching historical orders:", error);
+    alert("Hubo un error calculando el historial.");
+    if (btn) btn.innerHTML = '<span>📚</span> Calcular Historial Completo';
+  }
+};
+
+window.loadHistoricalOrdersList = function() {
+  window.calculateHistoricalStats();
 };
