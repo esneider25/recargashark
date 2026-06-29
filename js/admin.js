@@ -162,13 +162,43 @@ function renderAdminLogin(container) {
   container.innerHTML = `
     <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-deep); color: var(--text-primary); text-align: center; padding: 20px;">
       <div style="font-size: 4rem; margin-bottom: 20px;">🔒</div>
-      <h1 style="color: #ff6b6b; margin-bottom: 10px;">Acceso Denegado</h1>
+      <h1 style="color: #00e5c3; margin-bottom: 10px;">Acceso Administrativo</h1>
       <p style="color: var(--text-secondary); max-width: 400px; line-height: 1.5; margin-bottom: 30px;">
-        Esta área es exclusiva para el administrador principal de RecargaShark.
+        Inicia sesión con tu cuenta de administrador para acceder al panel.
       </p>
-      <a href="index.html" class="btn btn-primary" style="text-decoration: none;">Volver a la Tienda</a>
+      <div style="width: 100%; max-width: 320px; text-align: left; background: var(--bg-surface); padding: 25px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+        <input type="email" id="admin-email-input" placeholder="Correo electrónico" style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: white; outline: none;">
+        <input type="password" id="admin-password-input" placeholder="Contraseña" style="width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: white; outline: none;">
+        <button id="admin-login-btn" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: bold; border: none; cursor: pointer; border-radius: 8px;">
+          Ingresar al Panel
+        </button>
+      </div>
+      <a href="index.html" style="color: var(--text-muted); margin-top: 25px; text-decoration: none; font-size: 0.9rem;">Volver a la Tienda</a>
     </div>
   `;
+
+  const btn = document.getElementById('admin-login-btn');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const email = document.getElementById('admin-email-input').value.trim();
+      const password = document.getElementById('admin-password-input').value.trim();
+      if (!email || !password) {
+        alert('Por favor ingresa tu correo y contraseña.');
+        return;
+      }
+      btn.innerText = 'Cargando...';
+      btn.disabled = true;
+      firebase.auth().signInWithEmailAndPassword(email, password)
+        .then(() => {
+          // El listener de onAuthStateChanged procesará el login
+        })
+        .catch(err => {
+          alert('Error al iniciar sesión. Verifica tus datos.');
+          btn.innerText = 'Ingresar al Panel';
+          btn.disabled = false;
+        });
+    });
+  }
 }
 
 // ── Tab Switching ──
