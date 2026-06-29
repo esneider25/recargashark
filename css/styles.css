@@ -1383,7 +1383,7 @@ body {
 /* 2-Column Hero Layout (Text + Banner) */
 .hero-2col {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   max-width: 1200px;
   margin: 0 auto;
   gap: 30px;
@@ -1397,7 +1397,7 @@ body {
   width: 100%;
 }
 /* Strip excess paddings inside the 2col layout and fix alignment */
-.hero-2col .hero { padding: 20px 20px 20px 0; text-align: left; }
+.hero-2col .hero { padding: 0 20px 20px 0; text-align: left; margin-top: -40px; }
 .hero-2col .hero-subtitle { margin-left: 0; margin-right: 0; }
 .hero-2col .hero-cta-group { justify-content: flex-start; }
 .hero-2col .hero-stats { justify-content: flex-start; margin-left: 0; }
