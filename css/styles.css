@@ -1529,8 +1529,10 @@ body {
     flex: auto !important; /* Reset flex-basis to avoid huge height gaps */
   }
   .hero-2col .hero { padding: 0 15px 20px !important; text-align: center; margin: 0 !important; }
+  .hero-2col .hero-badge { margin-bottom: 10px; } /* Reduce el espacio debajo de la etiqueta */
   .hero-2col .hero-subtitle { margin: 0 auto 20px; }
   .hero-2col .hero-cta-group { justify-content: center; }
+  .hero-2col .hero-stats { justify-content: center; margin: 24px auto 0; }
   .hero-2col .promo-section { padding: 0 15px 0 !important; margin: 0 !important; }
   .promo-carousel { padding-bottom: 10px !important; }
 
