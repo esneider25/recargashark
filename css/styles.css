@@ -133,9 +133,9 @@ body {
   display: flex; align-items: center; gap: 10px;
   text-decoration: none; cursor: pointer;
 }
-.logo-icon { font-size: 2rem; filter: drop-shadow(0 0 8px var(--accent-glow)); }
+.logo-icon { font-size: 1.6rem; filter: drop-shadow(0 0 8px var(--accent-glow)); }
 .logo-text {
-  font-family: var(--font-display); font-weight: 800; font-size: 1.4rem;
+  font-family: var(--font-display); font-weight: 800; font-size: 1.15rem;
   background: linear-gradient(135deg, var(--accent), var(--accent-light));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text; letter-spacing: -0.5px;
@@ -149,15 +149,15 @@ body {
 .nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
 .nav-links a {
     white-space: nowrap;
-  color: var(--text-secondary); text-decoration: none; font-size: 0.88rem;
-  font-weight: 500; padding: 8px 14px; border-radius: var(--radius-sm);
+  color: var(--text-secondary); text-decoration: none; font-size: 0.85rem;
+  font-weight: 500; padding: 6px 10px; border-radius: var(--radius-sm);
   transition: var(--transition); cursor: pointer;
 }
 .nav-links a:hover, .nav-links a.active { color: var(--accent); background: var(--accent-glow); }
 .nav-cta {
   background: linear-gradient(135deg, var(--accent), var(--accent-dim)) !important;
-  color: var(--bg-deep) !important; font-weight: 600 !important;
-  padding: 10px 22px !important; border-radius: var(--radius-md) !important;
+  color: var(--bg-deep) !important; font-weight: 600 !important; font-size: 0.85rem !important;
+  padding: 8px 16px !important; border-radius: var(--radius-md) !important;
   box-shadow: 0 4px 15px var(--accent-glow);
 }
 .nav-cta:hover {
