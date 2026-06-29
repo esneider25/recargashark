@@ -1380,6 +1380,31 @@ body {
   white-space: nowrap;
 }
 
+/* 2-Column Hero Layout (Text + Banner) */
+.hero-2col {
+  display: flex;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 30px;
+  padding-top: 40px;
+}
+.hero-text-side {
+  flex: 1 1 500px;
+}
+.hero-banner-side {
+  flex: 0 1 500px;
+  width: 100%;
+}
+/* Strip excess paddings inside the 2col layout and fix alignment */
+.hero-2col .hero { padding: 20px 20px 20px 0; text-align: left; }
+.hero-2col .hero-subtitle { margin-left: 0; margin-right: 0; }
+.hero-2col .hero-cta-group { justify-content: flex-start; }
+.hero-2col .hero-stats { justify-content: flex-start; margin-left: 0; }
+.hero-2col .promo-section { padding: 0 !important; margin: 0 !important; width: 100%; max-width: 100%; }
+.hero-2col .promo-carousel { padding: 0 !important; --card-width: 100% !important; }
+.hero-2col .promo-card { flex: 0 0 100% !important; width: 100% !important; }
+
 @media (max-width: 768px) {
   /* Navbar Mobile Fix */
   .mobile-toggle { display: block; }
@@ -1413,6 +1438,31 @@ body {
   .header { padding: 10px 0; }
   .logo { font-size: 1.4rem; }
   .admin-btn { font-size: 0.85rem; padding: 6px 12px; }
+
+  /* 2-Column Hero Mobile (Banner on top) */
+  .hero-2col {
+    flex-direction: column;
+    padding-top: 80px; /* Leave space for navbar */
+    gap: 15px; /* Small gap between banner and text */
+  }
+  .hero-banner-side {
+    order: -1; /* Puts banner on top */
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+    flex: auto !important; /* Reset flex-basis so it doesn't force height */
+  }
+  .hero-text-side {
+    order: 2; /* Puts text on bottom */
+    text-align: center;
+    margin-top: 0;
+    flex: auto !important; /* Reset flex-basis to avoid huge height gaps */
+  }
+  .hero-2col .hero { padding: 0 15px 20px !important; text-align: center; margin: 0 !important; }
+  .hero-2col .hero-subtitle { margin: 0 auto 20px; }
+  .hero-2col .hero-cta-group { justify-content: center; }
+  .hero-2col .promo-section { padding: 0 15px 0 !important; margin: 0 !important; }
+  .promo-carousel { padding-bottom: 10px !important; }
 
   /* Hero Section */
   .hero { padding: 110px 20px 40px; }
