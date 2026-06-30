@@ -44,7 +44,7 @@
       }
     },
     "telegram_config": { 
-      ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
+      ".read": "true",
       ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     },
     "discounts": { 
