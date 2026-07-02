@@ -1,4 +1,4 @@
-const CACHE_NAME = 'recargashark-v50';
+const CACHE_NAME = 'recargashark-v51';
 const urlsToCache = [
   '/',
   '/manifest.json',
