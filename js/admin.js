@@ -2945,7 +2945,6 @@ function renderSettings(container) {
         </div>
 
       </div>
-      </div>
       
       <div class="admin-card">
         <div class="admin-card-header">
@@ -2954,9 +2953,14 @@ function renderSettings(container) {
         <div class="admin-form-group">
           <label class="admin-form-label" style="display: flex; justify-content: space-between; align-items: center;">
             <span>Activar Ruleta de la Suerte</span>
-            <input type="checkbox" id="setting-roulette" ${config.enableRoulette !== false ? 'checked' : ''} style="width: 24px; height: 24px; accent-color: #0ea5e9; cursor: pointer;">
+            <input type="checkbox" id="setting-enable-roulette" ${config.enableRoulette !== false ? 'checked' : ''} style="width: 24px; height: 24px; accent-color: var(--accent); cursor: pointer;">
           </label>
           <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">Si se activa, a los clientes que recarguen en la categoría de juegos les aparecerá el botón para girar la ruleta luego de que su pedido sea aprobado.</p>
+        </div>
+        <div class="admin-form-group" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+          <label class="admin-form-label">Probabilidad de Ganar (%)</label>
+          <input type="number" id="setting-roulette-probability" class="admin-form-input" value="${config.rouletteWinProbability || '2'}" min="0" max="100" step="1">
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">De 0 a 100. (Ejemplo: 2 = 2% de los clientes ganarán el premio de la ruleta).</p>
         </div>
       </div>
 
