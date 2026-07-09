@@ -1664,7 +1664,7 @@ function generateThumbnail(file) {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-        const max_size = 300;
+        const max_size = 1200;
         if (width > height) {
           if (width > max_size) {
             height *= max_size / width;
@@ -2532,3 +2532,4 @@ function initCarousel() {
   carousel.addEventListener('pointerdown', resetInterval);
   carousel.addEventListener('touchstart', resetInterval, { passive: true });
 }
+
