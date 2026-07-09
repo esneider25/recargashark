@@ -1570,59 +1570,13 @@ function previewScreenshot(input) {
   }
 
   const previewContainer = document.getElementById('screenshot-preview');
-  if (previewContainer) {
-    previewContainer.innerHTML = `
-      <div style="padding: 20px; text-align: center; color: var(--accent);">
-        <div class="pf-spinner" style="width: 30px; height: 30px; margin: 0 auto 10px;">
-          <div class="pf-spinner-ring"></div>
-        </div>
-        <div style="font-size: 0.85rem; opacity: 0.8;">Procesando captura...</div>
-      </div>
-    `;
-  }
 
   const reader = new FileReader();
-  reader.onload = async function(e) {
+  reader.onload = function(e) {
     const dataUrl = e.target.result;
     
     appState.selectedScreenshot = file;
     
-    // ── IMAGE HASH CHECK (Exact duplicate file detection) ──
-    let imgHashNum = 0;
-    const step = Math.max(1, Math.floor(dataUrl.length / 100000));
-    for (let i = 0; i < dataUrl.length; i += step) {
-      imgHashNum = ((imgHashNum << 5) - imgHashNum) + dataUrl.charCodeAt(i);
-      imgHashNum |= 0;
-    }
-    const imageHash = 'img-' + Math.abs(imgHashNum).toString(36) + '-' + file.size;
-    appState.selectedScreenshotHash = imageHash;
-
-    const orders = getOrders();
-    let duplicateFound = orders.some(o => o.status !== 'rejected' && o.imageHash === imageHash);
-    
-    if (duplicateFound) {
-      showToast('🚨 PAGO DUPLICADO: Esta captura ya fue procesada anteriormente.');
-      
-      const fp = getDeviceFingerprint();
-      blockUserForFraud(fp);
-      sendTelegramMessage(`🚨 <b>ALERTA DE FRAUDE:</b>\nUn cliente intentó re-utilizar un comprobante de pago ya procesado.\nFingerprint: <code>${fp}</code>\nEl usuario ha sido bloqueado preventivamente.`);
-      
-      appState.selectedScreenshot = null;
-      appState.selectedScreenshotOcr = null;
-      appState.selectedScreenshotHash = null;
-      input.value = '';
-      
-      if (previewContainer) {
-        previewContainer.innerHTML = `
-          <div class="screenshot-placeholder" style="border-color: var(--coral);">
-            <span style="font-size: 2rem;">🚨</span>
-            <span class="screenshot-hint" style="color: var(--coral);">Captura duplicada rechazada</span>
-          </div>
-        `;
-      }
-      return; // Stop execution
-    }
-
     if (previewContainer) {
       previewContainer.innerHTML = `
         <div class="screenshot-preview-wrapper" style="position: relative; border-radius: var(--radius); overflow: hidden;">
