@@ -1287,8 +1287,7 @@ function rectifyOrderId(orderId) {
     }
   }
 
-  // Refresh view
-  setTimeout(() => navigateTo('tracking', orderId), 500);
+  // Refresh view removed
 }
 
 // ── Toggle Password Visibility ──
