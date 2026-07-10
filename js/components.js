@@ -142,12 +142,12 @@ function renderPromoCarousel() {
           scroll-snap-type: x mandatory;
           scrollbar-width: none;
           scroll-behavior: smooth;
-          --card-width: 88vw;
-          padding: 0 calc(50vw - (var(--card-width) / 2));
+          --card-width: 100%;
+          padding: 0 calc(50% - (var(--card-width) / 2));
         }
         @media (min-width: 768px) {
           .promo-carousel {
-            --card-width: 75vw;
+            --card-width: 85%;
             gap: 24px;
           }
         }
