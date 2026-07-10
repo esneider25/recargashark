@@ -158,7 +158,6 @@ function renderApp() {
       ${renderNavbar()}
       <div class="app-container">
         ${renderHero()}
-        ${renderPromoCarousel()}
         ${renderHowItWorks()}
         ${renderCatalogSection(appState.selectedCategory)}
         ${renderFeaturesSection()}

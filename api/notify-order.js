@@ -62,6 +62,10 @@ export default async function handler(req, res) {
       try {
         if (screenshotBase64) {
           sent = await sendPhoto(botToken, chatId, screenshotBase64, msgText, keyboard);
+          if (!sent) {
+            console.warn(`Telegram sendPhoto failed on attempt ${attempt}. Falling back to sendMessage...`);
+            sent = await sendMessage(botToken, chatId, msgText, keyboard);
+          }
         } else {
           sent = await sendMessage(botToken, chatId, msgText, keyboard);
         }
@@ -156,6 +160,9 @@ async function sendMessage(botToken, chatId, text, inlineKeyboard) {
   });
 
   const data = await response.json();
+  if (!data.ok && response.status !== 429) {
+    console.error("Telegram sendMessage error:", data);
+  }
 
   // Handle 429 rate limit
   if (response.status === 429) {
@@ -195,6 +202,9 @@ async function sendPhoto(botToken, chatId, photoBase64, caption, inlineKeyboard)
   });
 
   const data = await response.json();
+  if (!data.ok && response.status !== 429) {
+    console.error("Telegram sendPhoto error:", data);
+  }
 
   // Handle 429 rate limit
   if (response.status === 429) {

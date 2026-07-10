@@ -36,6 +36,11 @@ export default async function handler(req, res) {
           data = await response.json();
         }
       }
+      
+      if (!data.ok && response.status !== 429) {
+        console.error("Telegram API error:", data);
+      }
+      
       return { response, data };
     }
 

@@ -48,6 +48,7 @@ function renderHero() {
   return `
     <section class="hero" id="hero">
       <div class="container">
+        ${renderPromoCarousel()}
         <div class="hero-badge">
           <span class="pulse-dot"></span>
           Plataforma activa 24/7
@@ -128,7 +129,7 @@ function renderPromoCarousel() {
   }).join('');
 
   return `
-    <section class="promo-section" style="padding: 30px 0 50px 0; overflow: hidden; position: relative; width: 100%;">
+    <section class="promo-section" style="padding: 0 0 30px 0; position: relative; width: 100%;">
       <div class="promo-carousel" id="promo-carousel">
         ${cards}
       </div>
