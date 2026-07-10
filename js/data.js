@@ -658,6 +658,11 @@ function createOrder(data) {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
+  
+  if (data.screenshot) {
+    order.screenshot = data.screenshot;
+  }
+  
   orders.unshift(order);
   saveOrderToDb(order);
   ORDERS = orders;
