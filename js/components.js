@@ -7,8 +7,7 @@ function renderNavbar() {
     <nav class="navbar" id="navbar">
       <div class="navbar-inner">
         <div class="logo" onclick="navigateTo('home')">
-          <img src="img/logo.png" alt="Logo" style="height: 38px; width: auto; object-fit: contain; filter: drop-shadow(0 0 8px var(--accent-glow));">
-          <span class="logo-text">Recarga<span>Shark</span></span>
+          <img src="img/logo.png" alt="Logo" style="height: 50px; width: auto; object-fit: contain; filter: drop-shadow(0 0 8px var(--accent-glow));">
         </div>
         
         <div class="mobile-auth-btn">
