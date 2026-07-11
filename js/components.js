@@ -337,12 +337,19 @@ function renderProductDetail(productId) {
       const isPkgOut = pkg.isOutofStock;
       const bgStyle = pkg.bgImage ? `background-image: url('${pkg.bgImage}'); background-size: cover; background-position: center; border-color: transparent;` : '';
       const bgClass = pkg.bgImage ? 'has-bg-img' : '';
+      
+      const amtStr = pkg.amount ? (typeof pkg.amount === 'number' ? pkg.amount.toLocaleString() : pkg.amount.toString()) : '';
+      let amtStyle = '';
+      if (amtStr.length > 14) amtStyle = 'font-size: 1.05rem; line-height: 1.2; white-space: normal; word-break: break-word;';
+      else if (amtStr.length > 9) amtStyle = 'font-size: 1.45rem; line-height: 1.1; white-space: normal; word-break: break-word;';
+      else if (amtStr.length > 6) amtStyle = 'font-size: 1.9rem;';
+      
       return `
         <div class="package-card fade-in-up stagger-${(i % 7) + 1} ${bgClass}"
              onclick="${isPkgOut ? "showToast('Paquete agotado', 'error')" : `selectPackage('${product.id}', ${i})`}"
              id="pkg-${product.id}-${i}"
              style="${isPkgOut ? 'opacity: 0.5; filter: grayscale(1); cursor: not-allowed;' : ''} ${bgStyle}">
-          <div class="package-amount">${pkg.amount ? pkg.amount.toLocaleString() : ''}</div>
+          <div class="package-amount" style="${amtStyle}">${amtStr}</div>
           ${(!pkg.hideCurrency && product.currency) ? `<div class="package-label">${product.currency}</div>` : ''}
           ${isPkgOut ? '<div style="font-size: 0.75rem; color: #ef5350; margin-top: 5px; font-weight: bold; position: relative; z-index: 2;">AGOTADO</div>' : ''}
         </div>
