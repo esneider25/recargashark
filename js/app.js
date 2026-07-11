@@ -1732,6 +1732,11 @@ async function triggerTelegramNotification(order) {
   }
 
   // ── Step 3: Fire-and-forget POST to server endpoint ──
+  if (typeof TELEGRAM_CONFIG !== 'undefined' && TELEGRAM_CONFIG.enabled === false) {
+    appState.selectedScreenshot = null;
+    return;
+  }
+
   // The SERVER handles Telegram delivery with retries — no dependency on client
   const payload = JSON.stringify({
     order: {

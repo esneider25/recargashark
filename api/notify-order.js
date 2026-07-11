@@ -32,6 +32,9 @@ export default async function handler(req, res) {
         const configRes = await fetch(`${FIREBASE_DB_URL}/telegram_config.json`);
         const telegramConfig = await configRes.json();
         if (telegramConfig) {
+          if (telegramConfig.enabled === false) {
+            return res.status(200).json({ ok: true, skipped: true, reason: 'Telegram disabled by admin config' });
+          }
           botToken = telegramConfig.botToken;
           chatId = telegramConfig.chatId;
         }
