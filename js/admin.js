@@ -1861,15 +1861,13 @@ function saveProduct() {
 
   if (!productName) { showAdminToast('❌ Ingresa el nombre del producto', 'error'); nameInput.focus(); return; }
   if (!productId) { showAdminToast('❌ Ingresa un ID válido', 'error'); idInput.focus(); return; }
-  if (!productCurrency) { showAdminToast('❌ Especifica la moneda/unidad', 'error'); currencyInput.focus(); return; }
-
   for (let i = 0; i < adminState.tempPackages.length; i++) {
     const pkg = adminState.tempPackages[i];
     if (!pkg.amount || pkg.priceUsd <= 0) {
       showAdminToast(`❌ El paquete #${i + 1} tiene valores incorrectos`, 'error');
       return;
     }
-    if (!pkg.label) pkg.label = `${pkg.amount} ${productCurrency}`;
+    if (!pkg.label) pkg.label = productCurrency ? `${pkg.amount} ${productCurrency}` : `${pkg.amount}`;
   }
 
   const hexColor = colorInput.value;
