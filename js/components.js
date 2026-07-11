@@ -342,8 +342,8 @@ function renderProductDetail(productId) {
              onclick="${isPkgOut ? "showToast('Paquete agotado', 'error')" : `selectPackage('${product.id}', ${i})`}"
              id="pkg-${product.id}-${i}"
              style="${isPkgOut ? 'opacity: 0.5; filter: grayscale(1); cursor: not-allowed;' : ''} ${bgStyle}">
-          <div class="package-amount">${pkg.amount.toLocaleString()}</div>
-          ${product.currency ? `<div class="package-label">${product.currency}</div>` : ''}
+          <div class="package-amount">${pkg.amount ? pkg.amount.toLocaleString() : ''}</div>
+          ${(!pkg.hideCurrency && product.currency) ? `<div class="package-label">${product.currency}</div>` : ''}
           ${isPkgOut ? '<div style="font-size: 0.75rem; color: #ef5350; margin-top: 5px; font-weight: bold; position: relative; z-index: 2;">AGOTADO</div>' : ''}
         </div>
       `;
