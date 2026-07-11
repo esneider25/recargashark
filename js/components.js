@@ -335,7 +335,7 @@ function renderProductDetail(productId) {
   } else {
     packagesHtml = product.packages.map((pkg, i) => {
       const isPkgOut = pkg.isOutofStock;
-      const bgStyle = pkg.bgImage ? `background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.9)), url('${pkg.bgImage}'); background-size: cover; background-position: center; border-color: rgba(255,255,255,0.1);` : '';
+      const bgStyle = pkg.bgImage ? `background-image: url('${pkg.bgImage}'); background-size: cover; background-position: center; border-color: transparent;` : '';
       const bgClass = pkg.bgImage ? 'has-bg-img' : '';
       return `
         <div class="package-card fade-in-up stagger-${(i % 7) + 1} ${bgClass}"
@@ -344,8 +344,7 @@ function renderProductDetail(productId) {
              style="${isPkgOut ? 'opacity: 0.5; filter: grayscale(1); cursor: not-allowed;' : ''} ${bgStyle}">
           <div class="package-amount">${pkg.amount.toLocaleString()}</div>
           <div class="package-label">${product.currency}</div>
-          <div class="package-price-bs">Bs. ${formatBs(usdToBs(pkg.priceUsd))}</div>
-          ${isPkgOut ? '<div style="font-size: 0.75rem; color: #ef5350; margin-top: 5px; font-weight: bold; text-shadow: none;">AGOTADO</div>' : ''}
+          ${isPkgOut ? '<div style="font-size: 0.75rem; color: #ef5350; margin-top: 5px; font-weight: bold; position: relative; z-index: 2;">AGOTADO</div>' : ''}
         </div>
       `;
     }).join('');
@@ -1228,7 +1227,6 @@ function renderWalletRecharge() {
          id="wallet-amt-${i}">
       <div class="package-amount">$${amount}</div>
       <div class="package-label">Saldo</div>
-      <div class="package-price-bs">Bs. ${formatBs(usdToBs(amount))}</div>
     </div>
   `).join('');
 
