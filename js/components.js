@@ -709,6 +709,12 @@ function renderOrderTracking(orderId) {
 
   const cleanAdminNote = cleanStr(order.adminNote);
 
+  const statusInfo = ORDER_STATUSES[order.status] || ORDER_STATUSES['pending'];
+  const isErrorStatus = ['rejected', 'invalid-id'].includes(order.status);
+  let currentIndex = 0;
+  if (order.status === 'processing') currentIndex = 1;
+  if (order.status === 'completed' || isErrorStatus) currentIndex = 2;
+
   const timelineSteps = [
     { key: 'pending', label: 'Recibido', icon: '📋', desc: 'Tu pedido fue registrado exitosamente' },
     { key: 'processing', label: 'Procesando', icon: '⚙️', desc: 'Estamos verificando tu pago y procesando la recarga' },
