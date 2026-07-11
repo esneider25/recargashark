@@ -521,6 +521,21 @@ body {
 .package-price-usd { font-size: 0.95rem; font-weight: 600; color: var(--accent); }
 .package-price-bs { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
 
+/* Overrides for package card with background image */
+.package-card.has-bg-img {
+  text-shadow: 0px 2px 4px rgba(0,0,0,0.9);
+}
+.package-card.has-bg-img .package-amount {
+  color: #fff;
+  text-shadow: 0px 2px 6px rgba(0,0,0,0.9);
+}
+.package-card.has-bg-img .package-label {
+  color: rgba(255, 255, 255, 0.9);
+}
+.package-card.has-bg-img .package-price-bs {
+  color: rgba(255, 255, 255, 0.75);
+}
+
 /* ── Order Form ── */
 .order-form {
   background: var(--bg-card); border: 1px solid var(--border);

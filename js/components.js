@@ -335,9 +335,10 @@ function renderProductDetail(productId) {
   } else {
     packagesHtml = product.packages.map((pkg, i) => {
       const isPkgOut = pkg.isOutofStock;
-      const bgStyle = pkg.bgImage ? `background-image: url('${pkg.bgImage}'); background-size: cover; background-position: center; border: none; box-shadow: inset 0 0 0 2000px rgba(0,0,0,0.3); text-shadow: 1px 1px 3px rgba(0,0,0,0.8);` : '';
+      const bgStyle = pkg.bgImage ? `background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.9)), url('${pkg.bgImage}'); background-size: cover; background-position: center; border-color: rgba(255,255,255,0.1);` : '';
+      const bgClass = pkg.bgImage ? 'has-bg-img' : '';
       return `
-        <div class="package-card fade-in-up stagger-${(i % 7) + 1}"
+        <div class="package-card fade-in-up stagger-${(i % 7) + 1} ${bgClass}"
              onclick="${isPkgOut ? "showToast('Paquete agotado', 'error')" : `selectPackage('${product.id}', ${i})`}"
              id="pkg-${product.id}-${i}"
              style="${isPkgOut ? 'opacity: 0.5; filter: grayscale(1); cursor: not-allowed;' : ''} ${bgStyle}">
