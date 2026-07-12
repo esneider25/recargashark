@@ -1378,10 +1378,11 @@ async function testApiConnection(idx) {
   showAdminToast(`🔌 Conectando con ${api.name || 'API'}...`, 'info');
 
   try {
+    const idToken = await firebase.auth().currentUser.getIdToken();
     const proxyUrl = '/api/proxy';
     const response = await fetch(proxyUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
       body: JSON.stringify({
         endpoint: "saldo",
         method: "GET",
@@ -1468,10 +1469,11 @@ async function processAutomaticTopup(orderId, fromModal = false) {
       }
     }
 
+    const idToken = await firebase.auth().currentUser.getIdToken();
     const proxyUrl = '/api/proxy';
     const response = await fetch(proxyUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
       body: JSON.stringify({
         endpoint: "comprar",
         method: "POST",
@@ -1588,10 +1590,11 @@ function pollApiStatus(baseUrl, apiKey, orderId, fromModal) {
   const interval = setInterval(async () => {
     attempts++;
     try {
+      const idToken = await firebase.auth().currentUser.getIdToken();
       const proxyUrl = '/api/proxy';
       const resp = await fetch(proxyUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
         body: JSON.stringify({
           endpoint: `recargas/status?merchant_ref=${orderId}`,
           method: "GET",
@@ -2320,8 +2323,8 @@ function openOrderDetailModal(orderId) {
       <div class="admin-detail-row">
         <span class="label">🎮 ID del Juego</span>
         <span class="value">
-          <strong>${order.gameId}</strong>
-          <button class="copy-btn" onclick="adminCopyText('${order.gameId}')" title="Copiar">📋</button>
+          <strong>${escapeHTML(order.gameId)}</strong>
+          <button class="copy-btn" onclick="adminCopyText('${escapeHTML(order.gameId)}')" title="Copiar">📋</button>
         </span>
       </div>
     `;
@@ -2330,16 +2333,16 @@ function openOrderDetailModal(orderId) {
       <div class="admin-detail-row">
         <span class="label">📧 Email / Usuario</span>
         <span class="value">
-          <strong>${order.accountEmail || 'N/A'}</strong>
-          ${order.accountEmail ? `<button class="copy-btn" onclick="adminCopyText('${order.accountEmail}')" title="Copiar">📋</button>` : ''}
+          <strong>${escapeHTML(order.accountEmail) || 'N/A'}</strong>
+          ${order.accountEmail ? `<button class="copy-btn" onclick="adminCopyText('${escapeHTML(order.accountEmail)}')" title="Copiar">📋</button>` : ''}
         </span>
       </div>
       <div class="admin-detail-row">
         <span class="label">🔒 Contraseña</span>
         <span class="value">
           <span id="order-pass-display" style="font-family: monospace;">••••••••</span>
-          <button class="copy-btn" onclick="toggleOrderPassword('${order.accountPassword || ''}')" title="Mostrar" id="order-pass-toggle">👁️</button>
-          ${order.accountPassword ? `<button class="copy-btn" onclick="adminCopyText('${order.accountPassword}')" title="Copiar">📋</button>` : ''}
+          <button class="copy-btn" onclick="toggleOrderPassword('${escapeHTML(order.accountPassword) || ''}')" title="Mostrar" id="order-pass-toggle">👁️</button>
+          ${order.accountPassword ? `<button class="copy-btn" onclick="adminCopyText('${escapeHTML(order.accountPassword)}')" title="Copiar">📋</button>` : ''}
         </span>
       </div>
     `;
@@ -2390,7 +2393,7 @@ function openOrderDetailModal(orderId) {
         <h4>📦 Producto</h4>
         <div class="admin-detail-row">
           <span class="label">Producto</span>
-          <span class="value">${order.productName}</span>
+          <span class="value">${escapeHTML(order.productName)}</span>
         </div>
         <div class="admin-detail-row">
           <span class="label">Tipo</span>
@@ -2398,7 +2401,7 @@ function openOrderDetailModal(orderId) {
         </div>
         <div class="admin-detail-row">
           <span class="label">Paquete</span>
-          <span class="value">${order.packageLabel}</span>
+          <span class="value">${escapeHTML(order.packageLabel)}</span>
         </div>
         <div class="admin-detail-row">
           <span class="label">Precio USD</span>
@@ -2415,8 +2418,8 @@ function openOrderDetailModal(orderId) {
         <div class="admin-detail-row">
           <span class="label">Contacto</span>
           <span class="value">
-            ${order.customerContact || 'No proporcionado'}
-            ${order.customerContact ? `<button class="copy-btn" onclick="adminCopyText('${order.customerContact}')" title="Copiar">📋</button>` : ''}
+            ${escapeHTML(order.customerContact) || 'No proporcionado'}
+            ${order.customerContact ? `<button class="copy-btn" onclick="adminCopyText('${escapeHTML(order.customerContact)}')" title="Copiar">📋</button>` : ''}
           </span>
         </div>
         <div class="admin-detail-row">

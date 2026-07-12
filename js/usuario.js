@@ -579,13 +579,15 @@ window.confirmRedeemPoints = function() {
   const modal = document.getElementById('redeem-points-modal');
   if (modal) modal.remove();
   
-  const newPoints = userProfile.points - cost;
-  const newWallet = (userProfile.wallet || 0) + dollars;
-  
-  firebase.database().ref('users/' + currentUser.uid).update({
-    points: newPoints,
-    wallet: newWallet
-  }).then(() => {
+  firebase.auth().currentUser.getIdToken().then(idToken => {
+    return fetch('/api/wallet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+      body: JSON.stringify({ action: 'redeem', amount: dollars, cost: cost })
+    });
+  }).then(res => res.json()).then(data => {
+    if (data.error) throw new Error(data.error);
+    
     firebase.database().ref('users/' + currentUser.uid + '/transactions').push({
       id: Date.now().toString(),
       type: 'deposit',
@@ -594,9 +596,9 @@ window.confirmRedeemPoints = function() {
       date: Date.now()
     });
     
-    usuarioToast(`ðŸŽ‰ ¡Canje exitoso! Se agregaron $${dollars} a tu billetera.`, 'success');
+    usuarioToast(`🎉 ¡Canje exitoso! Se agregaron $${dollars} a tu billetera.`, 'success');
   }).catch(err => {
-    usuarioToast('âŒ Hubo un error al canjear.', 'error');
+    usuarioToast('❌ Hubo un error al canjear: ' + err.message, 'error');
   });
 };
 
@@ -1295,10 +1297,16 @@ window.submitCashout = function() {
     createdAt: Date.now()
   };
   
-  // Deduct points instantly
-  firebase.database().ref('users/' + currentUser.uid).update({
-    points: currentPoints - amount
-  }).then(() => {
+  // Deduct points securely
+  firebase.auth().currentUser.getIdToken().then(idToken => {
+    return fetch('/api/wallet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+      body: JSON.stringify({ action: 'cashout', amount: amount })
+    });
+  }).then(res => res.json()).then(data => {
+    if (data.error) throw new Error(data.error);
+
     // Save transaction record in user's history
     firebase.database().ref('users/' + currentUser.uid + '/transactions').push({
       id: Date.now().toString(),

@@ -2,6 +2,20 @@
 // RecargaShark — Main App Logic & SPA Routing (v2 + Orders)
 // ============================================================
 
+window.escapeHTML = function(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/[&<>'"]/g, function(tag) {
+    const charsToReplace = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    };
+    return charsToReplace[tag] || tag;
+  });
+};
+
 // ── PWA Logic ──
 window.deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -705,16 +719,27 @@ async function _submitOrderLogic() {
   }
 
   if (appState.selectedPaymentId === 'wallet') {
-    const currentWallet = (typeof userProfile !== 'undefined' && userProfile && userProfile.wallet) ? userProfile.wallet : 0;
-    const newWallet = currentWallet - finalUsd;
-    firebase.database().ref('users/' + currentUser.uid).update({ wallet: newWallet });
-    firebase.database().ref('users/' + currentUser.uid + '/transactions').push({
-      id: Date.now().toString(),
-      type: 'purchase',
-      amount: -finalUsd,
-      description: numberOfOrders > 1 ? `Compra Masiva (${numberOfOrders} IDs): ${product.name} - ${pkg.label}` : `Compra: ${product.name} - ${pkg.label}`,
-      date: Date.now()
-    });
+    try {
+      const idToken = await firebase.auth().currentUser.getIdToken();
+      const res = await fetch('/api/wallet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+        body: JSON.stringify({ action: 'purchase', amount: finalUsd })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      firebase.database().ref('users/' + currentUser.uid + '/transactions').push({
+        id: Date.now().toString(),
+        type: 'purchase',
+        amount: -finalUsd,
+        description: numberOfOrders > 1 ? `Compra Masiva (${numberOfOrders} IDs): ${product.name} - ${pkg.label}` : `Compra: ${product.name} - ${pkg.label}`,
+        date: Date.now()
+      });
+    } catch (error) {
+      showToast('Error procesando pago con monedero: ' + error.message, 'error');
+      return;
+    }
   }
 
   // Create the orders
@@ -1901,14 +1926,14 @@ window.verifyGameId = async function(productId) {
 
       if (name && typeof name === 'string' && name.trim() !== '' && !name.includes('@')) {
         appState.verifiedPlayerName = name;
-        resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ Nombre: <b>${name}</b></span>`;
+        resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ Nombre: <b>${escapeHTML(name)}</b></span>`;
       } else {
         // Fallback inteligente: buscar cualquier string que no sea un correo y tenga longitud de nombre
         let fallbackName = Object.values(src).find(v => typeof v === 'string' && v.length > 2 && v.length < 30 && v !== 'success' && v !== 'OK' && !v.includes('@'));
         
         if (fallbackName) {
            appState.verifiedPlayerName = fallbackName;
-           resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ Nombre: <b>${fallbackName}</b></span>`;
+           resultDiv.innerHTML = `<span style="color: #00e5c3;">✅ Nombre: <b>${escapeHTML(fallbackName)}</b></span>`;
         } else {
            // Imprimir un mini-resumen de los datos recibidos para que el usuario pueda decirnos qué llaves llegaron
            const availableKeys = Object.keys(src).filter(k => typeof src[k] === 'string' || typeof src[k] === 'number').map(k => `${k}: ${src[k]}`).join(', ');
@@ -1919,9 +1944,9 @@ window.verifyGameId = async function(productId) {
       // Mostrar el error o el JSON crudo para depurar
       const errorMsg = data.error || data.msg || data.mensaje || data.message;
       if (errorMsg) {
-        resultDiv.innerHTML = `<span style="color: #ff5252;">❌ Error: ${errorMsg}</span>`;
+        resultDiv.innerHTML = `<span style="color: #ff5252;">❌ Error: ${escapeHTML(errorMsg)}</span>`;
       } else {
-        resultDiv.innerHTML = `<span style="color: #ff5252;">❌ ID Inválido. Respuesta API: ${JSON.stringify(data).substring(0, 60)}...</span>`;
+        resultDiv.innerHTML = `<span style="color: #ff5252;">❌ ID Inválido. Respuesta API: ${escapeHTML(JSON.stringify(data).substring(0, 60))}...</span>`;
       }
     }
   } catch (error) {

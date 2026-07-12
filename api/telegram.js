@@ -13,8 +13,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { type, text, inlineKeyboard, photoBase64, botToken, chatId } = req.body;
+    const { type, text, inlineKeyboard, photoBase64 } = req.body;
     
+    // El token ahora vive de forma segura en las variables de entorno de Vercel
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+
     if (!botToken || !chatId) {
       return res.status(400).json({ error: "Faltan credenciales de Telegram." });
     }
