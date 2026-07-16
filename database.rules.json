@@ -31,8 +31,8 @@
     "messages": { 
       ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
       "$sessionId": {
-         ".read": "auth != null && (auth.token.email === 'adminshark@gmail.com' || auth.uid === $sessionId) || $sessionId.matches(/^fp-/)",
-         ".write": "auth != null && (auth.token.email === 'adminshark@gmail.com' || auth.uid === $sessionId) || $sessionId.matches(/^fp-/)"
+         ".read": "(auth != null && (auth.token.email === 'adminshark@gmail.com' || auth.uid === $sessionId)) || $sessionId.matches(/^fp-/)",
+         ".write": "(auth != null && (auth.token.email === 'adminshark@gmail.com' || auth.uid === $sessionId)) || ($sessionId.matches(/^fp-/) && newData.exists())"
       }
     },
     "orders": { 
@@ -41,9 +41,9 @@
       ".indexOn": ["userId", "id"],
       "$orderId": {
         ".read": "!$orderId.beginsWith('AP-OLD-') || (auth != null && data.child('userId').val() === auth.uid) || (auth != null && auth.token.email === 'adminshark@gmail.com')",
-        ".write": "auth != null && auth.token.email === 'adminshark@gmail.com' || (!data.exists() && newData.child('status').val() === 'pending' && (auth == null || newData.child('userId').val() === auth.uid)) || (data.exists() && newData.child('status').val() === data.child('status').val() && newData.child('priceUsd').val() === data.child('priceUsd').val() && newData.child('priceBs').val() === data.child('priceBs').val() && (auth == null || data.child('userId').val() === auth.uid))",
+        ".write": "auth != null && auth.token.email === 'adminshark@gmail.com' || (!data.exists() && newData.child('status').val() === 'pending' && (auth == null || newData.child('userId').val() === auth.uid)) || (data.exists() && (newData.child('status').val() === data.child('status').val() || (data.child('status').val() === 'invalid-id' && newData.child('status').val() === 'pending')) && newData.child('priceUsd').val() === data.child('priceUsd').val() && newData.child('priceBs').val() === data.child('priceBs').val() && (auth == null || data.child('userId').val() === auth.uid))",
         "roulettePlayed": {
-          ".write": "true"
+          ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
         }
       }
     },
@@ -57,11 +57,19 @@
       }
     },
     "telegram_config": { 
-      ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
+      ".read": "true",
       ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     },
     "discounts": { 
       ".read": "true",
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
+    },
+    "_sysTracking": {
+      ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
+    },
+    "admin_logs": {
+      ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
       ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     },
     "spam_tracker": { 
@@ -70,7 +78,7 @@
     },
     "order_counter": { 
       ".read": "true", 
-      ".write": "auth != null" 
+      ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'" 
     },
     "api_configs": { 
       ".read": "auth != null && auth.token.email === 'adminshark@gmail.com'",
@@ -98,6 +106,27 @@
           ".validate": "!data.exists() || data.val() == newData.val() || auth.token.email === 'adminshark@gmail.com'"
         },
         "totalSpent": {
+          ".validate": "!data.exists() || data.val() == newData.val() || auth.token.email === 'adminshark@gmail.com'"
+        },
+        "referralsCount": {
+          ".validate": "!data.exists() || data.val() == newData.val() || auth.token.email === 'adminshark@gmail.com'"
+        },
+        "referralsEarnedPoints": {
+          ".validate": "!data.exists() || data.val() == newData.val() || auth.token.email === 'adminshark@gmail.com'"
+        },
+        "hasMadeFirstPurchase": {
+          ".validate": "!data.exists() || data.val() == newData.val() || auth.token.email === 'adminshark@gmail.com'"
+        },
+        "referredBy": {
+          ".validate": "!data.exists() || data.val() == newData.val() || newData.val() == null || auth.token.email === 'adminshark@gmail.com'"
+        },
+        "referralCode": {
+          ".validate": "!data.exists() || data.val() == newData.val() || auth.token.email === 'adminshark@gmail.com'"
+        },
+        "referralLimit": {
+          ".validate": "!data.exists() || data.val() == newData.val() || auth.token.email === 'adminshark@gmail.com'"
+        },
+        "autoProcess": {
           ".validate": "!data.exists() || data.val() == newData.val() || auth.token.email === 'adminshark@gmail.com'"
         }
       }

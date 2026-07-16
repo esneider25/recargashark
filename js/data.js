@@ -139,23 +139,22 @@ let PAYMENT_METHODS = [];
 
 // ── Telegram Bot Configuration ──
 let TELEGRAM_CONFIG = {
-  botToken: '8515103558:AAFMRrUiYRna3PbEbZogrIA-i7vIls0clbY',
-  chatId: '6012452103',
   enabled: true,
   notifyNewOrder: true,
   notifyWithPhoto: true
 };
 
-// ── Anti-Spam Configuration ──
-let SPAM_CONFIG = {
+// 🛡️ Anti-Spam Configuration 🛡️
+let _antiSpamConf = {
   maxOrdersPerHour: 5,
   maxOrdersPerDay: 15,
   cooldownMinutes: 30,
   blocklistEnabled: true
 };
+Object.freeze(_antiSpamConf);
 
-// ── Spam Tracker ──
-let SPAM_TRACKER = {
+// 🕵️ Spam Tracker 🕵️──
+let _sysTracking = {
   attempts: [],
   blocked: []
 };
@@ -301,9 +300,9 @@ function initFirebaseData() {
   const isAdmin = window.location.pathname.includes('admin');
   const userLoggedIn = typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser;
   
-  const baseKeys = ['products', 'categories', 'payment_methods', 'exchange_rate', 'settings', 'banners', 'landing_config', 'telegram_config', 'discounts', 'messages'];
+  const baseKeys = ['products', 'categories', 'payment_methods', 'exchange_rate', 'settings', 'banners', 'landing_config', 'discounts'];
   const keysToLoad = isAdmin 
-    ? ['products', 'categories', 'payment_methods', 'exchange_rate', 'settings', 'api_configs', 'discounts', 'messages', 'orders', 'telegram_config', 'quick_replies', 'spam_tracker', 'order_counter', 'banners', 'landing_config']
+    ? ['products', 'categories', 'payment_methods', 'exchange_rate', 'settings', 'api_configs', 'discounts', 'messages', 'orders', 'telegram_config', 'quick_replies', '_sysTracking', 'order_counter', 'banners', 'landing_config']
     : baseKeys;
   
   const loadedKeys = new Set();
@@ -335,11 +334,23 @@ function initFirebaseData() {
     queryRef.off('value');
     queryRef.on('value', (snapshot) => {
       const data = snapshot.val();
-      if (data) {
-        if (key === 'products') { PRODUCTS.length = 0; data.forEach(p => PRODUCTS.push(p)); }
-        else if (key === 'categories') { CATEGORIES.length = 0; data.forEach(c => CATEGORIES.push(c)); }
-        else if (key === 'payment_methods') { PAYMENT_METHODS.length = 0; data.forEach(p => PAYMENT_METHODS.push(p)); }
-        else if (key === 'exchange_rate') Object.assign(EXCHANGE_RATE, data);
+      try {
+        if (data !== null && data !== undefined) {
+          const toArray = (d) => Array.isArray(d) ? d.filter(Boolean) : Object.values(d);
+          if (key === 'products') { 
+            PRODUCTS.length = 0; 
+            toArray(data).forEach(p => {
+              if (p.packages) {
+                p.packages = (Array.isArray(p.packages) ? p.packages : Object.values(p.packages)).filter(Boolean);
+              } else {
+                p.packages = [];
+              }
+              PRODUCTS.push(p); 
+            }); 
+          }
+          else if (key === 'categories') { CATEGORIES.length = 0; toArray(data).forEach(c => CATEGORIES.push(c)); }
+          else if (key === 'payment_methods') { PAYMENT_METHODS.length = 0; toArray(data).forEach(p => PAYMENT_METHODS.push(p)); }
+          else if (key === 'exchange_rate') Object.assign(EXCHANGE_RATE, data);
         else if (key === 'settings') Object.assign(SITE_SETTINGS, data);
         else if (key === 'landing_config') {
           if (data.heroStats && !Array.isArray(data.heroStats)) data.heroStats = Object.values(data.heroStats);
@@ -376,9 +387,9 @@ function initFirebaseData() {
         }
         else if (key === 'telegram_config') Object.assign(TELEGRAM_CONFIG, data);
         else if (key === 'quick_replies') QUICK_REPLIES = data;
-        else if (key === 'spam_tracker') {
-          SPAM_TRACKER.attempts = data.attempts || [];
-          SPAM_TRACKER.blocked = data.blocked || [];
+        else if (key === '_sysTracking') {
+          _sysTracking.attempts = data.attempts || [];
+          _sysTracking.blocked = data.blocked || [];
         }
         else if (key === 'order_counter') localStorage.setItem('recargashark_order_counter', data.toString());
         else if (key === 'banners') {
@@ -386,6 +397,8 @@ function initFirebaseData() {
           else if (Array.isArray(data)) BANNERS = data.filter(Boolean);
           else BANNERS = Object.values(data).filter(Boolean);
         }
+      } catch (err) {
+        console.error('Error parsing data for key: ' + key, err);
       }
       checkLoadComplete(key);
     }, (error) => {
@@ -393,6 +406,16 @@ function initFirebaseData() {
       checkLoadComplete(key);
     });
   });
+
+  // Fallback to prevent freezing if any key fails to load
+  setTimeout(() => {
+    if (!window.DATA_LOADED) {
+      console.warn('Forcing DATA_LOADED true after timeout');
+      window.DATA_LOADED = true;
+      if (typeof renderApp === 'function') renderApp();
+      if (typeof initAdminApp === 'function') initAdminApp();
+    }
+  }, 4000);
 }
 
 initFirebaseData();
@@ -855,6 +878,9 @@ function deleteOrder(orderId) {
 }
 
 // ── Anti-Spam Functions ──
+// Client-side rate limiting uses localStorage (since _sysTracking in Firebase is now admin-only)
+// Admin-side block/unblock still uses Firebase for central management
+
 function getDeviceFingerprint() {
   const nav = navigator;
   const raw = [nav.userAgent, screen.width, screen.height, nav.language, nav.hardwareConcurrency || ''].join('|');
@@ -863,23 +889,48 @@ function getDeviceFingerprint() {
   return 'fp-' + Math.abs(hash).toString(36);
 }
 
+function _getLocalSpamData() {
+  try {
+    return JSON.parse(localStorage.getItem('_ap_spam') || '{"attempts":[],"blocked":[]}');
+  } catch (e) { return { attempts: [], blocked: [] }; }
+}
+
+function _saveLocalSpamData(data) {
+  try { localStorage.setItem('_ap_spam', JSON.stringify(data)); } catch (e) {}
+}
+
 function saveSpamTracker() {
-  saveToDb('spam_tracker', SPAM_TRACKER);
+  // Solo el admin puede escribir a _sysTracking en Firebase
+  const isAdmin = window.location.pathname.includes('admin');
+  if (isAdmin) {
+    saveToDb('_sysTracking', _sysTracking);
+  }
+  // Siempre guardar localmente como fallback
+  _saveLocalSpamData({ attempts: _sysTracking.attempts, blocked: _sysTracking.blocked });
 }
 
 function isUserBlocked() {
-  if (!SPAM_CONFIG.blocklistEnabled) return false;
+  if (!_antiSpamConf.blocklistEnabled) return false;
   const fp = getDeviceFingerprint();
   const now = Date.now();
+  
+  // Combinar datos de Firebase (si admin los cargó) con datos locales
+  const localData = _getLocalSpamData();
+  const allBlocked = [..._sysTracking.blocked, ...localData.blocked];
+  
   // Clean expired blocks
-  SPAM_TRACKER.blocked = SPAM_TRACKER.blocked.filter(b => new Date(b.until).getTime() > now);
-  saveSpamTracker();
-  return SPAM_TRACKER.blocked.some(b => b.fingerprint === fp);
+  const activeBlocks = allBlocked.filter(b => new Date(b.until).getTime() > now);
+  _sysTracking.blocked = activeBlocks;
+  _saveLocalSpamData({ attempts: _getLocalSpamData().attempts, blocked: activeBlocks });
+  
+  return activeBlocks.some(b => b.fingerprint === fp);
 }
 
 function getBlockedUntil() {
   const fp = getDeviceFingerprint();
-  const block = SPAM_TRACKER.blocked.find(b => b.fingerprint === fp);
+  const localData = _getLocalSpamData();
+  const allBlocked = [..._sysTracking.blocked, ...localData.blocked];
+  const block = allBlocked.find(b => b.fingerprint === fp);
   if (!block) return null;
   return new Date(block.until);
 }
@@ -890,19 +941,28 @@ function checkSpamLimit() {
   const oneHourAgo = now - (60 * 60 * 1000);
   const oneDayAgo = now - (24 * 60 * 60 * 1000);
 
+  // Usar datos locales para rate limiting del cliente
+  const localData = _getLocalSpamData();
+  let attempts = localData.attempts || [];
+  
   // Clean old attempts (older than 24h)
-  SPAM_TRACKER.attempts = SPAM_TRACKER.attempts.filter(a => new Date(a.timestamp).getTime() > oneDayAgo);
+  attempts = attempts.filter(a => new Date(a.timestamp).getTime() > oneDayAgo);
 
-  const myAttempts = SPAM_TRACKER.attempts.filter(a => a.fingerprint === fp);
+  const myAttempts = attempts.filter(a => a.fingerprint === fp);
   const hourlyAttempts = myAttempts.filter(a => new Date(a.timestamp).getTime() > oneHourAgo);
   const dailyAttempts = myAttempts;
 
-  if (hourlyAttempts.length >= SPAM_CONFIG.maxOrdersPerHour || dailyAttempts.length >= SPAM_CONFIG.maxOrdersPerDay) {
-    // Block user
-    const until = new Date(now + SPAM_CONFIG.cooldownMinutes * 60 * 1000).toISOString();
-    if (!SPAM_TRACKER.blocked.some(b => b.fingerprint === fp)) {
-      SPAM_TRACKER.blocked.push({ fingerprint: fp, until, reason: 'Exceso de pedidos', timestamp: new Date().toISOString() });
+  if (hourlyAttempts.length >= _antiSpamConf.maxOrdersPerHour || dailyAttempts.length >= _antiSpamConf.maxOrdersPerDay) {
+    // Block user locally
+    const until = new Date(now + _antiSpamConf.cooldownMinutes * 60 * 1000).toISOString();
+    const blocked = localData.blocked || [];
+    if (!blocked.some(b => b.fingerprint === fp)) {
+      blocked.push({ fingerprint: fp, until, reason: 'Exceso de pedidos', timestamp: new Date().toISOString() });
     }
+    _saveLocalSpamData({ attempts, blocked });
+    // También intentar guardar en Firebase si es admin
+    _sysTracking.attempts = attempts;
+    _sysTracking.blocked = blocked;
     saveSpamTracker();
     return false; // Blocked
   }
@@ -910,31 +970,38 @@ function checkSpamLimit() {
 }
 
 function recordOrderAttempt() {
-  SPAM_TRACKER.attempts.push({
+  const localData = _getLocalSpamData();
+  const attempts = localData.attempts || [];
+  attempts.push({
     fingerprint: getDeviceFingerprint(),
     timestamp: new Date().toISOString()
   });
+  _saveLocalSpamData({ attempts, blocked: localData.blocked || [] });
+  // Sincronizar con _sysTracking para que admin lo vea
+  _sysTracking.attempts = attempts;
   saveSpamTracker();
 }
 
 function unblockUser(fingerprint) {
-  SPAM_TRACKER.blocked = SPAM_TRACKER.blocked.filter(b => b.fingerprint !== fingerprint);
+  // Admin function: writes to Firebase
+  _sysTracking.blocked = _sysTracking.blocked.filter(b => b.fingerprint !== fingerprint);
   saveSpamTracker();
 }
 
 function blockUserForFraud(fingerprint, reason = 'Fraude detectado (Pago Duplicado)') {
+  // Admin function: writes to Firebase
   const until = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(); // 1 year ban
-  if (!SPAM_TRACKER.blocked.some(b => b.fingerprint === fingerprint)) {
-    SPAM_TRACKER.blocked.push({ fingerprint, until, reason, timestamp: new Date().toISOString() });
+  if (!_sysTracking.blocked.some(b => b.fingerprint === fingerprint)) {
+    _sysTracking.blocked.push({ fingerprint, until, reason, timestamp: new Date().toISOString() });
     saveSpamTracker();
   }
 }
 
 function getBlockedUsers() {
   const now = Date.now();
-  SPAM_TRACKER.blocked = SPAM_TRACKER.blocked.filter(b => new Date(b.until).getTime() > now);
+  _sysTracking.blocked = _sysTracking.blocked.filter(b => new Date(b.until).getTime() > now);
   saveSpamTracker();
-  return SPAM_TRACKER.blocked;
+  return _sysTracking.blocked;
 }
 
 // ── Telegram API Functions ──
@@ -943,12 +1010,10 @@ function saveTelegramConfig() {
 }
 
 async function sendTelegramMessage(text, inlineKeyboard) {
-  if (!TELEGRAM_CONFIG.enabled || !TELEGRAM_CONFIG.botToken || !TELEGRAM_CONFIG.chatId) return false;
+  if (!TELEGRAM_CONFIG.enabled) return false;
   try {
     const body = {
       type: 'message',
-      chatId: TELEGRAM_CONFIG.chatId,
-      botToken: TELEGRAM_CONFIG.botToken,
       text: text,
       inlineKeyboard: inlineKeyboard || null
     };
@@ -967,7 +1032,7 @@ async function sendTelegramMessage(text, inlineKeyboard) {
 }
 
 async function sendTelegramPhoto(photoBlob, caption, inlineKeyboard) {
-  if (!TELEGRAM_CONFIG.enabled || !TELEGRAM_CONFIG.botToken || !TELEGRAM_CONFIG.chatId) return false;
+  if (!TELEGRAM_CONFIG.enabled) return false;
   try {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -976,8 +1041,6 @@ async function sendTelegramPhoto(photoBlob, caption, inlineKeyboard) {
           const base64data = reader.result.split(',')[1];
           const body = {
             type: 'photo',
-            chatId: TELEGRAM_CONFIG.chatId,
-            botToken: TELEGRAM_CONFIG.botToken,
             text: caption,
             inlineKeyboard: inlineKeyboard || null,
             photoBase64: base64data

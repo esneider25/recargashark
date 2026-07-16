@@ -19,29 +19,15 @@ export default async function handler(req, res) {
       try { bodyObj = JSON.parse(bodyObj); } catch (e) {}
     }
 
-    let { order, screenshotBase64, siteOrigin, botToken, chatId } = bodyObj || {};
+    let { order, screenshotBase64, siteOrigin } = bodyObj || {};
 
     if (!order || !order.id) {
       return res.status(400).json({ error: 'Datos de orden inválidos.' });
     }
 
-    // Si no enviaron el token desde el cliente, intentamos leerlo de Firebase como fallback
-    if (!botToken || !chatId) {
-      const FIREBASE_DB_URL = 'https://recargashark-default-rtdb.firebaseio.com';
-      try {
-        const configRes = await fetch(`${FIREBASE_DB_URL}/telegram_config.json`);
-        const telegramConfig = await configRes.json();
-        if (telegramConfig) {
-          if (telegramConfig.enabled === false) {
-            return res.status(200).json({ ok: true, skipped: true, reason: 'Telegram disabled by admin config' });
-          }
-          botToken = telegramConfig.botToken;
-          chatId = telegramConfig.chatId;
-        }
-      } catch (e) {
-        console.warn("No se pudo leer config de Firebase");
-      }
-    }
+    // Leemos el token desde las variables de entorno seguras de Vercel
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
 
     if (!botToken || !chatId) {
       return res.status(200).json({ ok: true, skipped: true, reason: 'Telegram disabled or not configured' });
@@ -65,10 +51,6 @@ export default async function handler(req, res) {
       try {
         if (screenshotBase64) {
           sent = await sendPhoto(botToken, chatId, screenshotBase64, msgText, keyboard);
-          if (!sent) {
-            console.warn(`Telegram sendPhoto failed on attempt ${attempt}. Falling back to sendMessage...`);
-            sent = await sendMessage(botToken, chatId, msgText, keyboard);
-          }
         } else {
           sent = await sendMessage(botToken, chatId, msgText, keyboard);
         }
@@ -85,6 +67,7 @@ export default async function handler(req, res) {
 
     if (!sent) {
       console.error('All Telegram retry attempts failed for order:', order.id, lastError?.message);
+      // Still return 200 — the order is already saved in Firebase
       return res.status(200).json({ ok: false, error: 'Telegram delivery failed after retries', orderId: order.id });
     }
 
@@ -137,8 +120,8 @@ function buildMessage(order) {
 function buildKeyboard(orderId, origin) {
   return [
     [
-      { text: '✅ Aprobar', url: `${origin}/admin.html?action=approve&order=${orderId}` },
-      { text: '❌ Rechazar', url: `${origin}/admin.html?action=reject&order=${orderId}` }
+      { text: '✅ Aprobar', callback_data: `approve_${orderId}` },
+      { text: '❌ Rechazar', callback_data: `reject_${orderId}` }
     ],
     [
       { text: '🔍 Ver en Panel Admin', url: `${origin}/admin.html` }
@@ -163,9 +146,6 @@ async function sendMessage(botToken, chatId, text, inlineKeyboard) {
   });
 
   const data = await response.json();
-  if (!data.ok && response.status !== 429) {
-    console.error("Telegram sendMessage error:", data);
-  }
 
   // Handle 429 rate limit
   if (response.status === 429) {
@@ -205,9 +185,6 @@ async function sendPhoto(botToken, chatId, photoBase64, caption, inlineKeyboard)
   });
 
   const data = await response.json();
-  if (!data.ok && response.status !== 429) {
-    console.error("Telegram sendPhoto error:", data);
-  }
 
   // Handle 429 rate limit
   if (response.status === 429) {

@@ -2,20 +2,6 @@
 // RecargaShark — Main App Logic & SPA Routing (v2 + Orders)
 // ============================================================
 
-window.escapeHTML = function(str) {
-  if (typeof str !== 'string') return str;
-  return str.replace(/[&<>'"]/g, function(tag) {
-    const charsToReplace = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      "'": '&#39;',
-      '"': '&quot;'
-    };
-    return charsToReplace[tag] || tag;
-  });
-};
-
 // ── PWA Logic ──
 window.deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {

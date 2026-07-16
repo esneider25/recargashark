@@ -13,6 +13,24 @@
   ],
   "redirects": [
     {
+      "source": "/servicio(.*)",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/admin(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "recargashark.com"
+        }
+      ],
+      "destination": "/404.html",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
       "source": "/",
       "has": [
         {
@@ -20,13 +38,7 @@
           "value": "admin.recargashark.com"
         }
       ],
-      "destination": "/admin",
-      "permanent": true
-    },
-    {
-      "source": "/servicio(.*)",
-      "destination": "/",
-      "permanent": true
+      "destination": "/admin"
     }
   ]
 }
