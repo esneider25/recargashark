@@ -397,6 +397,7 @@ function initFirebaseData() {
           else if (Array.isArray(data)) BANNERS = data.filter(Boolean);
           else BANNERS = Object.values(data).filter(Boolean);
         }
+        }
       } catch (err) {
         console.error('Error parsing data for key: ' + key, err);
       }
@@ -538,9 +539,9 @@ function getMessagesForSession(sessionId) {
 }
 
 function addMessage(sessionId, sender, text, contact = null) {
-  let conv = MESSAGES.find(m => m.sessionId === sessionId);
-  if (!conv) {
-    conv = {
+  let localConv = MESSAGES.find(m => m.sessionId === sessionId);
+  if (!localConv) {
+    localConv = {
       sessionId: sessionId,
       contact: contact,
       createdAt: new Date().toISOString(),
@@ -549,48 +550,93 @@ function addMessage(sessionId, sender, text, contact = null) {
       hasUnreadAdmin: false,
       hasUnreadUser: false
     };
-    MESSAGES.push(conv);
+    MESSAGES.push(localConv);
   } else if (contact) {
-    conv.contact = contact;
+    localConv.contact = contact;
   }
 
   if (text) {
-    conv.messages.push({
+    localConv.messages.push({
       id: 'msg-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
       sender: sender, // 'user' or 'admin' or 'bot'
       text: text,
       timestamp: new Date().toISOString()
     });
   }
-  conv.updatedAt = new Date().toISOString();
+  localConv.updatedAt = new Date().toISOString();
 
   if (sender === 'user') {
-    conv.hasUnreadAdmin = true;
+    localConv.hasUnreadAdmin = true;
   } else {
-    conv.hasUnreadUser = true;
+    localConv.hasUnreadUser = true;
   }
 
-  saveMessages();
+  // DB Transaction to avoid overwriting other chats
+  if (typeof firebase !== 'undefined') {
+    firebase.database().ref('messages/' + sessionId).transaction((conv) => {
+      if (!conv) {
+        conv = {
+          sessionId: sessionId,
+          contact: contact || 'Desconocido',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          messages: [],
+          hasUnreadAdmin: false,
+          hasUnreadUser: false
+        };
+      } else if (contact) {
+        conv.contact = contact;
+      }
+
+      if (text) {
+        if (!conv.messages) conv.messages = [];
+        if (!Array.isArray(conv.messages)) conv.messages = Object.values(conv.messages).filter(Boolean);
+        conv.messages.push({
+          id: 'msg-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+          sender: sender,
+          text: text,
+          timestamp: new Date().toISOString()
+        });
+      }
+      conv.updatedAt = new Date().toISOString();
+      if (sender === 'user') conv.hasUnreadAdmin = true;
+      else conv.hasUnreadUser = true;
+      
+      return conv;
+    });
+  }
 }
 
 function markMessagesAsRead(sessionId, reader) {
-  const conv = MESSAGES.find(m => m.sessionId === sessionId);
-  if (conv) {
-    let changed = false;
-    if (reader === 'admin' && conv.hasUnreadAdmin) {
-      conv.hasUnreadAdmin = false;
-      changed = true;
-    }
-    if (reader === 'user' && conv.hasUnreadUser) {
-      conv.hasUnreadUser = false;
-      changed = true;
-    }
-    if (changed) saveMessages();
+  // Local update
+  let localConv = MESSAGES.find(m => m.sessionId === sessionId);
+  if (localConv) {
+    if (reader === 'admin') localConv.hasUnreadAdmin = false;
+    if (reader === 'user') localConv.hasUnreadUser = false;
+  }
+
+  // DB Transaction
+  if (typeof firebase !== 'undefined') {
+    firebase.database().ref('messages/' + sessionId).transaction((conv) => {
+      if (!conv) return conv;
+      
+      let changed = false;
+      if (reader === 'admin' && conv.hasUnreadAdmin) {
+        conv.hasUnreadAdmin = false;
+        changed = true;
+      }
+      if (reader === 'user' && conv.hasUnreadUser) {
+        conv.hasUnreadUser = false;
+        changed = true;
+      }
+      if (changed) return conv;
+      return; // return undefined aborts the transaction
+    });
   }
 }
 
 function saveMessages() {
-  saveToDb('messages', MESSAGES);
+  // Deprecated: handled via transaction now
 }
 
 // ── Orders CRUD ──
@@ -710,26 +756,31 @@ function updateOrderStatus(orderId, newStatus, note) {
 
   if (newStatus === 'completed' && order.status !== 'completed' && order.userId) {
     if (order.productType === 'wallet-recharge') {
-      db.ref('users/' + order.userId + '/wallet').once('value').then(snap => {
-        const currentWallet = parseFloat(snap.val() || 0);
-        const amountToAdd = parseFloat(order.priceUsd || 0);
-        db.ref('users/' + order.userId + '/wallet').set(currentWallet + amountToAdd);
+      // Transacción atómica para evitar race conditions en el saldo
+      const amountToAdd = parseFloat(order.priceUsd || 0);
+      db.ref('users/' + order.userId + '/wallet').transaction(current => {
+        return (parseFloat(current) || 0) + amountToAdd;
       });
       if (typeof addTransaction === 'function') {
         addTransaction(order.userId, 'deposit', parseFloat(order.priceUsd || 0), 'Recarga de monedero aprobada');
       }
     } else {
       // Product Purchase: Update points, spent, and cashback
-      db.ref('users/' + order.userId).once('value').then(snap => {
-        let p = snap.val() || {};
-        let currentPoints = p.points || 0;
-        let totalSpent = p.totalSpent || 0;
-        let currentWallet = parseFloat(p.wallet || 0);
-        let price = parseFloat(order.priceUsd || 0);
-        let role = p.role || 'cliente';
+      // FIX: Usar transacción atómica para evitar race conditions cuando se aprueban
+      // múltiples pedidos del mismo usuario rápidamente (antes se perdían puntos/totalSpent)
+      const userRef = db.ref('users/' + order.userId);
+      const price = parseFloat(order.priceUsd || 0);
+
+      userRef.transaction(userData => {
+        if (userData === null) return userData;
+
+        let currentPoints = userData.points || 0;
+        let totalSpent = userData.totalSpent || 0;
+        let currentWallet = parseFloat(userData.wallet || 0);
+        let role = userData.role || 'cliente';
 
         let newSpent = totalSpent + price;
-        let updates = { totalSpent: newSpent };
+        userData.totalSpent = newSpent;
 
         if (role !== 'revendedor') {
           // 1. Calculate Points
@@ -738,7 +789,7 @@ function updateOrderStatus(orderId, newStatus, note) {
           else if (price <= 12) earnedPoints = 4;
           else earnedPoints = 7;
 
-          updates.points = currentPoints + earnedPoints;
+          userData.points = currentPoints + earnedPoints;
 
           // 2. Calculate Cashback (if no discount code used)
           if (!order.discountCode) {
@@ -747,84 +798,107 @@ function updateOrderStatus(orderId, newStatus, note) {
 
             if (cashbackPercent > 0) {
               let cashbackAmount = price * (cashbackPercent / 100);
-              updates.wallet = currentWallet + cashbackAmount;
-
-              // Record the cashback transaction
-              db.ref('users/' + order.userId + '/transactions').push({
-                id: Date.now().toString(),
-                type: 'deposit',
-                amount: cashbackAmount,
-                description: `Cashback VIP (${cashbackPercent.toFixed(1)}%) por pedido #${order.id}`,
-                date: Date.now()
-              });
+              userData.wallet = currentWallet + cashbackAmount;
             }
           }
         }
 
-        db.ref('users/' + order.userId).update(updates).then(() => {
-          // --- LÓGICA DE REFERIDOS ---
-          if (p.referredBy) {
-            db.ref('users').orderByChild('referralCode').equalTo(p.referredBy).once('value').then(refSnap => {
-              if (refSnap.exists()) {
-                const referrerUid = Object.keys(refSnap.val())[0];
-                const referrerData = refSnap.val()[referrerUid];
+        return userData;
+      }, (error, committed, snapshot) => {
+        if (error) {
+          console.error('Error en transacción VIP:', error);
+          return;
+        }
+        if (!committed) return;
 
-                const referrerRole = referrerData.role || 'cliente';
-                // Solo clientes, influencers y partners pueden ganar por referidos
-                if (referrerRole !== 'cliente' && referrerRole !== 'influencer' && referrerRole !== 'partner') return;
+        const p = snapshot.val() || {};
+        const role = p.role || 'cliente';
 
-                const maxReferrals = (referrerRole === 'influencer' || referrerRole === 'partner') ? (referrerData.referralLimit || 100) : 10;
+        // Record cashback transaction (fuera de la transacción para no bloquear)
+        if (role !== 'revendedor' && !order.discountCode) {
+          let newSpent = p.totalSpent || 0;
+          let vip = typeof getVipLevel === 'function' ? getVipLevel(newSpent) : { cashback: 0 };
+          let cashbackPercent = vip.cashback || 0;
 
-                let refPoints = referrerData.points || 0;
-                let refCount = referrerData.referralsCount || 0;
-                let refEarned = referrerData.referralsEarnedPoints || 0;
-
-                let referrerReward = 0;
-                let isFirst = false;
-
-                if (!p.hasMadeFirstPurchase) {
-                  // Si ya tiene el máximo de amigos, quitamos el referido para que este usuario ya no genere ganancias
-                  if (refCount >= maxReferrals) {
-                    db.ref('users/' + order.userId).update({ referredBy: null, hasMadeFirstPurchase: true });
-                    return;
-                  }
-                  referrerReward = 12;
-                  isFirst = true;
-                  db.ref('users/' + order.userId).update({ hasMadeFirstPurchase: true });
-                } else {
-                  let baseReward = referrerRole === 'partner' ? 3 : 2;
-                  if (price >= 2) referrerReward = baseReward;
-                  else referrerReward = 1;
-                }
-
-                if (referrerReward > 0) {
-                  if (isFirst) refCount++;
-
-                  let newRole = referrerRole;
-                  if (referrerRole === 'influencer' && refCount >= 100) {
-                    newRole = 'partner';
-                  }
-
-                  db.ref('users/' + referrerUid).update({
-                    role: newRole,
-                    points: refPoints + referrerReward,
-                    referralsCount: refCount,
-                    referralsEarnedPoints: refEarned + referrerReward
-                  });
-
-                  db.ref('users/' + referrerUid + '/transactions').push({
-                    id: Date.now().toString(),
-                    type: 'deposit',
-                    amount: 0,
-                    description: `Bono referido (${p.name || 'Amigo'}): +${referrerReward} PTS`,
-                    date: Date.now()
-                  });
-                }
-              }
+          if (cashbackPercent > 0) {
+            let cashbackAmount = price * (cashbackPercent / 100);
+            db.ref('users/' + order.userId + '/transactions').push({
+              id: Date.now().toString(),
+              type: 'deposit',
+              amount: cashbackAmount,
+              description: `Cashback VIP (${cashbackPercent.toFixed(1)}%) por pedido #${order.id}`,
+              date: Date.now()
             });
           }
-          // ---------------------------
-        });
+        }
+
+        // --- LÓGICA DE REFERIDOS ---
+        if (p.referredBy) {
+          db.ref('users').orderByChild('referralCode').equalTo(p.referredBy).once('value').then(refSnap => {
+            if (refSnap.exists()) {
+              const referrerUid = Object.keys(refSnap.val())[0];
+              const referrerData = refSnap.val()[referrerUid];
+
+              const referrerRole = referrerData.role || 'cliente';
+              // Solo clientes, influencers y partners pueden ganar por referidos
+              if (referrerRole !== 'cliente' && referrerRole !== 'influencer' && referrerRole !== 'partner') return;
+
+              const maxReferrals = (referrerRole === 'influencer' || referrerRole === 'partner') ? (referrerData.referralLimit || 100) : 10;
+
+              let refPoints = referrerData.points || 0;
+              let refCount = referrerData.referralsCount || 0;
+              let refEarned = referrerData.referralsEarnedPoints || 0;
+
+              let referrerReward = 0;
+              let isFirst = false;
+
+              if (!p.hasMadeFirstPurchase) {
+                // Si ya tiene el máximo de amigos, quitamos el referido para que este usuario ya no genere ganancias
+                if (refCount >= maxReferrals) {
+                  db.ref('users/' + order.userId).update({ referredBy: null, hasMadeFirstPurchase: true });
+                  return;
+                }
+                referrerReward = 12;
+                isFirst = true;
+                db.ref('users/' + order.userId).update({ hasMadeFirstPurchase: true });
+              } else {
+                let baseReward = referrerRole === 'partner' ? 3 : 2;
+                if (price >= 2) referrerReward = baseReward;
+                else referrerReward = 1;
+              }
+
+              if (referrerReward > 0) {
+                if (isFirst) refCount++;
+
+                let newRole = referrerRole;
+                if (referrerRole === 'influencer' && refCount >= 100) {
+                  newRole = 'partner';
+                }
+
+                // FIX: También usar transacción para los puntos del referidor
+                db.ref('users/' + referrerUid).transaction(refUser => {
+                  if (refUser === null) return refUser;
+                  refUser.points = (refUser.points || 0) + referrerReward;
+                  refUser.referralsCount = isFirst ? (refUser.referralsCount || 0) + 1 : (refUser.referralsCount || 0);
+                  refUser.referralsEarnedPoints = (refUser.referralsEarnedPoints || 0) + referrerReward;
+                  if (referrerRole === 'influencer' && (refUser.referralsCount || 0) >= 100) {
+                    refUser.role = 'partner';
+                  }
+                  return refUser;
+                });
+
+                db.ref('users/' + referrerUid + '/transactions').push({
+                  id: Date.now().toString(),
+                  type: 'deposit',
+                  amount: 0,
+                  description: `Bono referido (${p.name || 'Amigo'}): +${referrerReward} PTS`,
+                  date: Date.now()
+                });
+              }
+            }
+          });
+        }
+        // ---------------------------
       });
     }
   }
@@ -832,10 +906,10 @@ function updateOrderStatus(orderId, newStatus, note) {
   if (newStatus === 'rejected' && order.status !== 'rejected' && order.userId && order.paymentMethodId === 'wallet' && order.productType !== 'wallet-recharge') {
     if (typeof firebase !== 'undefined') {
       const fdb = firebase.database();
-      fdb.ref('users/' + order.userId + '/wallet').once('value').then(snap => {
-        const currentWallet = parseFloat(snap.val() || 0);
-        const amountToRefund = parseFloat(order.priceUsd || 0);
-        fdb.ref('users/' + order.userId + '/wallet').set(currentWallet + amountToRefund);
+      // Transacción atómica para evitar race conditions en el reembolso
+      const amountToRefund = parseFloat(order.priceUsd || 0);
+      fdb.ref('users/' + order.userId + '/wallet').transaction(current => {
+        return (parseFloat(current) || 0) + amountToRefund;
       });
       fdb.ref('users/' + order.userId + '/transactions').push({
         id: Date.now().toString(),
