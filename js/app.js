@@ -1219,8 +1219,13 @@ async function lookupOrder() {
       console.error(e);
     }
   } else {
-    // Treat as contact search (email or phone)
-    navigateTo('history', val);
+    // Búsqueda por correo/teléfono
+    if (firebase.auth().currentUser) {
+      showToast('Tus pedidos están en tu perfil', 'info');
+      navigateTo('dashboard');
+    } else {
+      showToast('⚠️ Para buscar por correo/teléfono debes Iniciar Sesión, o usa tu número de pedido (Ej: RS-1234)', 'info');
+    }
   }
 }
 
