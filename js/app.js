@@ -765,9 +765,9 @@ async function _submitOrderLogic() {
 
     if (typeof recordOrderAttempt === 'function') recordOrderAttempt();
 
-    // Handle Telegram notification
-    if (typeof triggerTelegramNotification === 'function') {
-      await triggerTelegramNotification(order);
+    // Handle Screenshot Thumbnail
+    if (typeof processOrderScreenshot === 'function') {
+      await processOrderScreenshot(order);
     }
     
     lastOrder = order;
@@ -1524,17 +1524,7 @@ async function sendSupportMessage() {
   const quickActions = document.getElementById('support-quick-actions');
   if (quickActions) quickActions.style.display = 'none';
   
-  // Notify Telegram using global TELEGRAM_CONFIG
-  if (typeof TELEGRAM_CONFIG !== 'undefined' && TELEGRAM_CONFIG.enabled && TELEGRAM_CONFIG.botToken && TELEGRAM_CONFIG.chatId) {
-    const tgMsg = `💬 *Nuevo Mensaje de Soporte*\n\n*Contacto:* ${contact}\n*Mensaje:* ${text}\n\n_Responde desde el Panel Admin_`;
-    try {
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_CONFIG.botToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: TELEGRAM_CONFIG.chatId, text: tgMsg, parse_mode: 'Markdown' })
-      });
-    } catch(e) { console.error('Telegram error', e); }
-  }
+
 
   // Smart bot auto-replies for quick actions
   setTimeout(() => {
@@ -1654,7 +1644,7 @@ function generateThumbnail(file) {
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.7));
+          resolve(canvas.toDataURL('image/jpeg', 0.8));
         } catch (err) {
           resolve(null);
         }
@@ -1663,15 +1653,10 @@ function generateThumbnail(file) {
       img.src = e.target.result;
     };
     reader.onerror = () => resolve(null);
-    try {
-      reader.readAsDataURL(file);
-    } catch (err) {
-      resolve(null);
-    }
+    reader.readAsDataURL(file);
   });
 }
-
-async function triggerTelegramNotification(order) {
+async function processOrderScreenshot(order) {
   // ── Step 1: Save thumbnail to Firebase (keep existing behavior) ──
   if (appState.selectedScreenshot) {
     try {
@@ -1684,7 +1669,7 @@ async function triggerTelegramNotification(order) {
         try {
           saveOrderToDb(order);
         } catch (err) {
-          console.warn('Permiso denegado para miniatura (invitado), continuando con Telegram...');
+          console.warn('Permiso denegado para miniatura (invitado), continuando...');
         }
         ORDERS = orders;
       }
@@ -1693,119 +1678,7 @@ async function triggerTelegramNotification(order) {
     }
   }
 
-  // ── Step 2: Prepare screenshot base64 for server (if available) ──
-  let screenshotBase64 = null;
-  if (appState.selectedScreenshot) {
-    try {
-      const blob = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const img = new Image();
-          img.onload = function() {
-            try {
-              const canvas = document.createElement('canvas');
-              let width = img.width;
-              let height = img.height;
-              const max_size = 1000;
-              if (!width || !height) {
-                resolve(appState.selectedScreenshot);
-                return;
-              }
-              if (width > height) {
-                if (width > max_size) { height *= max_size / width; width = max_size; }
-              } else {
-                if (height > max_size) { width *= max_size / height; height = max_size; }
-              }
-              canvas.width = width;
-              canvas.height = height;
-              canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-              canvas.toBlob((b) => resolve(b || appState.selectedScreenshot), 'image/jpeg', 0.8);
-            } catch (err) {
-              console.warn('Error inside img.onload for telegram thumbnail:', err);
-              resolve(appState.selectedScreenshot);
-            }
-          };
-          img.onerror = () => resolve(appState.selectedScreenshot);
-          img.src = e.target.result;
-        };
-        reader.onerror = () => resolve(appState.selectedScreenshot);
-        reader.readAsDataURL(appState.selectedScreenshot);
-      });
-      screenshotBase64 = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = () => resolve(null);
-        reader.readAsDataURL(blob);
-      });
-    } catch (e) {
-      console.warn('Error compressing screenshot for server, sending without image:', e);
-    }
-  }
 
-  // ── Step 3: Fire-and-forget POST to server endpoint ──
-  if (typeof TELEGRAM_CONFIG !== 'undefined' && TELEGRAM_CONFIG.enabled === false) {
-    appState.selectedScreenshot = null;
-    return;
-  }
-
-  // The SERVER handles Telegram delivery with retries — no dependency on client
-  const payload = JSON.stringify({
-    order: {
-      id: order.id,
-      playerName: order.playerName,
-      gameId: order.gameId,
-      accountEmail: order.accountEmail,
-      productName: order.productName,
-      packageLabel: order.packageLabel,
-      priceUsd: order.priceUsd,
-      priceBs: order.priceBs,
-      discountCode: order.discountCode,
-      discountValue: order.discountValue,
-      discountType: order.discountType,
-      ocrNumbers: order.ocrNumbers,
-      paymentMethodName: order.paymentMethodName,
-      customerContact: order.customerContact
-    },
-    screenshotBase64: screenshotBase64,
-    siteOrigin: window.location.origin,
-    botToken: typeof TELEGRAM_CONFIG !== 'undefined' ? TELEGRAM_CONFIG.botToken : null,
-    chatId: typeof TELEGRAM_CONFIG !== 'undefined' ? TELEGRAM_CONFIG.chatId : null
-  });
-
-  try {
-    const blobPayload = new Blob([payload], { type: 'application/json' });
-    let sent = false;
-    
-    // navigator.sendBeacon and fetch keepalive=true have a ~64KB limit.
-    // Payloads with screenshots easily exceed this limit.
-    if (blobPayload.size < 60000) {
-      sent = navigator.sendBeacon('/api/notify-order', blobPayload);
-      if (!sent) {
-        fetch('/api/notify-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: payload,
-          keepalive: true
-        }).catch(() => {});
-        sent = true;
-      }
-    }
-
-    if (!sent) {
-      // For larger payloads (>64KB), we MUST use normal fetch without keepalive
-      fetch('/api/notify-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: payload
-      }).catch(() => {});
-    }
-  } catch (e) {
-    fetch('/api/notify-order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: payload
-    }).catch(() => {});
-  }
   
   appState.selectedScreenshot = null;
 }

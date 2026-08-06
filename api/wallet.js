@@ -12,9 +12,46 @@ if (!admin.apps.length) {
   }
 }
 
+const rateLimit = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_REQUESTS_WALLET = 5;
+
 export default async function handler(req, res) {
+  // Rate Limiting
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown';
+  const now = Date.now();
+  if (rateLimit.has(ip)) {
+    const data = rateLimit.get(ip);
+    if (now - data.startTime > RATE_LIMIT_WINDOW) {
+      rateLimit.set(ip, { count: 1, startTime: now });
+    } else {
+      data.count++;
+      if (data.count > MAX_REQUESTS_WALLET) {
+        return res.status(429).json({ error: 'Too many requests, please try again later.' });
+      }
+      rateLimit.set(ip, data);
+    }
+  } else {
+    rateLimit.set(ip, { count: 1, startTime: now });
+  }
+
+  // Cleanup old entries every 5 minutes to prevent memory leaks
+  if (Math.random() < 0.05) {
+    for (const [key, value] of rateLimit.entries()) {
+      if (now - value.startTime > RATE_LIMIT_WINDOW) {
+        rateLimit.delete(key);
+      }
+    }
+  }
+
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  const allowedOrigins = ['https://recargashark.com', 'https://admin.recargashark.com', 'http://localhost:3000', 'http://127.0.0.1:3000'];
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', 'https://recargashark.com');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 

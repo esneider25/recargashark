@@ -2802,37 +2802,6 @@ function renderTelegram(container) {
   `).join('') : '<p style="color: var(--text-muted); font-size: 0.9rem; padding: 20px; text-align: center; background: rgba(0,0,0,0.02); border-radius: 8px;">No hay usuarios bloqueados actualmente.</p>';
 
   container.innerHTML = `
-    <div class="admin-header">
-      <div>
-        <h1 class="admin-title">Telegram & Seguridad</h1>
-        <p class="admin-subtitle">Configura el bot de Telegram y gestiona usuarios bloqueados</p>
-      </div>
-    </div>
-
-    <div class="admin-telegram-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px;">
-      <div class="admin-card">
-        <div class="admin-card-header">
-          <h2 class="admin-card-title">🤖 Configuración del Bot</h2>
-        </div>
-        <div class="admin-form-group">
-          <label class="admin-form-label">Bot Token</label>
-          <input type="text" class="admin-form-input" id="tg-bot-token" value="${TELEGRAM_CONFIG.botToken}">
-        </div>
-        <div class="admin-form-group">
-          <label class="admin-form-label">Chat ID (Tu Telegram)</label>
-          <input type="text" class="admin-form-input" id="tg-chat-id" value="${TELEGRAM_CONFIG.chatId}">
-        </div>
-        <div class="admin-form-group" style="display: flex; gap: 16px; align-items: center; margin-top: 16px; margin-bottom: 24px;">
-          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.95rem;">
-            <input type="checkbox" id="tg-enabled" ${TELEGRAM_CONFIG.enabled ? 'checked' : ''} style="width: 18px; height: 18px;">
-            Habilitar notificaciones a Telegram
-          </label>
-        </div>
-        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-          <button class="btn btn-primary" onclick="saveAdminTelegramConfig()" style="flex: 1;">💾 Guardar Configuración</button>
-          <button class="btn btn-secondary" onclick="testTelegramConnection()" style="flex: 1;">🔌 Probar Conexión</button>
-        </div>
-      </div>
 
       <div class="admin-card">
         <div class="admin-card-header">
@@ -2847,28 +2816,6 @@ function renderTelegram(container) {
       </div>
     </div>
   `;
-}
-
-function saveAdminTelegramConfig() {
-  TELEGRAM_CONFIG.botToken = document.getElementById('tg-bot-token').value.trim();
-  TELEGRAM_CONFIG.chatId = document.getElementById('tg-chat-id').value.trim();
-  TELEGRAM_CONFIG.enabled = document.getElementById('tg-enabled').checked;
-  saveTelegramConfig();
-  showAdminToast('✅ Configuración de Telegram guardada', 'success');
-}
-
-async function testTelegramConnection() {
-  if (!TELEGRAM_CONFIG.botToken || !TELEGRAM_CONFIG.chatId) {
-    showAdminToast('⚠️ Faltan datos de configuración', 'error');
-    return;
-  }
-  showAdminToast('Probando conexión...', 'info');
-  const success = await sendTelegramMessage('🤖 <b>¡Conexión Exitosa!</b>\nLas notificaciones de AccessPlay están funcionando correctamente.');
-  if (success) {
-    showAdminToast('✅ Mensaje de prueba enviado', 'success');
-  } else {
-    showAdminToast('❌ Error al enviar. Verifica el Token y Chat ID.', 'error');
-  }
 }
 
 function adminUnblockUser(fingerprint) {

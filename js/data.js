@@ -138,12 +138,6 @@ let MESSAGES = JSON.parse(localStorage.getItem('recargashark_messages') || '[]')
 // ── Payment Methods ──
 let PAYMENT_METHODS = [];
 
-// ── Telegram Bot Configuration ──
-let TELEGRAM_CONFIG = {
-  enabled: true,
-  notifyNewOrder: true,
-  notifyWithPhoto: true
-};
 
 // 🛡️ Anti-Spam Configuration 🛡️
 let _antiSpamConf = {
@@ -404,7 +398,7 @@ function initFirebaseData() {
           ORDERS = newOrders;
           ORDERS.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         }
-        else if (key === 'telegram_config') Object.assign(TELEGRAM_CONFIG, data);
+
         else if (key === 'quick_replies') QUICK_REPLIES = data;
         else if (key === '_sysTracking') {
           _sysTracking.attempts = data.attempts || [];
@@ -1097,101 +1091,6 @@ function getBlockedUsers() {
   return _sysTracking.blocked;
 }
 
-// ── Telegram API Functions ──
-function saveTelegramConfig() {
-  saveToDb('telegram_config', TELEGRAM_CONFIG);
-}
-
-async function sendTelegramMessage(text, inlineKeyboard) {
-  if (!TELEGRAM_CONFIG.enabled) return false;
-  try {
-    const body = {
-      type: 'message',
-      text: text,
-      inlineKeyboard: inlineKeyboard || null
-    };
-    
-    const res = await fetch('/api/telegram', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    return data.ok;
-  } catch (e) {
-    console.warn('Telegram sendMessage error:', e);
-    return false;
-  }
-}
-
-async function sendTelegramPhoto(photoBlob, caption, inlineKeyboard) {
-  if (!TELEGRAM_CONFIG.enabled) return false;
-  try {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          const base64data = reader.result.split(',')[1];
-          const body = {
-            type: 'photo',
-            text: caption,
-            inlineKeyboard: inlineKeyboard || null,
-            photoBase64: base64data
-          };
-          
-          const res = await fetch('/api/telegram', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-          });
-          const data = await res.json();
-          resolve(data.ok);
-        } catch (e) {
-          console.warn('Telegram proxy photo error:', e);
-          resolve(false);
-        }
-      };
-      reader.onerror = () => resolve(false);
-      reader.readAsDataURL(photoBlob);
-    });
-  } catch (e) {
-    console.warn('Telegram sendPhoto error:', e);
-    return false;
-  }
-}
-
-function buildOrderTelegramMessage(order) {
-  let msg = `🦈 <b>NUEVO PEDIDO — ${order.id}</b>\n`;
-  msg += `👤 <b>Jugador:</b> ${order.playerName || 'ㅤ'}\n`;
-  msg += `🆔 <b>ID:</b> <code>${order.gameId || order.accountEmail || 'N/A'}</code>\n`;
-  msg += `🔥 <b>Producto:</b> ${order.productName} (${order.packageLabel})\n`;
-  msg += `💰 <b>Monto:</b> $${order.priceUsd.toFixed(2)} USD | Bs. ${formatBs(order.priceBs)}\n`;
-
-  if (order.discountCode) {
-    const discountStr = order.discountType === 'percentage' ? `${order.discountValue}%` : `$${parseFloat(order.discountValue).toFixed(2)} USD`;
-    msg += `🎁 <b>Descuento:</b> ${order.discountCode} (-${discountStr})\n`;
-  }
-
-  const refNumbers = (order.ocrNumbers && order.ocrNumbers.length > 0) ? order.ocrNumbers.join(', ') : 'Ver comprobante adjunto';
-  msg += `🔢 <b>Ref:</b> <code>${refNumbers}</code>\n`;
-
-  msg += `🏦 <b>metodo de pago:</b> ${order.paymentMethodName}\n`;
-  msg += `📱 <b>contacto:</b> ${order.customerContact || 'N/A'}\n`;
-  return msg;
-}
-
-function buildOrderKeyboard(orderId) {
-  const baseUrl = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : 'https://recargashark.com';
-  return [
-    [
-      { text: '✅ Aprobar', url: `${baseUrl}/admin.html?action=approve&order=${orderId}` },
-      { text: '❌ Rechazar', url: `${baseUrl}/admin.html?action=reject&order=${orderId}` }
-    ],
-    [
-      { text: '🔍 Ver en Panel Admin', url: `${baseUrl}/admin.html` }
-    ]
-  ];
-}
 
 function getQuickReplies() {
   if (QUICK_REPLIES && QUICK_REPLIES.length > 0) return QUICK_REPLIES;
