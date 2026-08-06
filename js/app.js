@@ -1185,11 +1185,10 @@ async function lookupOrder() {
   const val = input.value.trim();
   
   let orderIdToTrack = null;
-  // Allow tracking by digits (which we prepend RS- to) or full RS- code
-  if (/^\d{1,6}$/.test(val)) {
-    orderIdToTrack = 'RS-' + val;
-  } else if (/^RS-\d{1,6}$/i.test(val)) {
+  if (/^RS-/i.test(val)) {
     orderIdToTrack = val.toUpperCase();
+  } else if (/^\d{1,6}(?:-[A-Za-z0-9]+)?$/.test(val)) {
+    orderIdToTrack = 'RS-' + val.toUpperCase();
   }
 
   if (orderIdToTrack) {
