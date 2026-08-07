@@ -1262,7 +1262,7 @@ function renderExchange(container) {
         const hasCustom = pkg.customMargin !== undefined && pkg.customMargin !== null && pkg.customMargin !== '';
         const effectiveMargin = hasCustom ? parseFloat(pkg.customMargin) : currentMargin;
         const newPrice = parseFloat((pkg.costUsd + (pkg.costUsd * effectiveMargin / 100)).toFixed(2));
-        const diff = newPrice - pkg.priceUsd;
+        const diff = newPrice - pkg.costUsd;
         const diffColor = diff > 0 ? '#4ade80' : diff < 0 ? '#f87171' : '#94a3b8';
         const diffSign = diff > 0 ? '+' : '';
         previewRows += `
@@ -1387,7 +1387,7 @@ function renderExchange(container) {
               <th style="padding: 10px; text-align: left; font-size: 0.75rem; color: #f59e0b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Costo Prov.</th>
               <th style="padding: 10px; text-align: left; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Precio Actual</th>
               <th style="padding: 10px; text-align: left; font-size: 0.75rem; color: #0ea5e9; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Nuevo Precio</th>
-              <th style="padding: 10px; text-align: left; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Diferencia</th>
+              <th style="padding: 10px; text-align: left; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Ganancia</th>
               <th style="padding: 10px; text-align: center; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Margen</th>
             </tr>
           </thead>
@@ -1421,7 +1421,7 @@ function previewMarginChanges() {
         const hasCustom = pkg.customMargin !== undefined && pkg.customMargin !== null && pkg.customMargin !== '';
         const effectiveMargin = hasCustom ? parseFloat(pkg.customMargin) : newMargin;
         const newPrice = parseFloat((pkg.costUsd + (pkg.costUsd * effectiveMargin / 100)).toFixed(2));
-        const diff = newPrice - pkg.priceUsd;
+        const diff = newPrice - pkg.costUsd;
         const diffColor = diff > 0 ? '#4ade80' : diff < 0 ? '#f87171' : '#94a3b8';
         const diffSign = diff > 0 ? '+' : '';
         rows += `
