@@ -210,7 +210,7 @@ function switchTab(tabId) {
   renderActiveTab();
 }
 
-function renderActiveTab() {
+function renderActiveTab() { try {
   const main = document.getElementById('admin-main-content');
   if (!main) return;
 
@@ -243,6 +243,7 @@ function renderActiveTab() {
     case 'settings': renderSettings(main); break;
     default: renderDashboard(main);
   }
+  } catch (err) { alert('ERROR in renderActiveTab: ' + err.stack); }
 }
 
 // ── Helper: Unread Messages Count ──
