@@ -1153,8 +1153,13 @@ function renderTermsModal() {
 }
 
 window.acceptTerms = function() {
+  try {
+    console.log('acceptTerms called');
   sessionStorage.setItem('recargaaccessplay_terms_accepted', 'true');
   sessionStorage.setItem('recargashark_terms_accepted', 'true'); // Backward compatibility if needed
+  } catch (e) {
+    console.error('sessionStorage error', e);
+  }
   const container = document.getElementById('terms-modal-container');
   if (container) {
     const overlay = container.querySelector('.modal-overlay');
