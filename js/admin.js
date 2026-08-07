@@ -3244,9 +3244,41 @@ function renderSettings(container) {
             <input type="checkbox" id="setting-announcement-enabled" ${config.announcementEnabled ? 'checked' : ''} style="width: 24px; height: 24px; accent-color: #0ea5e9; cursor: pointer;">
           </label>
         </div>
+
+        <div class="admin-form-group" style="margin-top: 15px;">
+          <label class="admin-form-label">Subir Imagen Promocional (Recomendado)</label>
+          <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+            <input type="file" id="announcement-image-upload" accept="image/*" style="display: none;" onchange="uploadAnnouncementImage(this)">
+            <button class="btn btn-secondary" onclick="document.getElementById('announcement-image-upload').click()">📷 Subir Imagen desde el dispositivo</button>
+            <span id="announcement-upload-status" style="font-size: 0.9rem; color: var(--text-secondary);"></span>
+          </div>
+          <div id="announcement-image-preview-container" style="display: ${config.announcementImageUrl ? 'block' : 'none'}; margin-bottom: 15px;">
+            <img id="announcement-image-preview" src="${config.announcementImageUrl || ''}" style="max-width: 300px; max-height: 200px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+            <button class="btn-secondary" style="margin-top: 10px; background: rgba(2ef, 68, 68, 0.1); color: #ef4444;" onclick="removeAnnouncementImage()">🗑️ Quitar Imagen</button>
+          </div>
+          <input type="hidden" id="setting-announcement-image-url" value="${config.announcementImageUrl || ''}">
+        </div>
+
         <div class="admin-form-group">
-          <label class="admin-form-label">Contenido del Mensaje <span style="font-weight: 400; color:var(--text-muted);">(Permite HTML básico)</span></label>
-          <textarea id="setting-announcement-msg" class="admin-form-textarea" rows="3">${config.announcementMessage || ''}</textarea>
+          <label class="admin-form-label">Enlace de Redirección (Opcional)</label>
+          <div style="display: flex; gap: 10px;">
+            <select id="setting-announcement-link-type" class="admin-form-input" style="flex: 1;" onchange="document.getElementById('setting-announcement-link').style.display = this.value === 'external' ? 'block' : 'none'">
+              <option value="">(Ninguno)</option>
+              <option value="catalog" ${config.announcementLink === 'catalog' ? 'selected' : ''}>Catálogo</option>
+              <option value="how-it-works" ${config.announcementLink === 'how-it-works' ? 'selected' : ''}>¿Cómo Funciona?</option>
+              <optgroup label="Productos">
+                ${typeof PRODUCTS !== 'undefined' ? PRODUCTS.map(p => `<option value="product:${p.id}" ${config.announcementLink === `product:${p.id}` ? 'selected' : ''}>${p.name}</option>`).join('') : ''}
+              </optgroup>
+              <option value="external" ${config.announcementLink && config.announcementLink.startsWith('http') ? 'selected' : ''}>🌐 URL Externa (Ej: WhatsApp)</option>
+            </select>
+            <input type="url" id="setting-announcement-link" class="admin-form-input" style="flex: 1; display: ${config.announcementLink && config.announcementLink.startsWith('http') ? 'block' : 'none'};" placeholder="https://..." value="${config.announcementLink && config.announcementLink.startsWith('http') ? config.announcementLink : ''}">
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">Si colocas un enlace aquí, el cliente será redirigido al hacer click en el anuncio.</p>
+        </div>
+
+        <div class="admin-form-group" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+          <label class="admin-form-label">Mensaje de Texto (Alternativa a la imagen) <span style="font-weight: 400; color:var(--text-muted);">(Permite HTML básico)</span></label>
+          <textarea id="setting-announcement-msg" class="admin-form-textarea" rows="3" placeholder="Si subes una imagen arriba, este texto se ignorará.">${config.announcementMessage || ''}</textarea>
         </div>
       </div>
 
@@ -3344,10 +3376,18 @@ function adminSaveSettings() {
   const maintenance = document.getElementById('setting-maintenance').checked;
   const announcementEnabled = document.getElementById('setting-announcement-enabled').checked;
   const announcementMessage = document.getElementById('setting-announcement-msg').value;
+  const announcementImageUrl = document.getElementById('setting-announcement-image-url') ? document.getElementById('setting-announcement-image-url').value : '';
+  let announcementLink = document.getElementById('setting-announcement-link-type') ? document.getElementById('setting-announcement-link-type').value : '';
+  if (announcementLink === 'external') {
+    announcementLink = document.getElementById('setting-announcement-link').value.trim();
+  }
   const termsAndConditions = window.currentTermsEditorData || [];
-  const enableRoulette = document.getElementById('setting-roulette').checked;
+  const enableRouletteEl = document.getElementById('setting-enable-roulette');
+  const enableRoulette = enableRouletteEl ? enableRouletteEl.checked : true;
+  const rouletteProbEl = document.getElementById('setting-roulette-probability');
+  const rouletteWinProbability = rouletteProbEl ? parseInt(rouletteProbEl.value) : 2;
 
-  saveSettings({ whatsapp, whatsappChannel, instagram, telegram, schedule, maintenance, announcementEnabled, announcementMessage, termsAndConditions, enableRoulette });
+  saveSettings({ whatsapp, whatsappChannel, instagram, telegram, schedule, maintenance, announcementEnabled, announcementMessage, announcementImageUrl, announcementLink, termsAndConditions, enableRoulette, rouletteWinProbability });
   showAdminToast('✅ Configuración guardada', 'success');
 }
 
@@ -4451,4 +4491,36 @@ window.calculateHistoricalStats = async function() {
 
 window.loadHistoricalOrdersList = function() {
   window.calculateHistoricalStats();
+};
+
+window.uploadAnnouncementImage = async function(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const maxMb = 2;
+  if (file.size > maxMb * 1024 * 1024) return alert(`El archivo supera los ${maxMb}MB`);
+  document.getElementById('announcement-upload-status').innerText = '⏳ Subiendo imagen...';
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('action', 'upload_announcement');
+  try {
+    const token = await firebase.auth().currentUser.getIdToken();
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Authorization': Bearer  },
+      body: formData
+    });
+    if (!res.ok) throw new Error('Fallo al subir archivo');
+    const data = await res.json();
+    document.getElementById('setting-announcement-image-url').value = data.url;
+    document.getElementById('announcement-image-preview').src = data.url;
+    document.getElementById('announcement-image-preview-container').style.display = 'block';
+    document.getElementById('announcement-upload-status').innerText = '✅ Imagen subida con éxito';
+  } catch (error) {
+    document.getElementById('announcement-upload-status').innerText = '❌ Error al subir imagen';
+  }
+};
+window.removeAnnouncementImage = function() {
+  document.getElementById('setting-announcement-image-url').value = '';
+  document.getElementById('announcement-image-preview-container').style.display = 'none';
+  document.getElementById('announcement-upload-status').innerText = '🗑️ Imagen removida';
 };

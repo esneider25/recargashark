@@ -88,23 +88,95 @@ function toggleTheme() {
 }
 
 // ── Render ──
-function showAnnouncementModal(message) {
+function showAnnouncementModal(config) {
   if (sessionStorage.getItem('recargashark_announcement_seen') === 'true') return;
   
+  // Backward compatibility in case we passed a string
+  const message = typeof config === 'string' ? config : (config.announcementMessage || '');
+  const imageUrl = typeof config === 'object' ? config.announcementImageUrl : null;
+  const link = typeof config === 'object' ? config.announcementLink : null;
+  
+  if (!message && !imageUrl) return; // Nothing to show
+
   const modalContainer = document.createElement('div');
   modalContainer.id = 'announcement-modal-container';
-  modalContainer.innerHTML = `
-    <div class="modal-overlay active" style="z-index: 9999; backdrop-filter: blur(5px);">
-      <div class="modal payment-flow-modal" style="text-align: center; max-width: 500px; border: 1px solid rgba(0, 229, 195, 0.3); background: var(--bg-card); padding: 35px 25px;">
+
+  // Detect if message is a direct image URL or contains HTML image tags (fallback if they didn't use the new upload field)
+  const isImageUrlText = message.trim().match(/^https?:\/\/.*\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i) != null;
+  const isHtmlImage = message.includes('<img');
+
+  let contentHtml = '';
+  
+  if (imageUrl || isImageUrlText || isHtmlImage) {
+    const finalImageSrc = imageUrl || (isImageUrlText ? message.trim() : null);
+    const imgElement = finalImageSrc 
+      ? `<img src="${finalImageSrc}" style="width: 100%; border-radius: 16px 16px 0 0; display: block; object-fit: contain; max-height: 70vh;">` 
+      : `<div style="width: 100%; border-radius: 16px 16px 0 0; overflow: hidden; background: #000; display: flex; justify-content: center;">${message}</div>`;
+      
+    let imageWithLink = imgElement;
+    if (link) {
+      if (link.startsWith('http')) {
+        imageWithLink = `<a href="${link}" target="_blank" style="display: block;">${imgElement}</a>`;
+      } else {
+        imageWithLink = `<a href="#" onclick="handleAnnouncementClick(event, '${link}')" style="display: block;">${imgElement}</a>`;
+      }
+    }
+
+    // Style for full image popup
+    contentHtml = `
+      <div class="modal payment-flow-modal" style="text-align: center; max-width: 480px; width: 100%; background: transparent; padding: 0; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.9);">
+        ${imageWithLink}
+        <button id="announcement-modal-btn" style="width: 100%; padding: 18px; font-size: 1.05rem; border-radius: 0 0 16px 16px; font-weight: bold; background: #00e5c3; color: white; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: background 0.2s;">
+          ✓ He leído y acepto la información
+        </button>
+      </div>
+    `;
+  } else {
+    let textLinkBtnHtml = '';
+    if (link) {
+      if (link.startsWith('http')) {
+        textLinkBtnHtml = `<a href="${link}" target="_blank" class="btn-secondary" style="width: 100%; display: block; margin-bottom: 15px; padding: 12px; border-radius: 12px; font-weight: bold; text-decoration: none;">🔗 Más Información</a>`;
+      } else {
+        textLinkBtnHtml = `<button onclick="handleAnnouncementClick(event, '${link}')" class="btn-secondary" style="width: 100%; margin-bottom: 15px; padding: 12px; border-radius: 12px; font-weight: bold;">🔗 Más Información</button>`;
+      }
+    }
+
+    // Standard text style
+    contentHtml = `
+      <div class="modal payment-flow-modal" style="text-align: center; max-width: 500px; width: 100%; border: 1px solid rgba(0, 229, 195, 0.3); background: var(--bg-card); padding: 35px 25px; border-radius: 16px;">
         <div style="font-size: 3.5rem; margin-bottom: 15px; text-shadow: 0 0 15px rgba(0, 229, 195, 0.4);">📢</div>
         <h3 style="color: #00e5c3; margin-bottom: 15px; font-size: 1.5rem;">Aviso Importante</h3>
         <div style="color: var(--text-secondary); margin-bottom: 30px; line-height: 1.6; font-size: 1.05rem; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
           ${message}
         </div>
+        ${textLinkBtnHtml}
         <button id="announcement-modal-btn" class="btn-primary" style="width: 100%; padding: 14px; font-size: 1.1rem; border-radius: 12px; font-weight: bold; box-shadow: 0 4px 15px rgba(0, 229, 195, 0.3);">
           Entendido 👍
         </button>
       </div>
+    `;
+  }
+
+window.handleAnnouncementClick = function(e, link) {
+  e.preventDefault();
+  const modalContainer = document.getElementById('announcement-modal-container');
+  if (modalContainer) {
+    sessionStorage.setItem('recargashark_announcement_seen', 'true');
+    const overlay = modalContainer.querySelector('.modal-overlay');
+    if (overlay) overlay.classList.remove('active');
+    setTimeout(() => modalContainer.remove(), 300);
+  }
+  
+  if (link.startsWith('product:')) {
+    if (typeof navigateTo === 'function') navigateTo('product', link.split(':')[1]);
+  } else {
+    if (typeof scrollToSection === 'function') scrollToSection(link);
+  }
+};
+
+  modalContainer.innerHTML = `
+    <div class="modal-overlay active" style="z-index: 99999; backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.85); padding: 15px;">
+      ${contentHtml}
     </div>
   `;
   document.body.appendChild(modalContainer);
@@ -171,8 +243,8 @@ function renderApp() {
       initCounters();
       initScrollObserver();
       initCarousel();
-      if (config.announcementEnabled && config.announcementMessage && termsAccepted) {
-        setTimeout(() => showAnnouncementModal(config.announcementMessage), 500);
+      if (config.announcementEnabled && (config.announcementMessage || config.announcementImageUrl) && termsAccepted) {
+        setTimeout(() => showAnnouncementModal(config), 500);
       }
     });
   } else if (appState.currentView === 'product') {
