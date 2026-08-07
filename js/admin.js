@@ -4506,7 +4506,7 @@ window.uploadAnnouncementImage = async function(input) {
     const token = await firebase.auth().currentUser.getIdToken();
     const res = await fetch('/api/upload', {
       method: 'POST',
-      headers: { 'Authorization': Bearer  },
+      headers: { 'Authorization': `Bearer ${token}` },
       body: formData
     });
     if (!res.ok) throw new Error('Fallo al subir archivo');
