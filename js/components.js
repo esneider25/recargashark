@@ -346,8 +346,7 @@ function renderProductDetail(productId) {
       
       let priceDisplay = '';
       if (pkg.priceUsd !== undefined) {
-          const bsPrice = usdToBs(pkg.priceUsd);
-          priceDisplay = `<div class="package-price-bs">Bs. ${formatBs(bsPrice)} | $${pkg.priceUsd.toFixed(2)}</div>`;
+          priceDisplay = `<div class="package-price-badge" data-usd="${pkg.priceUsd.toFixed(2)}" data-bs="${formatBs(usdToBs(pkg.priceUsd))}">Bs. ${formatBs(usdToBs(pkg.priceUsd))}</div>`;
       }
 
       return `
