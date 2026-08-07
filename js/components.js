@@ -344,13 +344,19 @@ function renderProductDetail(productId) {
       else if (amtStr.length > 9) amtStyle = 'font-size: 1.45rem; line-height: 1.1; white-space: normal; word-break: break-word;';
       else if (amtStr.length > 6) amtStyle = 'font-size: 1.9rem;';
       
+      let priceDisplay = '';
+      if (pkg.priceUsd !== undefined) {
+          priceDisplay = `<div class="package-price" style="font-size: 0.9rem; color: #10b981; font-weight: 800; margin-top: 8px; background: rgba(15, 23, 42, 0.9); padding: 4px 14px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 2; position: relative; letter-spacing: 0.5px;">$${pkg.priceUsd.toFixed(2)}</div>`;
+      }
+
       return `
         <div class="package-card fade-in-up stagger-${(i % 7) + 1} ${bgClass}"
              onclick="${isPkgOut ? "showToast('Paquete agotado', 'error')" : `selectPackage('${product.id}', ${i})`}"
              id="pkg-${product.id}-${i}"
-             style="${isPkgOut ? 'opacity: 0.5; filter: grayscale(1); cursor: not-allowed;' : ''} ${bgStyle}">
+             style="${isPkgOut ? 'opacity: 0.5; filter: grayscale(1); cursor: not-allowed;' : ''} ${bgStyle}; display: flex; flex-direction: column; align-items: center; justify-content: center;">
           <div class="package-amount" style="${amtStyle}">${amtStr}</div>
           ${(!pkg.hideCurrency && product.currency) ? `<div class="package-label">${product.currency}</div>` : ''}
+          ${priceDisplay}
           ${isPkgOut ? '<div style="font-size: 0.75rem; color: #ef5350; margin-top: 5px; font-weight: bold; position: relative; z-index: 2;">AGOTADO</div>' : ''}
         </div>
       `;
