@@ -61,7 +61,7 @@
       }
     },
     "discounts": { 
-      ".read": "auth != null",
+      ".read": "true",
       ".write": "auth != null && auth.token.email === 'adminshark@gmail.com'"
     },
     "_sysTracking": {
