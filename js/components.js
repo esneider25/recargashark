@@ -1142,7 +1142,7 @@ function renderTermsModal() {
           </div>
           <div style="padding: 20px 24px; border-top: 1px solid var(--border); background: var(--bg-surface); text-align: center;">
             <p style="margin-bottom: 16px; font-size: 0.9rem; color: var(--text-muted);">Debes aceptar los términos para poder continuar y realizar compras.</p>
-            <button class="btn-primary" onclick="acceptTerms()" style="width: 100%; padding: 14px; font-size: 1.1rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 229, 195, 0.2);">
+            <button type="button" class="btn-primary" onclick="window.acceptTerms(); return false;" style="width: 100%; padding: 14px; font-size: 1.1rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 229, 195, 0.2); cursor: pointer; position: relative; z-index: 10001;">
               Acepto los Términos y Condiciones ✅
             </button>
           </div>
@@ -1155,29 +1155,27 @@ function renderTermsModal() {
 window.acceptTerms = function() {
   try {
     console.log('acceptTerms called');
-  sessionStorage.setItem('recargaaccessplay_terms_accepted', 'true');
-  sessionStorage.setItem('recargashark_terms_accepted', 'true'); // Backward compatibility if needed
+    sessionStorage.setItem('recargaaccessplay_terms_accepted', 'true');
+    sessionStorage.setItem('recargashark_terms_accepted', 'true');
+    localStorage.setItem('recargashark_terms_accepted', 'true');
   } catch (e) {
     console.error('sessionStorage error', e);
   }
   const container = document.getElementById('terms-modal-container');
   if (container) {
-    const overlay = container.querySelector('.modal-overlay');
-    if (overlay) overlay.classList.remove('active');
+    container.style.display = 'none';
     setTimeout(() => {
       container.remove();
-      // Show announcement if exists
       const config = typeof getSettings === 'function' ? getSettings() : {};
       if (config.announcementEnabled && (config.announcementMessage || config.announcementImageUrl)) {
         if (typeof showAnnouncementModal === 'function') {
           showAnnouncementModal(config);
         }
       }
-    }, 300);
+    }, 100);
   }
 };
 
-// ── Support Chat Widget ──
 function renderSupportWidget() {
   const settings = getSettings();
   const channelLink = settings.whatsappChannel || 'https://whatsapp.com/channel/TU_CANAL_AQUI';
