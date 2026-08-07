@@ -713,8 +713,38 @@ function removeOrderFromDb(orderId) {
   }
 }
 
-function createOrder(data) {
+async function createOrder(data) {
   const orders = getOrders();
+  
+  // Encrypt account password server-side before storing
+  let encryptedPassword = '';
+  if (data.accountPassword && data.accountPassword.trim()) {
+    try {
+      const currentUser = typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser;
+      if (currentUser) {
+        const idToken = await currentUser.getIdToken();
+        const resp = await fetch('/api/crypto', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+          body: JSON.stringify({ action: 'encrypt', password: data.accountPassword })
+        });
+        if (resp.ok) {
+          const result = await resp.json();
+          encryptedPassword = result.encrypted || data.accountPassword;
+        } else {
+          // Fallback: store as-is if encryption endpoint fails (should not happen in production)
+          console.warn('Password encryption failed, storing as-is');
+          encryptedPassword = data.accountPassword;
+        }
+      } else {
+        encryptedPassword = data.accountPassword;
+      }
+    } catch (e) {
+      console.warn('Password encryption error:', e);
+      encryptedPassword = data.accountPassword;
+    }
+  }
+
   const order = {
     id: generateOrderRef(),
     userId: data.userId || null,
@@ -733,7 +763,8 @@ function createOrder(data) {
     gameId: data.gameId || '',
     playerName: data.playerName || null,
     accountEmail: data.accountEmail || '',
-    accountPassword: data.accountPassword || '',
+    accountPassword: encryptedPassword,
+    passwordEncrypted: encryptedPassword ? true : false,
     ocrNumbers: data.ocrNumbers || [],
     imageHash: data.imageHash || null,
     discountCode: data.discountCode || null,

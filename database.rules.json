@@ -34,7 +34,7 @@
          ".read": "(auth != null && (auth.token.email === 'adminshark@gmail.com' || auth.uid === $sessionId)) || $sessionId.matches(/^fp-/)",
          ".write": "(auth != null && (auth.token.email === 'adminshark@gmail.com' || auth.uid === $sessionId)) || ($sessionId.matches(/^fp-/) && newData.exists())",
          "$messageId": {
-           ".validate": "newData.child('content').isString() && newData.child('content').val().length < 500"
+           ".validate": "newData.child('content').isString() && newData.child('content').val().length < 300 && newData.child('timestamp').exists()"
          }
       }
     },

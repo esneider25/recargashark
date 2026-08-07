@@ -2360,16 +2360,16 @@ function renderOrders(container) {
         <div style="padding-right: 12px; display: flex; align-items: center;" onclick="event.stopPropagation()">
           <input type="checkbox" class="admin-bulk-checkbox" value="${order.id}" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
         </div>
-        <div class="admin-order-ref">${order.id}</div>
+        <div class="admin-order-ref">${escapeHTML(order.id)}</div>
         <div class="admin-order-info">
           <div class="admin-order-product">
-            ${typeLabel} ${order.productName}
-            <span style="font-size: 0.78rem; font-weight: 400; color: var(--text-muted);">— ${order.packageLabel}</span>
+            ${typeLabel} ${escapeHTML(order.productName)}
+            <span style="font-size: 0.78rem; font-weight: 400; color: var(--text-muted);">— ${escapeHTML(order.packageLabel)}</span>
           </div>
           <div class="admin-order-meta">
             <span class="admin-order-meta-item">💰 $${order.priceUsd.toFixed(2)} | Bs. ${formatBs(order.priceBs)}</span>
-            <span class="admin-order-meta-item">💳 ${order.paymentMethodName}</span>
-            <span class="admin-order-meta-item">📱 ${order.customerContact || 'Sin contacto'}</span>
+            <span class="admin-order-meta-item">💳 ${escapeHTML(order.paymentMethodName)}</span>
+            <span class="admin-order-meta-item">📱 ${escapeHTML(order.customerContact) || 'Sin contacto'}</span>
             <span class="admin-order-meta-item">📅 ${date.toLocaleDateString('es-VE', { day: '2-digit', month: 'short' })} ${date.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
         </div>
@@ -2553,8 +2553,8 @@ function openOrderDetailModal(orderId) {
         <span class="label">🔒 Contraseña</span>
         <span class="value">
           <span id="order-pass-display" style="font-family: monospace;">••••••••</span>
-          <button class="copy-btn" onclick="toggleOrderPassword('${escapeHTML(order.accountPassword) || ''}')" title="Mostrar" id="order-pass-toggle">👁️</button>
-          ${order.accountPassword ? `<button class="copy-btn" onclick="adminCopyText('${escapeHTML(order.accountPassword)}')" title="Copiar">📋</button>` : ''}
+          <button class="copy-btn" onclick="toggleOrderPassword()" title="Mostrar/Ocultar" id="order-pass-toggle" data-encrypted="${escapeHTML(order.accountPassword) || ''}" data-is-encrypted="${order.passwordEncrypted ? 'true' : 'false'}">👁️</button>
+          <button class="copy-btn" id="order-pass-copy" onclick="copyDecryptedPassword()" title="Copiar" style="display:none;">📋</button>
         </span>
       </div>
     `;
@@ -2568,8 +2568,8 @@ function openOrderDetailModal(orderId) {
       <div class="admin-history-item">
         <div class="admin-history-dot" style="background: ${s.color || '#5a7099'}"></div>
         <div class="admin-history-text">
-          <div style="font-weight: 500;">${s.icon || ''} ${s.label || h.status}</div>
-          ${h.note ? `<div style="color: var(--text-muted); margin-top: 2px; font-size: 0.78rem;">${h.note}</div>` : ''}
+          <div style="font-weight: 500;">${s.icon || ''} ${s.label || escapeHTML(h.status)}</div>
+          ${h.note ? `<div style="color: var(--text-muted); margin-top: 2px; font-size: 0.78rem;">${escapeHTML(h.note)}</div>` : ''}
         </div>
         <div class="admin-history-time">${hDate.toLocaleDateString('es-VE', { day: '2-digit', month: 'short' })} ${hDate.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}</div>
       </div>
@@ -2636,7 +2636,7 @@ function openOrderDetailModal(orderId) {
         </div>
         <div class="admin-detail-row">
           <span class="label">Método de Pago</span>
-          <span class="value">${order.paymentMethodName}</span>
+          <span class="value">${escapeHTML(order.paymentMethodName)}</span>
         </div>
         ${typeSpecificHtml}
         <div class="admin-detail-row">
@@ -2649,7 +2649,7 @@ function openOrderDetailModal(orderId) {
     ${order.adminNote ? `
       <div style="background: var(--bg-deep); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 16px;">
         <span style="color: var(--text-muted); font-size: 0.82rem;">📝 Nota del admin:</span>
-        <div style="margin-top: 4px; font-size: 0.9rem;">${order.adminNote}</div>
+        <div style="margin-top: 4px; font-size: 0.9rem;">${escapeHTML(order.adminNote)}</div>
       </div>
     ` : ''}
 
@@ -2684,16 +2684,65 @@ function quickUpdateStatusFromModal(orderId, newStatus) {
   }
 }
 
-function toggleOrderPassword(password) {
+function toggleOrderPassword() {
   const display = document.getElementById('order-pass-display');
   const toggleBtn = document.getElementById('order-pass-toggle');
-  if (!display) return;
-  if (display.textContent === '••••••••') {
-    display.textContent = password;
-    if (toggleBtn) toggleBtn.textContent = '🙈';
-  } else {
+  const copyBtn = document.getElementById('order-pass-copy');
+  if (!display || !toggleBtn) return;
+  
+  if (display.textContent !== '••••••••') {
+    // Hide password
     display.textContent = '••••••••';
-    if (toggleBtn) toggleBtn.textContent = '👁️';
+    toggleBtn.textContent = '👁️';
+    if (copyBtn) copyBtn.style.display = 'none';
+    return;
+  }
+
+  const encrypted = toggleBtn.getAttribute('data-encrypted');
+  const isEncrypted = toggleBtn.getAttribute('data-is-encrypted') === 'true';
+  
+  if (!encrypted) {
+    display.textContent = 'N/A';
+    return;
+  }
+
+  if (!isEncrypted) {
+    // Legacy plain text password
+    display.textContent = encrypted;
+    toggleBtn.textContent = '🙈';
+    if (copyBtn) copyBtn.style.display = 'inline';
+    window._lastDecryptedPassword = encrypted;
+    return;
+  }
+
+  // Decrypt from server
+  display.textContent = 'Descifrando...';
+  firebase.auth().currentUser.getIdToken().then(idToken => {
+    return fetch('/api/crypto', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+      body: JSON.stringify({ action: 'decrypt', password: encrypted })
+    });
+  }).then(resp => resp.json()).then(data => {
+    if (data.decrypted) {
+      display.textContent = data.decrypted;
+      toggleBtn.textContent = '🙈';
+      if (copyBtn) copyBtn.style.display = 'inline';
+      window._lastDecryptedPassword = data.decrypted;
+    } else {
+      display.textContent = 'Error al descifrar';
+    }
+  }).catch(err => {
+    console.error('Decrypt error:', err);
+    display.textContent = encrypted;
+    toggleBtn.textContent = '🙈';
+    window._lastDecryptedPassword = encrypted;
+  });
+}
+
+function copyDecryptedPassword() {
+  if (window._lastDecryptedPassword) {
+    adminCopyText(window._lastDecryptedPassword);
   }
 }
 
@@ -3019,11 +3068,11 @@ function updateAdminMessagesUI() {
       listHtml += `
         <div style="padding: 15px; margin-bottom: 10px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; ${selectedStr}" onclick="openAdminChat('${conv.sessionId}')">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-            <strong style="color:var(--text-primary); font-size: 0.95rem;">📱 ${contactLabel}</strong>
+            <strong style="color:var(--text-primary); font-size: 0.95rem;">📱 ${escapeHTML(contactLabel)}</strong>
             ${unreadBadge}
           </div>
           <div style="color:var(--text-secondary); font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-            ${lastMsg}
+            ${escapeHTML(lastMsg)}
           </div>
           <div style="color:var(--text-muted); font-size: 0.75rem; margin-top: 5px; text-align: right;">
             ${new Date(conv.updatedAt).toLocaleString('es-VE')}
@@ -3052,7 +3101,7 @@ function updateAdminMessagesUI() {
       messagesHtml += `
         <div style="display:flex; flex-direction:column; align-items:${align}; margin-bottom:15px;">
           <div style="background:${bg}; color:${color}; padding:10px 15px; border-radius:15px; max-width:80%;">
-            ${msg.text}
+            ${escapeHTML(msg.text)}
           </div>
           <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">${time}</div>
         </div>
@@ -3072,7 +3121,7 @@ function updateAdminMessagesUI() {
       chatContainer.innerHTML = `
         <div style="display: flex; flex-direction: column; height: 500px;">
           <div class="admin-card-header" style="border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 0;">
-            <h3 class="admin-card-title">📱 Conversación con: ${contactLabel}</h3>
+            <h3 class="admin-card-title">📱 Conversación con: ${escapeHTML(contactLabel)}</h3>
           </div>
           <div id="admin-chat-messages" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg-surface);">
             ${messagesHtml}
@@ -3395,9 +3444,9 @@ function renderQuickReplies(main) {
     html += replies.map(r => `
       <div style="background:var(--bg-deep); padding:16px; border-radius:8px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:flex-start; gap: 16px;">
         <div style="flex: 1;">
-          <h4 style="color:var(--accent); margin-bottom:4px; font-size: 1.05rem;">${r.title}</h4>
-          <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px; background: rgba(0,0,0,0.05); display: inline-block; padding: 2px 6px; border-radius: 4px;">🔑 ${r.keywords}</div>
-          <div style="font-size:0.9rem; color:var(--text-primary); white-space:pre-wrap; line-height: 1.4;">${r.response}</div>
+          <h4 style="color:var(--accent); margin-bottom:4px; font-size: 1.05rem;">${escapeHTML(r.title)}</h4>
+          <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px; background: rgba(0,0,0,0.05); display: inline-block; padding: 2px 6px; border-radius: 4px;">🔑 ${escapeHTML(r.keywords)}</div>
+          <div style="font-size:0.9rem; color:var(--text-primary); white-space:pre-wrap; line-height: 1.4;">${escapeHTML(r.response)}</div>
         </div>
         <div style="display:flex; flex-direction: column; gap: 8px;">
           <button class="btn btn-secondary" style="padding: 6px 12px;" onclick="adminEditQuickReply('${r.id}')">✏️ Editar</button>

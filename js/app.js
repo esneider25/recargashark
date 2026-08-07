@@ -737,7 +737,7 @@ async function _submitOrderLogic() {
     const orderPriceUsd = finalUsd / numberOfOrders;
     const orderPriceBs = priceBs / numberOfOrders;
     
-    const order = createOrder({
+    const order = await createOrder({
       userId: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.uid : null,
       userName: (typeof currentUser !== 'undefined' && currentUser) ? (currentUser.displayName || currentUser.email) : null,
       productId: product.id,
