@@ -210,7 +210,7 @@ function switchTab(tabId) {
   renderActiveTab();
 }
 
-function renderActiveTab() { try {
+function renderActiveTab() {
   const main = document.getElementById('admin-main-content');
   if (!main) return;
 
@@ -243,7 +243,6 @@ function renderActiveTab() { try {
     case 'settings': renderSettings(main); break;
     default: renderDashboard(main);
   }
-  } catch (err) { alert('ERROR in renderActiveTab: ' + err.stack); }
 }
 
 // ── Helper: Unread Messages Count ──
@@ -484,6 +483,9 @@ function renderDashboard(container, forcedOrders = null) {
       // 1. Orders Chart Data
       const ctxOrders = document.getElementById('ordersChart');
       if (ctxOrders) {
+        const existingChart = Chart.getChart('ordersChart');
+        if (existingChart) existingChart.destroy();
+        
         const salesByProduct = {};
         completedOrders.forEach(o => {
           salesByProduct[o.productName] = (salesByProduct[o.productName] || 0) + 1;
@@ -517,6 +519,9 @@ function renderDashboard(container, forcedOrders = null) {
       // 2. Earnings Chart Data
       const ctxEarnings = document.getElementById('earningsChart');
       if (ctxEarnings) {
+        const existingChart = Chart.getChart('earningsChart');
+        if (existingChart) existingChart.destroy();
+        
         const earningsByDate = {};
         completedOrders.forEach(o => {
           const date = new Date(o.createdAt).toLocaleDateString('es-VE', { month: 'short', day: 'numeric' });
@@ -557,6 +562,9 @@ function renderDashboard(container, forcedOrders = null) {
       // 3. Payments Chart Data
       const ctxPayments = document.getElementById('paymentsChart');
       if (ctxPayments) {
+        const existingChart = Chart.getChart('paymentsChart');
+        if (existingChart) existingChart.destroy();
+        
         const pmCounts = {};
         completedOrders.forEach(o => {
           pmCounts[o.paymentMethodName || 'Monedero'] = (pmCounts[o.paymentMethodName || 'Monedero'] || 0) + 1;
@@ -3410,7 +3418,9 @@ function adminSaveSettings() {
 // Global polling for admin panel
 setInterval(() => {
   // Always update badge
-  updateAdminSidebarBadges();
+  if (typeof updateAdminSidebarBadges === 'function') {
+    updateAdminSidebarBadges();
+  }
   checkAdminNotifications();
 
   // If we are in messages tab, update UI without losing focus
@@ -3443,6 +3453,43 @@ function checkAdminNotifications() {
 
   lastPendingOrders = currentPending;
   lastUnreadMessages = currentUnread;
+}
+
+function updateAdminSidebarBadges() {
+  const pending = getPendingOrdersCount();
+  const unread = getUnreadMessagesCount();
+  
+  const ordersTab = document.querySelector('.admin-nav-item[data-tab="orders"]');
+  const messagesTab = document.querySelector('.admin-nav-item[data-tab="messages"]');
+
+  if (ordersTab) {
+    let badge = ordersTab.querySelector('.admin-nav-badge');
+    if (pending > 0) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'admin-nav-badge';
+        ordersTab.appendChild(badge);
+      }
+      badge.innerText = pending;
+    } else if (badge) {
+      badge.remove();
+    }
+  }
+
+  if (messagesTab) {
+    let badge = messagesTab.querySelector('.admin-nav-badge');
+    if (unread > 0) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'admin-nav-badge';
+        badge.style.background = 'var(--error)';
+        messagesTab.appendChild(badge);
+      }
+      badge.innerText = unread;
+    } else if (badge) {
+      badge.remove();
+    }
+  }
 }
 
 
