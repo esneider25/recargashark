@@ -54,10 +54,12 @@ window.escapeHTML = function(str) {
 
   // 3. Trampa de Debugger Constante
   // Si logran abrir la consola de alguna otra forma, esto congelará su navegador.
+  /*
   setInterval(function() {
     (function() {
       return false;
     }['constructor']('debugger')());
   }, 100);
+  */
 
 })();
