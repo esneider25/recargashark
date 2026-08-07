@@ -346,14 +346,15 @@ function renderProductDetail(productId) {
       
       let priceDisplay = '';
       if (pkg.priceUsd !== undefined) {
-          priceDisplay = `<div class="package-price" style="font-size: 0.9rem; color: #10b981; font-weight: 800; margin-top: 8px; background: rgba(15, 23, 42, 0.9); padding: 4px 14px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 2; position: relative; letter-spacing: 0.5px;">$${pkg.priceUsd.toFixed(2)}</div>`;
+          const bsPrice = usdToBs(pkg.priceUsd);
+          priceDisplay = `<div class="package-price-bs">Bs. ${formatBs(bsPrice)} | $${pkg.priceUsd.toFixed(2)}</div>`;
       }
 
       return `
         <div class="package-card fade-in-up stagger-${(i % 7) + 1} ${bgClass}"
              onclick="${isPkgOut ? "showToast('Paquete agotado', 'error')" : `selectPackage('${product.id}', ${i})`}"
              id="pkg-${product.id}-${i}"
-             style="${isPkgOut ? 'opacity: 0.5; filter: grayscale(1); cursor: not-allowed;' : ''} ${bgStyle}; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+             style="${isPkgOut ? 'opacity: 0.5; filter: grayscale(1); cursor: not-allowed;' : ''} ${bgStyle}">
           <div class="package-amount" style="${amtStyle}">${amtStr}</div>
           ${(!pkg.hideCurrency && product.currency) ? `<div class="package-label">${product.currency}</div>` : ''}
           ${priceDisplay}
